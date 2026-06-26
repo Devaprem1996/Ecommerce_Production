@@ -1,0 +1,214 @@
+Now I'm going to tell you how we're going to build this project.
+
+We're no longer writing notes.
+We're writing a Software Engineering Handbook.
+
+I want this handbook to become something you can reuse for every future project (ERP, CRM, LMS, SaaS, AI applications, etc.).
+
+Here is my complete roadmap
+📁 docs/
+
+00_PROJECT_RULES.md
+01_PROJECT_PLAN.md
+02_ARCHITECTURE.md
+03_DATABASE_DESIGN.md
+03.5_DOMAIN_MODEL.md
+03.6_FEATURE_SPECIFICATIONS.md
+04_API_DESIGN.md
+
+========== ARCHITECTURE ==========
+
+05_BACKEND_ARCHITECTURE.md
+06_FRONTEND_ARCHITECTURE.md
+07_SECURITY_ARCHITECTURE.md
+08_DEPLOYMENT_ARCHITECTURE.md
+
+========== IMPLEMENTATION ==========
+
+09_BACKEND_SETUP.md
+10_FRONTEND_SETUP.md
+11_DATABASE_SETUP.md
+12_AUTHENTICATION.md
+13_PRODUCTS_MODULE.md
+14_CATEGORIES_MODULE.md
+15_INVENTORY_MODULE.md
+16_CART_MODULE.md
+17_CHECKOUT_MODULE.md
+18_PAYMENT_MODULE.md
+19_ORDER_MODULE.md
+20_REVIEW_MODULE.md
+21_WISHLIST_MODULE.md
+22_ADMIN_MODULE.md
+
+========== QUALITY ==========
+
+23_TESTING.md
+24_DEBUGGING.md
+25_PERFORMANCE.md
+26_MONITORING.md
+27_DEPLOYMENT.md
+
+========== PROJECT MANAGEMENT ==========
+
+28_GIT_WORKFLOW.md
+29_AI_DEVELOPMENT_GUIDE.md
+30_DAILY_WORKFLOW.md
+31_RELEASE_CHECKLIST.md
+32_PROJECT_HANDOVER.md
+This is NOT Documentation.
+
+This is your
+
+Engineering Operating System
+
+Every decision you make comes from these files.
+
+My New Role
+
+From today, I'm no longer acting as ChatGPT.
+
+Inside this project, I have five roles.
+
+Solution Architect
+
+↓
+
+Technical Lead
+
+↓
+
+Senior Backend Engineer
+
+↓
+
+Senior Frontend Engineer
+
+↓
+
+DevOps Engineer
+
+↓
+
+QA Lead
+
+Whenever I give you something, I'll review it as if it were going into production.
+
+Your New Role
+
+You are NOT a beginner.
+
+You are
+
+Product Owner
+
+↓
+
+Project Manager
+
+↓
+
+Software Engineer
+
+Even if you're learning, I want you to think in those roles.
+
+New Rule (Very Important)
+
+I will never generate a complete module in one response.
+
+Instead, every module will be built like this:
+
+Business Goal
+        ↓
+Business Rules
+        ↓
+Architecture
+        ↓
+Folder Structure
+        ↓
+Database
+        ↓
+API
+        ↓
+Implementation Plan
+        ↓
+Coding
+        ↓
+Testing
+        ↓
+Code Review
+        ↓
+Deployment
+
+Exactly like a software company.
+
+What Makes Our Project Different?
+
+Most AI conversations look like this:
+
+User
+
+↓
+
+Build Login
+
+↓
+
+AI writes 600 lines
+
+↓
+
+User copies
+
+↓
+
+Next feature...
+
+Ours will look like this:
+
+Requirement
+
+↓
+
+Planning
+
+↓
+
+Architecture
+
+↓
+
+Database
+
+↓
+
+API
+
+↓
+
+Folder Structure
+
+↓
+
+Implementation Strategy
+
+↓
+
+Code
+
+↓
+
+Review
+
+↓
+
+Testing
+
+↓
+
+Documentation
+
+↓
+
+Deployment
+
+That's why the final project will be easier to maintain and explain.

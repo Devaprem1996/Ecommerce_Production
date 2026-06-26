@@ -1,0 +1,425 @@
+Excellent.
+
+Now I'm going to tell you something that will save you **months** of frustration.
+
+---
+
+# The Biggest Mistake AI-Assisted Developers Make
+
+They ask AI:
+
+> "Create User table."
+
+Then:
+
+> "Create Product table."
+
+Then:
+
+> "Create Cart table."
+
+Eventually they realize the tables don't work well together, and they have to redesign everything.
+
+**We won't do that.**
+
+We are going to think like a **Database Architect**.
+
+---
+
+# Before Database Design
+
+Forget SQL.
+
+Forget PostgreSQL.
+
+Forget Tables.
+
+Instead ask:
+
+> **"What information does the business need to remember?"**
+
+Example:
+
+When a user buys an iPhone...
+
+The system must remember:
+
+* Who bought it?
+* Which product?
+* Which quantity?
+* Which address?
+* Which payment?
+* Which coupon?
+* Which delivery partner?
+* Current delivery status?
+* Invoice number?
+* Payment reference?
+* Product price at purchase time?
+* Tax?
+* Shipping cost?
+
+Notice something?
+
+**One purchase touches many business modules.**
+
+That is why database design is difficult.
+
+---
+
+# Real Software Company Process
+
+Most beginners imagine this:
+
+```text
+Requirement
+↓
+
+Code
+
+↓
+
+Finish
+```
+
+A professional process is more like this:
+
+```text
+Requirement
+      │
+      ▼
+Business Analysis
+      │
+      ▼
+Business Modules
+      │
+      ▼
+Entities
+      │
+      ▼
+Relationships
+      │
+      ▼
+Database
+      │
+      ▼
+API
+      │
+      ▼
+Backend
+      │
+      ▼
+Frontend
+      │
+      ▼
+Testing
+      │
+      ▼
+Deployment
+```
+
+Everything starts with **business analysis**.
+
+---
+
+# Business Analysis
+
+Let's analyze your project.
+
+## Customers
+
+They can:
+
+* Register
+* Login
+* Search products
+* Add cart
+* Buy
+* Pay
+* Track order
+* Review product
+
+---
+
+## Admin
+
+They can:
+
+* Login
+* Add product
+* Edit product
+* Delete product
+* View orders
+* Update delivery
+* Manage users
+* Manage categories
+* View reports
+
+---
+
+## Guest
+
+They can:
+
+* Browse products
+* Search products
+
+Nothing else.
+
+---
+
+# Module Dependency Map
+
+This is one of the most important diagrams in the project.
+
+```text
+Authentication
+        │
+        ▼
+Users
+        │
+        ▼
+Addresses
+        │
+        ▼
+Cart
+        │
+        ▼
+Checkout
+        │
+        ▼
+Payments
+        │
+        ▼
+Orders
+        │
+        ▼
+Shipping
+        │
+        ▼
+Reviews
+```
+
+Notice something?
+
+Every module depends on the previous one.
+
+You cannot build **Orders** before **Payments**.
+
+You cannot build **Payments** before **Checkout**.
+
+You cannot build **Checkout** before **Cart**.
+
+This dependency map becomes your implementation order.
+
+---
+
+# Feature Dependency Matrix
+
+| Feature  | Depends On     |
+| -------- | -------------- |
+| Login    | User           |
+| Product  | Category       |
+| Cart     | User + Product |
+| Checkout | Cart + Address |
+| Payment  | Checkout       |
+| Order    | Payment        |
+| Review   | Order          |
+| Reports  | Orders         |
+
+This table is your roadmap.
+
+---
+
+# The Data Journey
+
+Let's follow one customer.
+
+```
+John opens website
+
+↓
+
+Searches iPhone
+
+↓
+
+Views Product
+
+↓
+
+Adds to Cart
+
+↓
+
+Adds Address
+
+↓
+
+Chooses UPI
+
+↓
+
+Payment Success
+
+↓
+
+Order Created
+
+↓
+
+Invoice Generated
+
+↓
+
+Stock Reduced
+
+↓
+
+Delivery Started
+
+↓
+
+Order Delivered
+
+↓
+
+Review Submitted
+```
+
+That single journey tells us almost everything we need to design the database and APIs.
+
+---
+
+# Event-Driven Thinking
+
+Instead of asking:
+
+> "What pages exist?"
+
+Ask:
+
+> "What events happen?"
+
+Events are easier to model.
+
+Examples:
+
+```
+User Registered
+
+↓
+
+User Logged In
+
+↓
+
+Product Created
+
+↓
+
+Cart Updated
+
+↓
+
+Payment Started
+
+↓
+
+Payment Completed
+
+↓
+
+Order Created
+
+↓
+
+Order Shipped
+
+↓
+
+Order Delivered
+
+↓
+
+Review Added
+```
+
+Every event may:
+
+* update the database,
+* trigger notifications,
+* create logs,
+* affect analytics.
+
+---
+
+# Real Production Database Modules
+
+If this project grows into a large platform, each area can become its own service.
+
+```
+Authentication Service
+
+User Service
+
+Product Service
+
+Inventory Service
+
+Cart Service
+
+Order Service
+
+Payment Service
+
+Notification Service
+
+Analytics Service
+```
+
+We won't build microservices now, but designing with these boundaries makes future growth easier.
+
+---
+
+# Phase Completion Checklist
+
+Before we create any SQL tables, make sure you can answer **yes** to all of these:
+
+* [ ] I know every actor (Guest, Customer, Admin).
+* [ ] I know every business module.
+* [ ] I know how modules depend on each other.
+* [ ] I know the customer's journey.
+* [ ] I know the important business events.
+* [ ] I have a folder ready for database design.
+* [ ] I have documented the naming conventions.
+
+If any answer is "No", stop and complete it before moving on.
+
+---
+
+# The Rule We'll Follow
+
+From this point onward, **every new feature** will go through the same lifecycle:
+
+```
+Business Need
+      ↓
+Business Rules
+      ↓
+Database Design
+      ↓
+API Design
+      ↓
+Backend
+      ↓
+Frontend
+      ↓
+Testing
+      ↓
+Documentation
+      ↓
+Git Commit
+```
+
+We will **never** start with code.
+

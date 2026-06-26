@@ -1,0 +1,32 @@
+My Final Promise
+
+I'm going to teach you this project as if I'm training a Junior Engineer to become a Mid-Level Engineer.
+
+That means I won't just tell you what to do.
+
+For every important topic, I'll explain:
+
+Why we do it this way.
+What problem it solves.
+What happens if we don't.
+How experienced teams handle it.
+Common mistakes to avoid.
+
+The objective isn't just to complete this ecommerce application. It's to help you build a way of working that you can apply to future projects with confidence.
+
+One request before we continue
+
+From this point onward, when we move into implementation (starting with the backend architecture), don't let me skip reviews.
+
+Hold me to this sequence every time:
+
+Explain
+Design
+Plan
+Review
+Generate code
+Test
+Review again
+Update documentation
+
+If we follow that discipline consistently, you'll finish this project with not only a working application but also a complete engineering playbook you can reuse on future projects.

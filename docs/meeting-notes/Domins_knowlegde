@@ -1,0 +1,135 @@
+Excellent.
+
+This is where we stop being "developers" and become Software Engineers.
+
+Most tutorials completely skip this document.
+
+Most AI tools also skip it.
+
+But companies like Amazon, Microsoft, Uber, and Stripe don't.
+
+They define the Domain Model before they define APIs.
+
+Why?
+
+Look at these two sentences:
+
+User places an order.
+Customer purchases products.
+
+Are they the same?
+
+Almost.
+
+But in software engineering,
+
+User
+
+and
+
+Customer
+
+can be two completely different entities.
+
+Without a Domain Model, every developer starts using different names.
+
+Eventually your code becomes
+
+User
+
+Customer
+
+Buyer
+
+Client
+
+Member
+
+Account
+
+all meaning the same thing.
+
+That becomes a nightmare.
+
+What is a Domain?
+
+A Domain is simply
+
+The business we are building.
+
+Our domain is
+
+Ecommerce
+
+Inside Ecommerce there are many smaller domains.
+
+Authentication
+
+Catalog
+
+Shopping
+
+Payments
+
+Orders
+
+Shipping
+
+Administration
+Why This Document Exists
+
+The Domain Model answers
+
+What exists in our business?
+
+Not
+
+How to code it.
+
+Not
+
+Which API.
+
+Not
+
+Which table.
+
+Business only.
+
+Imagine Amazon
+
+Amazon doesn't think
+
+POST /orders
+
+They think
+
+Customer
+
+↓
+
+Shopping Cart
+
+↓
+
+Checkout
+
+↓
+
+Payment
+
+↓
+
+Order
+
+↓
+
+Shipment
+
+↓
+
+Delivery
+
+That's called
+
+Business Flow.

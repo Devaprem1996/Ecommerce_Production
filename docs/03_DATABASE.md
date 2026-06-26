@@ -1,29 +1,4 @@
-# Database Design
+# 03_DATABASE.md
 
-This document details the database schemas, tables, and relationships.
-
-## Data Models
-
-### Users
-- `id` (UUID, PK)
-- `email` (String, Unique)
-- `password_hash` (String)
-- `first_name` (String)
-- `last_name` (String)
-- `created_at` (Timestamp)
-
-### Products
-- `id` (UUID, PK)
-- `name` (String)
-- `description` (Text)
-- `price` (Decimal)
-- `stock` (Integer)
-- `image_url` (String)
-- `created_at` (Timestamp)
-
-### Orders
-- `id` (UUID, PK)
-- `user_id` (UUID, FK -> Users)
-- `total_amount` (Decimal)
-- `status` (Enum: PENDING, PAID, SHIPPED, CANCELLED)
-- `created_at` (Timestamp)
+> [!IMPORTANT]
+> This file has been renamed to [03_DATABASE_DESIGN.md](file:///c:/Users/user/OneDrive/Ecommerce/ecommerce-production/docs/03_DATABASE_DESIGN.md) to follow the Technical Lead's updated project structure. Please refer to that file for the current database design specifications.

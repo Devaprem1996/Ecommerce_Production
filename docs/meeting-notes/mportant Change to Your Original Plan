@@ -1,0 +1,382 @@
+
+Now we're entering the phase where **90% of junior developers make mistakes**.
+
+They start coding.
+
+We won't.
+
+A professional developer **designs the database first**, because **the database is the heart of an ecommerce application**. If the database is poorly designed, every API, every screen, and every feature becomes harder to build and maintain.
+
+---
+
+# Important Change to Your Original Plan
+
+I'm going to modify your roadmap slightly.
+
+Instead of:
+
+```
+Architecture
+↓
+Backend
+↓
+Database
+```
+
+We'll use:
+
+```
+Architecture
+↓
+Business Modules
+↓
+Database Design
+↓
+API Design
+↓
+Backend
+↓
+Frontend
+```
+
+**Why?**
+
+Because the database should support the **business**, not the other way around.
+
+---
+
+# Before We Design Tables
+
+We need to answer one business question.
+
+## What is an Ecommerce Application?
+
+It is **not** a website.
+
+It is a collection of **business modules**.
+
+Think of it like a shopping mall.
+
+Each shop has one responsibility.
+
+---
+
+# Business Modules
+
+Our application consists of these modules:
+
+```
+Authentication
+
+↓
+
+Users
+
+↓
+
+Products
+
+↓
+
+Categories
+
+↓
+
+Inventory
+
+↓
+
+Cart
+
+↓
+
+Wishlist
+
+↓
+
+Orders
+
+↓
+
+Payments
+
+↓
+
+Shipping
+
+↓
+
+Reviews
+
+↓
+
+Coupons
+
+↓
+
+Notifications
+
+↓
+
+Admin
+
+↓
+
+Reports
+
+↓
+
+Settings
+```
+
+Each module owns its own data.
+
+For example:
+
+* Products own product information.
+* Cart owns cart items.
+* Orders own order history.
+* Payments own payment records.
+
+This separation keeps the system organized.
+
+---
+
+# Step 1 — Identify the Actors
+
+Who uses the system?
+
+| Actor    | Description              |
+| -------- | ------------------------ |
+| Guest    | Can browse products only |
+| Customer | Can buy products         |
+| Admin    | Manages the platform     |
+
+Every feature must answer:
+
+> **Which actor is allowed to use this?**
+
+This is the basis for authorization later.
+
+---
+
+# Step 2 — Identify the Main Objects
+
+Everything in software is an object.
+
+Our ecommerce application has these core objects:
+
+| Object       | Purpose                   |
+| ------------ | ------------------------- |
+| User         | Customer or Admin         |
+| Product      | Item for sale             |
+| Category     | Groups of products        |
+| Cart         | Temporary shopping basket |
+| Order        | Purchased items           |
+| Payment      | Transaction details       |
+| Address      | Delivery location         |
+| Review       | Product feedback          |
+| Wishlist     | Saved products            |
+| Coupon       | Discount rules            |
+| Notification | Messages to users         |
+
+Notice that we're still not talking about tables. We're talking about the business.
+
+---
+
+# Step 3 — Draw Relationships
+
+Here's the first business relationship diagram.
+
+```text
+User
+ │
+ ├─────< Cart
+ │
+ ├─────< Orders
+ │
+ ├─────< Addresses
+ │
+ ├─────< Reviews
+ │
+ └─────< Wishlist
+
+Category
+ │
+ └─────< Products
+
+Order
+ │
+ ├─────< Order Items
+ │
+ └───── Payment
+
+Product
+ │
+ ├───── Reviews
+ │
+ └───── Inventory
+```
+
+This diagram becomes the foundation for the database schema.
+
+---
+
+# Step 4 — Database Naming Standards
+
+These rules prevent confusion later.
+
+## Table Names
+
+Always use **plural**.
+
+✅ `users`
+
+❌ `user`
+
+---
+
+## Primary Keys
+
+Every table uses:
+
+```
+id
+```
+
+Not:
+
+```
+userId
+productId
+categoryId
+```
+
+Those names are for **foreign keys**, not primary keys.
+
+---
+
+## Foreign Keys
+
+Example:
+
+```
+user_id
+
+product_id
+
+category_id
+
+order_id
+```
+
+Always lowercase with underscores.
+
+---
+
+## Timestamp Columns
+
+Every table should include:
+
+```
+created_at
+
+updated_at
+```
+
+Some tables also include:
+
+```
+deleted_at
+```
+
+This supports soft deletes and auditing.
+
+---
+
+## Boolean Columns
+
+Name them clearly.
+
+Good:
+
+```
+is_active
+
+is_verified
+
+is_admin
+```
+
+Avoid vague names like:
+
+```
+status
+```
+
+unless the column truly represents multiple states.
+
+---
+
+# Step 5 — Data Ownership
+
+Each module owns its data.
+
+| Module         | Owns                |
+| -------------- | ------------------- |
+| Authentication | Login, tokens       |
+| Users          | Profile             |
+| Products       | Product information |
+| Cart           | Cart items          |
+| Orders         | Purchase history    |
+| Payments       | Transactions        |
+| Reviews        | Ratings             |
+| Wishlist       | Saved items         |
+
+This rule prevents one module from changing another module's data directly.
+
+---
+
+# Step 6 — File Organization
+
+Before writing any models, decide where everything belongs.
+
+```text
+database/
+
+├── schema/
+│   ├── users.sql
+│   ├── products.sql
+│   ├── categories.sql
+│   ├── orders.sql
+│   ├── order_items.sql
+│   ├── carts.sql
+│   ├── payments.sql
+│   ├── reviews.sql
+│   └── wishlist.sql
+│
+├── migrations/
+│
+├── seeds/
+│
+└── diagrams/
+```
+
+This keeps the database work organized from the beginning.
+
+---
+
+# Assignment (No Coding Yet)
+
+Before we create a single SQL table, complete these tasks:
+
+1. Write down every business module.
+2. List the actors (Guest, Customer, Admin).
+3. Draw the relationships between the modules (even a simple sketch is fine).
+4. Decide on naming conventions (table names, primary keys, foreign keys, timestamps).
+5. Create the `database/` folder structure shown above.
+
+Only after these are complete should we start defining the actual tables.
+
+please dont build anything just check first three md files form the [text](docs/meeting-notes) and confirm me
+

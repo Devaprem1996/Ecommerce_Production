@@ -1,0 +1,124 @@
+Excellent.
+
+This is where I'm going to change your entire way of building software.
+
+From this point onward:
+
+You are NOT asking AI to build features.
+
+You are asking AI to implement an already approved specification.
+
+That is how senior engineers work.
+
+Why 90% of AI Projects Fail
+
+Most people ask:
+
+Build Login
+
+AI builds login.
+
+Later:
+
+Add Google Login
+
+AI changes login.
+
+Later:
+
+Add Admin Login
+
+AI changes login.
+
+Later:
+
+Add RBAC
+
+AI changes login.
+
+Eventually the authentication module becomes a mess.
+
+Professional teams don't work like that.
+
+They first write a Feature Specification.
+
+Then developers implement it.
+
+Then testers verify it.
+
+Then the PM approves it.
+
+This document is your Product Manager.
+
+It tells AI exactly what to build.
+
+Welcome to
+03.6_FEATURE_SPECIFICATIONS.md
+
+This will become the most referenced document during development.
+
+Before We Start
+
+I want to explain something important.
+
+A feature is NOT a page.
+
+Example
+
+Wrong thinking
+
+Login Page
+
+Correct thinking
+
+Authentication
+
+Authentication includes
+
+Login
+Logout
+Register
+Google OAuth
+JWT
+Refresh Token
+Forgot Password
+Reset Password
+RBAC
+Session Management
+Account Verification
+
+That entire thing is ONE feature.
+
+Feature Hierarchy
+
+Our ecommerce application consists of:
+
+Authentication
+
+Products
+
+Categories
+
+Inventory
+
+Search
+
+Cart
+
+Checkout
+
+Payments
+
+Orders
+
+Reviews
+
+Wishlist
+
+Admin Dashboard
+
+Reports
+
+Notifications
+
+Each one becomes one specification.
