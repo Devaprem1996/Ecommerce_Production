@@ -1,0 +1,56 @@
+S No,Action Items,Estimated Hours,Technical Brief,Zero-Cost Strategy
+,Planning and Analysis,,,
+,Understanding the Requirement from Business User,6,"Conduct meetings to detail inventory, delivery rules, and roles.",Google Meet / Google Docs
+,Project Plan Creation,4,Establish 14-day Agile project timeline and task definitions.,Local Markdown Files
+,Commercials Discussion,4,"Finalize milestones, support bounds, and cost options.",Email / Shared Documents
+,Sample Scope Document to be shared,4,Provide templates outlining MVP limits to manage scope creep.,Local Markdown templates
+,Solution / Scope Document to be created,8,"Map system architecture, database models, and API endpoints.",Prisma schemas & Architecture files
+,Solution / Scope Document to be Signed off from Business User,4,Acquire client sign-off on scope boundaries.,Digital Signature
+,,,,
+,,,,
+,,,,
+,Design,,,
+,AWS . Azure cloud Cost,6,"Evaluate free-tier bounds for Vercel, Koyeb, Supabase, and Neon.",Developer documentation checks
+,Color / Theme Finalization,6,Configure Tailwind CSS palette variables for dark/light themes.,Tailwind CSS variables
+,Architecture Design,8,Design decoupled client-server layouts and routing middleware.,Prisma Client + Next.js App Router
+,3 Templates for Finalization,8,"Draft mockups modeled on reference sites (MyHarvest, TwoBrothers, Ueir).",Figma/HTML prototypes
+,DB / Schema Preparation,8,"Design Prisma schema containing tables, relations, and indices.",Prisma ORM & local schemas
+,Backend Finalization,8,"Configure Express backend structure with Helmet, CORS, and logging.",Node.js core libraries
+,Front End Finalization,8,Configure Next.js frontend structures with Zustand state managers.,Next.js template
+,GIT Set up,2,"Configure Git repositories, branches, and ignore rules.",GitHub Free Tier
+,"Videos , Images, Content to be provided by Business Team",4,"Organize client asset catalogs, photos, and descriptions.",GitHub LFS / Local directories
+,"Role Identification / RBAC (Business Admin, Guest without Login, User)",6,Write RBAC route guard middlewares using secure JWTs.,JWT in HttpOnly Cookies
+,,,,
+,,,,
+,Implementation,,,
+,"Classic e-Commerce Web Application with Mobile Responsive (Mobile, Tablet and Desktop)",16,"Write fluid layouts that auto-adjust to Mobile, Tablet, and Desktop.",Tailwind CSS
+,Touch Friendly Navigation (Menus n Icons),8,Build responsive touch-optimized drawers and sticky mobile menus.,Tailwind CSS + Lucide Icons
+,Menu : Home | Overview | About | Review | Blog | FAQs n Contact us | Social Media,8,Create core routes and static pages with responsive links.,Next.js App Router Static Pages
+,"Add to Cart, Checkout",16,Implement client cart storage synced with secure checkouts.,Zustand Store + Next.js routes
+,Payment Gateway Integration,16,Integrate Razorpay client SDK and backend webhook signature checks.,Razorpay SDK (Free setup/2% commission)
+,Track Order,12,Create order status tracker dashboard with chronological timelines.,Prisma DB + React timeline components
+,Dashboards n reports to Admin,16,"Build sales charts, stock level alerts, and transaction logs.",Recharts library
+,Upload the Content (CURD) / Rest API to Admin,12,"Implement secure product, price, and category CRUD endpoints.",Prisma DB + REST APIs
+,Create Categorization by Admin,8,Build category drawers allowing parent-child categorization.,Prisma self-relations
+,"UI to add Products with Rate, UoM etc",10,"Build form validation enforcing rate, weight, and UoM criteria.",React Hook Form + Zod validation
+,Search,10,Write PostgreSQL text-search matching product names and tags.,PostgreSQL ILIKE queries
+,Banner | Photo Movement Animation Photos (zoom in out ),6,Write animated carousels using CSS transition effects.,Tailwind Animations
+,FAQs,4,Build expandable accordion components for common user queries.,React Accordion state
+,Review Stars,8,Build rating star component showing average product reviews.,PostgreSQL review tables
+,Pincode Delivery Validator (inspired by myharvestfarms.com),12,Modal popup verifying delivery availability by postcode before letting users add items.,React State / Local Pincode DB
+,OTP-Based Fast Checkout (inspired by twobrothersindiashop.com & ueirorganic.com),16,OTP verification to auto-fill address and payment methods for quick checkout.,SMS Gateway (OTP) / Razorpay Checkout
+,Product Variant / Weight Selector (inspired by myharvestfarms.com),8,Dynamic dropdown/button selector for weight/volume options with auto-pricing.,Prisma schema modifications
+,Bilingual Content Support (English/Tamil) (inspired by myharvestfarms.com),10,Bilingual localization fields in products database and toggle switch in header.,Next.js Internationalization
+,,,,
+,Testing,,,
+,Unit Testing,12,Write Jest and React Testing Library tests for core logic.,Jest + Testing Library
+,UAT Sign off,8,Conduct client walkthroughs to verify all active user paths.,Local staging URLs
+,,,,
+,,,,
+,Deployment,,,
+,Cloud Deployment,10,"Deploy frontend to Vercel, database to Supabase, backend to Koyeb.",Vercel + Koyeb + Supabase (Free Tiers)
+,Go Live,6,"Map custom domains, set environment variables, run db migrations.",Vercel DNS + Neon Postgres
+,,,,
+,,,,
+,Support and Maintenance,,,
+,Hyper care Support (2 weeks),20,"Provide system monitoring, log checks, and immediate bug fixes.",Winston logging + console logs
