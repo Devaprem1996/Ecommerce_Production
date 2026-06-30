@@ -175,12 +175,12 @@ export default function OrderManagementPage() {
 
       {/* Tabs + Search */}
       <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center border-b border-neutral-200 dark:border-neutral-800 pb-2">
-        <div className="flex gap-1.5 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 scrollbar-none">
+        <div className="flex gap-1.5 overflow-x-auto w-full md:w-auto pb-2.5 md:pb-0 scrollbar-none">
           {statuses.map(st => (
             <button
               key={st}
               onClick={() => setActiveTab(st)}
-              className={`px-4 py-2 text-xs font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer whitespace-nowrap ${
+              className={`px-4 py-2.5 md:py-2 text-sm md:text-xs font-bold uppercase tracking-wider rounded-full transition-all cursor-pointer whitespace-nowrap ${
                 activeTab === st
                   ? 'bg-primary-500 text-white shadow-sm'
                   : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:border-neutral-350'
@@ -199,13 +199,13 @@ export default function OrderManagementPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder="Search Order ID, name or phone..."
-            className="w-full text-xs font-semibold pl-10 pr-4 py-2.5 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-card text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+            className="w-full text-base md:text-xs font-semibold pl-10 pr-4 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 rounded-card text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
         </div>
       </div>
 
-      {/* Order List Table */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature shadow-sm overflow-hidden">
+      {/* Order List Table (Desktop only) */}
+      <div className="hidden md:block bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
@@ -253,7 +253,7 @@ export default function OrderManagementPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() => setSelectedOrder(order)}
-                        className="font-bold text-xs p-2 cursor-pointer"
+                        className="font-bold text-xs p-2 cursor-pointer border border-neutral-250 dark:border-neutral-750"
                         leftIcon={<Eye className="w-4 h-4" />}
                       >
                         Inspect
@@ -273,6 +273,67 @@ export default function OrderManagementPage() {
         </div>
       </div>
 
+      {/* Mobile Card Deck (Mobile only) */}
+      <div className="block md:hidden space-y-4">
+        {filteredOrders.length > 0 ? (
+          filteredOrders.map(order => (
+            <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 shadow-sm space-y-3">
+              <div className="flex justify-between items-center">
+                <span className="font-bold text-sm text-neutral-900 dark:text-white">{order.id}</span>
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                  order.status === 'delivered' ? 'bg-success/15 text-success' :
+                  order.status === 'processing' ? 'bg-blue-500/15 text-blue-500' :
+                  order.status === 'shipped' ? 'bg-primary-500/10 text-primary-500' :
+                  order.status === 'pending' ? 'bg-amber-500/15 text-amber-500' :
+                  'bg-red-500/15 text-red-500'
+                }`}>
+                  {order.status}
+                </span>
+              </div>
+
+              <div className="space-y-1">
+                <p className="font-bold text-neutral-800 dark:text-neutral-200 text-xs">{order.customer}</p>
+                <div className="flex justify-between text-[10px] text-neutral-500 font-semibold">
+                  <span>{order.date}</span>
+                  <span>+91 {order.phone}</span>
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center text-xs border-t border-neutral-50 dark:border-neutral-850/60 pt-2.5">
+                <div>
+                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Amount</span>
+                  <span className="font-extrabold text-neutral-900 dark:text-white">₹{order.amount}</span>
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Payment</span>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase mt-0.5 ${
+                    order.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
+                  }`}>
+                    {order.paymentMethod.toUpperCase()} - {order.paymentStatus}
+                  </span>
+                </div>
+              </div>
+
+              <div className="border-t border-neutral-50 dark:border-neutral-850/60 pt-2.5">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedOrder(order)}
+                  className="w-full font-bold text-xs py-2 justify-center cursor-pointer border border-neutral-250 dark:border-neutral-750"
+                  leftIcon={<Eye className="w-4 h-4" />}
+                >
+                  Inspect Order
+                </Button>
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="bg-white dark:bg-neutral-900 border rounded-feature p-8 text-center font-bold text-neutral-500">
+            No matching orders located.
+          </div>
+        )}
+      </div>
+
       {/* DETAIL MODAL DRAWER */}
       {selectedOrder && (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
@@ -283,7 +344,7 @@ export default function OrderManagementPage() {
           />
 
           {/* Modal Container */}
-          <div className="relative w-full max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature shadow-2xl p-6 space-y-6 z-10 max-h-[90vh] overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature shadow-2xl p-4 sm:p-6 space-y-6 z-10 max-h-[90vh] overflow-y-auto">
             
             {/* Header info */}
             <div className="flex items-center justify-between border-b border-neutral-50 dark:border-neutral-850 pb-3">
@@ -294,7 +355,7 @@ export default function OrderManagementPage() {
                 </h3>
                 <p className="text-[10px] font-semibold text-neutral-500">Placed on {selectedOrder.date}</p>
               </div>
-              <button onClick={() => setSelectedOrder(null)} className="text-neutral-500 hover:text-primary-500 cursor-pointer">
+              <button onClick={() => setSelectedOrder(null)} className="text-neutral-500 hover:text-primary-500 cursor-pointer p-1">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -329,7 +390,7 @@ export default function OrderManagementPage() {
                   <select
                     value={selectedOrder.status}
                     onChange={(e) => handleUpdateStatus(selectedOrder.id, e.target.value as any)}
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
+                    className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
                   >
                     <option value="pending">Pending</option>
                     <option value="processing">Processing</option>
@@ -366,7 +427,7 @@ export default function OrderManagementPage() {
                   <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => triggerNotification('SMS', selectedOrder.customer, selectedOrder.phone)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-card transition-colors cursor-pointer border border-emerald-500/20"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 md:py-2 bg-emerald-500/10 text-emerald-500 hover:bg-emerald-500 hover:text-white text-xs md:text-[10px] font-bold uppercase tracking-wider rounded-card transition-colors cursor-pointer border border-emerald-500/20"
                     >
                       <MessageSquare className="w-3.5 h-3.5 fill-current" />
                       <span>SMS Alert</span>
@@ -374,7 +435,7 @@ export default function OrderManagementPage() {
                     
                     <button
                       onClick={() => triggerNotification('Email', selectedOrder.customer, selectedOrder.email)}
-                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-sky-500/10 text-sky-500 hover:bg-sky-500 hover:text-white text-[10px] font-bold uppercase tracking-wider rounded-card transition-colors cursor-pointer border border-sky-500/20"
+                      className="inline-flex items-center justify-center gap-1.5 px-3 py-2.5 md:py-2 bg-sky-500/10 text-sky-500 hover:bg-sky-500 hover:text-white text-xs md:text-[10px] font-bold uppercase tracking-wider rounded-card transition-colors cursor-pointer border border-sky-500/20"
                     >
                       <Mail className="w-3.5 h-3.5" />
                       <span>Email Alert</span>

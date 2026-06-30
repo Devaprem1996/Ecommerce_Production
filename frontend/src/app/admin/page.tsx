@@ -109,8 +109,7 @@ export default function AdminDashboardOverview() {
 
   return (
     <div className="space-y-8 font-sans pb-10">
-      
-      {/* Title + Quick Actions */}
+           {/* Title + Quick Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
@@ -122,14 +121,14 @@ export default function AdminDashboardOverview() {
         </div>
 
         {/* Quick actions panel */}
-        <div className="flex flex-wrap gap-2">
-          <Link href="/admin/products/new">
-            <Button size="sm" variant="primary" className="text-xs font-bold" leftIcon={<PlusCircle className="w-4 h-4" />}>
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+          <Link href="/admin/products/new" className="w-full sm:w-auto">
+            <Button size="sm" variant="primary" className="w-full justify-center text-xs font-bold py-2.5 md:py-2" leftIcon={<PlusCircle className="w-4 h-4" />}>
               Add Product
             </Button>
           </Link>
-          <Link href="/admin/reports">
-            <Button size="sm" variant="ghost" className="text-xs font-bold border border-neutral-250 dark:border-neutral-750" leftIcon={<FileBarChart className="w-4 h-4" />}>
+          <Link href="/admin/reports" className="w-full sm:w-auto">
+            <Button size="sm" variant="ghost" className="w-full justify-center text-xs font-bold border border-neutral-250 dark:border-neutral-750 py-2.5 md:py-2" leftIcon={<FileBarChart className="w-4 h-4" />}>
               Analytics
             </Button>
           </Link>
@@ -137,13 +136,13 @@ export default function AdminDashboardOverview() {
       </div>
 
       {/* KPI Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {kpiCards.map(card => {
           const Icon = card.icon;
           return (
             <div 
               key={card.title} 
-              className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm flex items-center justify-between transition-transform duration-normal hover:translate-y-[-4px]"
+              className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 sm:p-6 shadow-sm flex items-center justify-between transition-transform duration-normal hover:translate-y-[-4px]"
             >
               <div className="space-y-1">
                 <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">{card.title}</span>
@@ -168,7 +167,7 @@ export default function AdminDashboardOverview() {
       </div>
 
       {/* Analytics Chart Block */}
-      <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 sm:p-6 shadow-sm space-y-4">
         <div className="flex items-center justify-between border-b border-neutral-50 dark:border-neutral-850 pb-3">
           <div>
             <h3 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider">Revenue Trend</h3>
@@ -207,7 +206,7 @@ export default function AdminDashboardOverview() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
         
         {/* Recent Orders (7 cols) */}
-        <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 sm:p-6 shadow-sm flex flex-col justify-between">
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-neutral-50 dark:border-neutral-850 pb-3">
               <div>
@@ -220,7 +219,7 @@ export default function AdminDashboardOverview() {
               </Link>
             </div>
 
-            <div className="overflow-x-auto">
+            <div className="hidden md:block overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-neutral-100 dark:border-neutral-800 text-neutral-450 uppercase font-black tracking-wider">
@@ -239,7 +238,7 @@ export default function AdminDashboardOverview() {
                       <td className="py-3">
                         <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
                           order.status === 'delivered' ? 'bg-success/15 text-success' :
-                          order.status === 'processing' ? 'bg-blue-500/15 text-blue-500' :
+                          order.status === 'processing' ? 'bg-blue-500/15 text-blue-505' :
                           order.status === 'pending' ? 'bg-amber-500/15 text-amber-500' :
                           'bg-red-500/15 text-red-500'
                         }`}>
@@ -250,6 +249,28 @@ export default function AdminDashboardOverview() {
                   ))}
                 </tbody>
               </table>
+            </div>
+
+            <div className="block md:hidden space-y-3.5">
+              {recentOrders.map(order => (
+                <div key={order.id} className="flex justify-between items-center py-2.5 border-b border-neutral-50 dark:border-neutral-850/60 last:border-0 text-xs">
+                  <div className="space-y-0.5">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-neutral-900 dark:text-white">{order.id}</span>
+                      <span className={`inline-block px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider ${
+                        order.status === 'delivered' ? 'bg-success/15 text-success' :
+                        order.status === 'processing' ? 'bg-blue-500/15 text-blue-505' :
+                        order.status === 'pending' ? 'bg-amber-500/15 text-amber-500' :
+                        'bg-red-500/15 text-red-500'
+                      }`}>
+                        {order.status}
+                      </span>
+                    </div>
+                    <p className="text-[10px] text-neutral-500 font-semibold">{order.customer} • {order.date}</p>
+                  </div>
+                  <span className="font-extrabold text-neutral-900 dark:text-white text-sm">₹{order.amount}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

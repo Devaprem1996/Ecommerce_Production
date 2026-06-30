@@ -100,13 +100,13 @@ export default function ReportsPage() {
         </div>
 
         {/* Date Selector and Download Button */}
-        <div className="flex flex-wrap gap-2.5 w-full sm:w-auto">
-          <div className="relative flex-1 sm:flex-initial">
-            <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
+        <div className="flex flex-col sm:flex-row gap-2.5 w-full sm:w-auto">
+          <div className="relative w-full sm:w-44">
+            <CalendarIcon className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
             <select
               value={dateRange}
               onChange={(e) => setDateRange(e.target.value)}
-              className="w-full sm:w-44 text-xs font-bold pl-9 pr-3 py-2 bg-white dark:bg-neutral-900 border rounded-card text-neutral-805 dark:text-white focus:outline-none cursor-pointer"
+              className="w-full text-base md:text-xs font-bold pl-10 pr-8 py-2.5 md:py-2 bg-white dark:bg-neutral-900 border rounded-card text-neutral-805 dark:text-white focus:outline-none cursor-pointer"
             >
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
@@ -118,7 +118,7 @@ export default function ReportsPage() {
             variant="ghost"
             size="sm"
             onClick={handleExportCSV}
-            className="text-xs font-bold flex-1 sm:flex-initial border border-neutral-250 dark:border-neutral-750"
+            className="text-xs font-bold w-full sm:w-auto py-2.5 md:py-2 justify-center border border-neutral-250 dark:border-neutral-750"
             leftIcon={<Download className="w-4 h-4" />}
           >
             Export CSV

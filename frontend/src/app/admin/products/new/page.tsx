@@ -165,7 +165,7 @@ export default function NewProductPage() {
               <input
                 type="text"
                 {...register('name')}
-                className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
                 placeholder="Organic Red Tomatoes"
               />
               {errors.name && (
@@ -183,7 +183,7 @@ export default function NewProductPage() {
               <input
                 type="text"
                 {...register('nameTamil')}
-                className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
                 placeholder="இயற்கை தக்காளி"
               />
             </div>
@@ -274,9 +274,9 @@ export default function NewProductPage() {
                 value={newImageUrl}
                 onChange={(e) => setNewImageUrl(e.target.value)}
                 placeholder="https://unsplash.com/photo-..."
-                className="flex-1 text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                className="flex-1 text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
-              <Button type="button" variant="ghost" size="sm" onClick={handleAddImage} className="text-xs font-bold border border-neutral-250 dark:border-neutral-750">
+              <Button type="button" variant="ghost" size="sm" onClick={handleAddImage} className="text-xs font-bold border border-neutral-250 dark:border-neutral-750 py-2.5 md:py-2 px-4">
                 Add URL
               </Button>
             </div>
@@ -298,7 +298,7 @@ export default function NewProductPage() {
               </label>
               <select
                 {...register('category')}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
               >
                 <option value="Fruits & Vegetables">Fruits & Vegetables</option>
                 <option value="Dairy & Eggs">Dairy & Eggs</option>
@@ -316,7 +316,7 @@ export default function NewProductPage() {
               <input
                 type="number"
                 {...register('price', { valueAsNumber: true })}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
               {errors.price && (
                 <span className="text-[9px] font-bold text-red-500 mt-1 block">{errors.price.message}</span>
@@ -331,7 +331,7 @@ export default function NewProductPage() {
               <input
                 type="number"
                 {...register('originalPrice', { valueAsNumber: true })}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
             </div>
 
@@ -343,7 +343,7 @@ export default function NewProductPage() {
               <input
                 type="text"
                 {...register('unit')}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
                 placeholder="500g or 1L"
               />
               {errors.unit && (
@@ -359,7 +359,7 @@ export default function NewProductPage() {
               <input
                 type="number"
                 {...register('stock', { valueAsNumber: true })}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
               {errors.stock && (
                 <span className="text-[9px] font-bold text-red-500 mt-1 block">{errors.stock.message}</span>
@@ -373,7 +373,7 @@ export default function NewProductPage() {
               </label>
               <select
                 {...register('status')}
-                className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none cursor-pointer"
               >
                 <option value="active">Active</option>
                 <option value="inactive">Inactive</option>
@@ -395,19 +395,19 @@ export default function NewProductPage() {
                 value={newVarWeight}
                 onChange={(e) => setNewVarWeight(e.target.value)}
                 placeholder="1kg"
-                className="w-20 text-xs font-semibold px-2 py-1.5 border rounded-card bg-transparent focus:outline-none"
+                className="w-20 text-base md:text-xs font-semibold px-2 py-2.5 md:py-1.5 border rounded-card bg-transparent focus:outline-none"
               />
               <input
                 type="number"
                 value={newVarPrice}
                 onChange={(e) => setNewVarPrice(parseFloat(e.target.value) || 0)}
                 placeholder="Price"
-                className="flex-1 text-xs font-semibold px-2 py-1.5 border rounded-card bg-transparent focus:outline-none"
+                className="flex-1 text-base md:text-xs font-semibold px-2 py-2.5 md:py-1.5 border rounded-card bg-transparent focus:outline-none"
               />
               <button 
                 type="button"
                 onClick={handleAddVariant}
-                className="p-2 rounded bg-primary-500 text-white hover:bg-primary-600 transition-colors cursor-pointer"
+                className="p-2.5 md:p-2 rounded bg-primary-500 text-white hover:bg-primary-600 transition-colors cursor-pointer flex items-center justify-center min-w-[40px] md:min-w-0"
               >
                 <Plus className="w-4 h-4" />
               </button>
