@@ -1,0 +1,828 @@
+"use client";
+
+import React, { useState, useEffect, useMemo, Suspense } from 'react';
+import Link from 'next/link';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
+import { motion, AnimatePresence } from 'framer-motion';
+import { 
+  Filter, 
+  Grid2X2, 
+  Grid3X3, 
+  List, 
+  ChevronRight, 
+  X, 
+  Star, 
+  RotateCcw, 
+  ShoppingBag, 
+  SlidersHorizontal,
+  ChevronDown,
+  Loader2,
+  Check
+} from 'lucide-react';
+import { mockProducts, mockCategories } from '@/constants/mockData';
+import { ProductCard } from '@/components/ui/ProductCard';
+import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
+import { Button } from '@/components/ui/Button';
+import { useCart } from '@/hooks/useCart';
+import { useWishlist } from '@/hooks/useWishlist';
+import { toast } from '@/components/ui/Toast';
+import { ProductType } from '@/types';
+import { slugify } from '@/utils/slugify';
+
+const categorySlugMap: Record<string, string> = {
+  'fruits-vegetables': 'Fruits & Vegetables',
+  'dairy-eggs': 'Dairy & Eggs',
+  'honey-spices': 'Honey & Spices',
+  'grains-flours': 'Grains & Flours',
+  'beverages': 'Beverages'
+};
+
+function ShopContent() {
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Stores
+  const { addItem } = useCart();
+  const { toggleItem, hasItem } = useWishlist();
+
+  // URL State initialization
+  const initialCategoryQuery = searchParams.get('category');
+  
+  // Filtering & Sorting States
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [minPrice, setMinPrice] = useState<number>(0);
+  const [maxPrice, setMaxPrice] = useState<number>(500);
+  const [selectedRating, setSelectedRating] = useState<number | null>(null);
+  const [inStockOnly, setInStockOnly] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<string>('featured');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [gridCols, setGridCols] = useState<2 | 3 | 4>(4);
+
+  // Pagination & Loading
+  const [visibleCount, setVisibleCount] = useState<number>(8);
+  const [isPageLoading, setIsPageLoading] = useState<boolean>(true);
+  const [isFilterLoading, setIsFilterLoading] = useState<boolean>(false);
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
+
+  // Set initial category from query parameters if present
+  useEffect(() => {
+    if (initialCategoryQuery) {
+      const mappedCategory = categorySlugMap[initialCategoryQuery] || initialCategoryQuery;
+      setSelectedCategories([mappedCategory]);
+    }
+    
+    // Simulate loading on mount
+    const timer = setTimeout(() => {
+      setIsPageLoading(false);
+    }, 800);
+    return () => clearTimeout(timer);
+  }, [initialCategoryQuery]);
+
+  // Sync category state when URL changes
+  useEffect(() => {
+    const categoryParam = searchParams.get('category');
+    if (categoryParam) {
+      const mappedCategory = categorySlugMap[categoryParam] || categoryParam;
+      setSelectedCategories([mappedCategory]);
+    }
+  }, [searchParams]);
+
+  // Handle Add to Cart
+  const handleAddToCart = (product: ProductType) => {
+    addItem(product);
+    const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
+    toast.cart(displayName);
+  };
+
+  // Handle Wishlist Toggle
+  const handleWishlistToggle = (product: ProductType) => {
+    const wasWishlisted = hasItem(product.id);
+    toggleItem(product);
+    const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
+    if (!wasWishlisted) {
+      toast.success(
+        currentLang === 'ta' 
+          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!` 
+          : `${displayName} added to wishlist!`
+      );
+    } else {
+      toast.info(
+        currentLang === 'ta' 
+          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது` 
+          : `${displayName} removed from wishlist`
+      );
+    }
+  };
+
+  // Filter Categories Selection
+  const toggleCategory = (categoryName: string) => {
+    setSelectedCategories(prev => 
+      prev.includes(categoryName)
+        ? prev.filter(c => c !== categoryName)
+        : [...prev, categoryName]
+    );
+  };
+
+  // Clear all filters
+  const handleClearAll = () => {
+    setSelectedCategories([]);
+    setMinPrice(0);
+    setMaxPrice(500);
+    setSelectedRating(null);
+    setInStockOnly(false);
+    setSortBy('featured');
+    // Clear URL params
+    router.replace('/shop');
+  };
+
+  // Apply mobile filters
+  const applyMobileFilters = () => {
+    setIsMobileFiltersOpen(false);
+  };
+
+  // Processed Products
+  const filteredProducts = useMemo(() => {
+    let result = [...mockProducts];
+
+    // Category Filter
+    if (selectedCategories.length > 0) {
+      result = result.filter(product => selectedCategories.includes(product.category));
+    }
+
+    // Price Filter
+    result = result.filter(product => product.price >= minPrice && product.price <= maxPrice);
+
+    // Rating Filter
+    if (selectedRating !== null) {
+      result = result.filter(product => product.rating >= selectedRating);
+    }
+
+    // Availability Filter
+    if (inStockOnly) {
+      result = result.filter(product => product.stock > 0);
+    }
+
+    // Sort Logic
+    if (sortBy === 'price-low-high') {
+      result.sort((a, b) => a.price - b.price);
+    } else if (sortBy === 'price-high-low') {
+      result.sort((a, b) => b.price - a.price);
+    } else if (sortBy === 'rating') {
+      result.sort((a, b) => b.rating - a.rating);
+    } else if (sortBy === 'newest') {
+      // For mock, sort by id descending
+      result.sort((a, b) => b.id.localeCompare(a.id));
+    }
+
+    return result;
+  }, [selectedCategories, minPrice, maxPrice, selectedRating, inStockOnly, sortBy]);
+
+  // Paginated Products
+  const paginatedProducts = useMemo(() => {
+    return filteredProducts.slice(0, visibleCount);
+  }, [filteredProducts, visibleCount]);
+
+  // Load more action
+  const loadMoreProducts = () => {
+    setIsFilterLoading(true);
+    setTimeout(() => {
+      setVisibleCount(prev => prev + 4);
+      setIsFilterLoading(false);
+    }, 600);
+  };
+
+  // Count items for categories dynamically
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = {};
+    mockProducts.forEach(product => {
+      counts[product.category] = (counts[product.category] || 0) + 1;
+    });
+    return counts;
+  }, []);
+
+  return (
+    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-16 transition-colors duration-normal">
+      {/* Breadcrumb Header Section */}
+      <div className="w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider mb-2">
+            <Link href="/" className="hover:text-primary-500 transition-colors">
+              {t('shop.breadcrumb_home', 'Home')}
+            </Link>
+            <ChevronRight className="w-3.5 h-3.5" />
+            <span className="text-primary-500 select-none">
+              {t('shop.breadcrumb_shop', 'Shop')}
+            </span>
+          </nav>
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-3.5xl font-bold font-heading text-neutral-900 dark:text-white leading-tight">
+                {selectedCategories.length === 1 ? selectedCategories[0] : t('shop.title', 'Organic Shop')}
+              </h1>
+              <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mt-1">
+                {filteredProducts.length}{' '}
+                {filteredProducts.length === 1 
+                  ? t('shop.results_count', 'product') 
+                  : t('shop.results_count_plural', 'products')}{' '}
+                {t('products.in_stock', 'available')}
+              </p>
+            </div>
+
+            {/* Mobile Filter Toggle & Controls */}
+            <div className="flex items-center gap-2 sm:hidden w-full">
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsMobileFiltersOpen(true)}
+                leftIcon={<Filter className="w-4 h-4" />}
+                className="flex-1 text-xs py-2.5 h-10 border border-neutral-200 dark:border-neutral-800"
+              >
+                {t('shop.filter_title', 'Filters')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Main Body */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+          
+          {/* Desktop Filter Sidebar */}
+          <aside className="hidden lg:block lg:col-span-1 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sticky top-24 self-start max-h-[85vh] overflow-y-auto shadow-sm">
+            <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-6">
+              <h3 className="font-bold text-lg text-neutral-900 dark:text-white flex items-center gap-2">
+                <SlidersHorizontal className="w-5 h-5 text-primary-500" />
+                {t('shop.filter_title', 'Filters')}
+              </h3>
+              {(selectedCategories.length > 0 || minPrice > 0 || maxPrice < 500 || selectedRating !== null || inStockOnly) && (
+                <button
+                  onClick={handleClearAll}
+                  className="text-xs font-semibold text-red-500 hover:text-red-400 flex items-center gap-1.5 transition-colors cursor-pointer focus:outline-none"
+                >
+                  <RotateCcw className="w-3.5 h-3.5" />
+                  {t('shop.clear_all', 'Clear All')}
+                </button>
+              )}
+            </div>
+
+            {/* Categories */}
+            <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                {t('shop.category', 'Categories')}
+              </h4>
+              <div className="flex flex-col gap-2.5">
+                {mockCategories.map(cat => {
+                  const displayName = currentLang === 'ta' && cat.nameTamil ? cat.nameTamil : cat.name;
+                  const isChecked = selectedCategories.includes(cat.name);
+                  return (
+                    <label key={cat.id} className="flex items-center justify-between text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer group select-none">
+                      <div className="flex items-center gap-2.5">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleCategory(cat.name)}
+                          className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 text-primary-500 focus:ring-primary-500 accent-primary-500"
+                        />
+                        <span className="group-hover:text-primary-500 transition-colors font-medium">
+                          {displayName}
+                        </span>
+                      </div>
+                      <span className="text-xs text-neutral-600 dark:text-neutral-500 font-semibold bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
+                        {categoryCounts[cat.name] || 0}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Price Filter */}
+            <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                {t('shop.price_range', 'Price Range')}
+              </h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-white">
+                  <span>₹{minPrice}</span>
+                  <span>₹{maxPrice}</span>
+                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="500"
+                  step="10"
+                  value={maxPrice}
+                  onChange={(e) => setMaxPrice(Number(e.target.value))}
+                  className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block mb-1">
+                      Min
+                    </label>
+                    <input
+                      type="number"
+                      value={minPrice}
+                      onChange={(e) => setMinPrice(Math.max(0, Number(e.target.value)))}
+                      className="w-full text-xs font-semibold px-2.5 py-1.5 border border-neutral-200 dark:border-neutral-700 rounded bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:border-primary-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block mb-1">
+                      Max
+                    </label>
+                    <input
+                      type="number"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(Math.max(minPrice, Number(e.target.value)))}
+                      className="w-full text-xs font-semibold px-2.5 py-1.5 border border-neutral-200 dark:border-neutral-700 rounded bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:border-primary-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Ratings Filter */}
+            <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                {t('shop.rating', 'Customer Rating')}
+              </h4>
+              <div className="flex flex-col gap-2">
+                {[5, 4, 3, 2].map(stars => (
+                  <button
+                    key={stars}
+                    onClick={() => setSelectedRating(selectedRating === stars ? null : stars)}
+                    className={`flex items-center justify-between w-full px-3 py-1.5 rounded-card text-left transition-colors cursor-pointer text-sm font-medium ${
+                      selectedRating === stars
+                        ? 'bg-primary-500/10 text-primary-500 font-bold border border-primary-500/20'
+                        : 'text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 border border-transparent'
+                    }`}
+                  >
+                    <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-0.5 text-secondary-400">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${i < stars ? 'fill-current' : 'text-neutral-300 dark:text-neutral-700'}`}
+                          />
+                        ))}
+                      </div>
+                      <span className="text-xs ml-1 select-none">
+                        {stars === 5 ? 'Only' : '& Up'}
+                      </span>
+                    </div>
+                    {selectedRating === stars && <Check className="w-4 h-4 text-primary-500" />}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Availability */}
+            <div className="mb-2">
+              <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                {t('shop.availability', 'Availability')}
+              </h4>
+              <label className="flex items-center gap-2.5 text-sm text-neutral-700 dark:text-neutral-300 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={inStockOnly}
+                  onChange={() => setInStockOnly(!inStockOnly)}
+                  className="w-4 h-4 rounded border-neutral-300 dark:border-neutral-700 text-primary-500 focus:ring-primary-500 accent-primary-500"
+                />
+                <span className="font-medium">{t('shop.in_stock', 'Hide Out of Stock')}</span>
+              </label>
+            </div>
+          </aside>
+
+          {/* Product Listing Main Section */}
+          <main className="col-span-1 lg:col-span-3 flex flex-col">
+            
+            {/* Top Toolbar Controls */}
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature px-4 py-3 mb-6 shadow-sm">
+              {/* Sort By Dropdown */}
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider">
+                  {t('shop.sort_by', 'Sort By')}:
+                </span>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none text-sm font-semibold text-neutral-900 dark:text-white bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 pl-3 pr-8 py-1.5 rounded-card focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer transition-colors"
+                  >
+                    <option value="featured">{t('shop.sort_featured', 'Featured')}</option>
+                    <option value="price-low-high">{t('shop.sort_price_asc', 'Price: Low to High')}</option>
+                    <option value="price-high-low">{t('shop.sort_price_desc', 'Price: High to Low')}</option>
+                    <option value="rating">{t('shop.sort_rating', 'Top Rated')}</option>
+                    <option value="newest">{t('shop.sort_newest', 'Newest')}</option>
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-neutral-600 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* View Mode controls */}
+              <div className="flex items-center justify-between sm:justify-end gap-4">
+                <div className="flex items-center gap-1.5 border-r border-neutral-100 dark:border-neutral-800 pr-4">
+                  <button
+                    onClick={() => { setViewMode('grid'); setGridCols(4); }}
+                    className={`p-2 rounded-card transition-colors cursor-pointer ${
+                      viewMode === 'grid' && gridCols === 4
+                        ? 'bg-primary-500/10 text-primary-500'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    }`}
+                    title="Grid view (4 columns)"
+                    aria-label="Grid view (4 columns)"
+                  >
+                    <Grid3X3 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => { setViewMode('grid'); setGridCols(2); }}
+                    className={`p-2 rounded-card transition-colors cursor-pointer ${
+                      viewMode === 'grid' && gridCols === 2
+                        ? 'bg-primary-500/10 text-primary-500'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    }`}
+                    title="Grid view (2 columns)"
+                    aria-label="Grid view (2 columns)"
+                  >
+                    <Grid2X2 className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 rounded-card transition-colors cursor-pointer ${
+                      viewMode === 'list'
+                        ? 'bg-primary-500/10 text-primary-500'
+                        : 'text-neutral-600 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-800'
+                    }`}
+                    title="List view"
+                    aria-label="List view"
+                  >
+                    <List className="w-5 h-5" />
+                  </button>
+                </div>
+
+                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold select-none">
+                  {filteredProducts.length} {t('category.items', 'items')}
+                </span>
+              </div>
+            </div>
+
+            {/* Products Area */}
+            {isPageLoading ? (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+                {Array.from({ length: 8 }).map((_, idx) => (
+                  <SkeletonLoader key={idx} variant="card" />
+                ))}
+              </div>
+            ) : filteredProducts.length === 0 ? (
+              /* Empty State */
+              <div className="flex flex-col items-center justify-center py-20 text-center bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-8 shadow-sm">
+                <div className="w-24 h-24 text-neutral-300 dark:text-neutral-700 mb-6">
+                  <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-full h-full">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                </div>
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
+                  {t('shop.no_results', 'No products found')}
+                </h3>
+                <p className="text-sm text-neutral-600 dark:text-neutral-400 max-w-sm mb-6">
+                  {t('shop.no_results_desc', 'Try adjusting your filters, modifying price ranges or categories to find what you need.')}
+                </p>
+                <Button
+                  variant="primary"
+                  onClick={handleClearAll}
+                  leftIcon={<RotateCcw className="w-4 h-4" />}
+                >
+                  {t('shop.clear_all', 'Reset Filters')}
+                </Button>
+              </div>
+            ) : (
+              /* Product Grid / List view with stagger animations */
+              <>
+                <motion.div
+                  layout
+                  className={
+                    viewMode === 'list'
+                      ? 'flex flex-col gap-4'
+                      : gridCols === 2
+                      ? 'grid grid-cols-2 gap-4 sm:gap-6'
+                      : 'grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'
+                  }
+                  initial="hidden"
+                  animate="visible"
+                  variants={{
+                    hidden: { opacity: 0 },
+                    visible: {
+                      opacity: 1,
+                      transition: { staggerChildren: 0.05 }
+                    }
+                  }}
+                >
+                  {paginatedProducts.map(product => (
+                    <motion.div
+                      layout
+                      key={product.id}
+                      variants={{
+                        hidden: { opacity: 0, y: 15 },
+                        visible: { opacity: 1, y: 0, transition: { type: 'spring', stiffness: 300, damping: 24 } }
+                      }}
+                      className="flex"
+                    >
+                      {viewMode === 'list' ? (
+                        /* Beautiful List View Card */
+                        <div
+                          onClick={() => router.push(`/shop/${slugify(product.name)}`)}
+                          className="flex flex-col sm:flex-row gap-6 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 p-4 rounded-feature w-full group cursor-pointer hover:shadow-card-hover transition-all duration-normal"
+                        >
+                          <div className="relative aspect-square w-full sm:w-48 bg-neutral-50 dark:bg-neutral-800 rounded-card overflow-hidden flex-shrink-0 flex items-center justify-center">
+                            <img
+                              src={product.images[0]}
+                              alt={currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name}
+                              className="object-cover w-full h-full transition-transform duration-slow group-hover:scale-105"
+                            />
+                            {product.stock === 0 && (
+                              <div className="absolute inset-0 bg-black/45 backdrop-blur-[1px] flex items-center justify-center">
+                                <span className="text-[10px] font-bold text-white uppercase tracking-widest bg-error px-2.5 py-1 rounded-badge">
+                                  {t('badge.sold-out', 'Sold Out')}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex flex-col justify-between flex-1 py-1">
+                            <div>
+                              <span className="text-[10px] font-bold text-primary-500 uppercase tracking-widest">
+                                {product.category}
+                              </span>
+                              <h3 className="text-lg font-bold font-heading text-neutral-900 dark:text-white mt-1 group-hover:text-primary-500 transition-colors">
+                                {currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name}
+                              </h3>
+                              <div className="flex items-center gap-2 mt-2">
+                                <div className="flex items-center text-secondary-400">
+                                  {Array.from({ length: 5 }).map((_, i) => (
+                                    <Star
+                                      key={i}
+                                      className={`w-3.5 h-3.5 ${i < Math.floor(product.rating) ? 'fill-current' : 'text-neutral-200 dark:text-neutral-800'}`}
+                                    />
+                                  ))}
+                                </div>
+                                <span className="text-xs text-neutral-600 dark:text-neutral-400 font-semibold">
+                                  ({product.reviewsCount} {t('product.reviews', 'reviews')})
+                                </span>
+                              </div>
+                              <p className="text-xs sm:text-sm text-neutral-650 dark:text-neutral-400 mt-3 line-clamp-2 leading-relaxed">
+                                {currentLang === 'ta' && product.descriptionTamil ? product.descriptionTamil : product.description}
+                              </p>
+                            </div>
+                            <div className="flex flex-wrap items-end justify-between gap-4 mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800/60">
+                              <div>
+                                <span className="text-xs text-neutral-650 line-through">
+                                  ₹{Math.round(product.price * 1.25)}
+                                </span>
+                                <div className="text-xl font-black text-primary-700 dark:text-primary-400 leading-tight">
+                                  ₹{product.price}
+                                  <span className="text-xs text-neutral-600 font-normal ml-1">/ {product.unit}</span>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  variant="secondary"
+                                  size="sm"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleWishlistToggle(product);
+                                  }}
+                                  className={`p-2 rounded-card border border-neutral-200 dark:border-neutral-800 ${
+                                    hasItem(product.id) ? 'text-red-500' : 'text-neutral-600 hover:text-red-500'
+                                  }`}
+                                  aria-label="Wishlist"
+                                >
+                                  <svg className="w-5 h-5 fill-current" viewBox="0 0 24 24">
+                                    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                                  </svg>
+                                </Button>
+                                <Button
+                                  variant={product.stock === 0 ? 'secondary' : 'primary'}
+                                  size="sm"
+                                  disabled={product.stock === 0}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleAddToCart(product);
+                                  }}
+                                  leftIcon={<ShoppingBag className="w-4 h-4" />}
+                                  className="font-bold text-xs"
+                                >
+                                  {product.stock === 0 ? t('products.out_of_stock', 'Sold Out') : t('products.add_to_cart', 'Add to Cart')}
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        /* Grid View Card */
+                        <ProductCard
+                          product={product}
+                          onAddToCart={handleAddToCart}
+                          onWishlistToggle={handleWishlistToggle}
+                          isWishlisted={hasItem(product.id)}
+                          onClick={() => router.push(`/shop/${slugify(product.name)}`)}
+                        />
+                      )}
+                    </motion.div>
+                  ))}
+                </motion.div>
+
+                {/* Load More Button */}
+                {filteredProducts.length > visibleCount && (
+                  <div className="flex items-center justify-center mt-12">
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      onClick={loadMoreProducts}
+                      disabled={isFilterLoading}
+                      className="min-w-[160px] border border-neutral-200 dark:border-neutral-800 shadow-sm"
+                      leftIcon={isFilterLoading ? <Loader2 className="w-4 h-4 animate-spin text-primary-500" /> : undefined}
+                    >
+                      {isFilterLoading ? t('shop.checking', 'Loading...') : t('shop.load_more', 'Load More')}
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+          </main>
+
+        </div>
+      </div>
+
+      {/* Mobile Drawer Slide-up Panel for Filters */}
+      <AnimatePresence>
+        {isMobileFiltersOpen && (
+          <>
+            {/* Backdrop */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.5 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsMobileFiltersOpen(false)}
+              className="fixed inset-0 bg-black z-40"
+            />
+            {/* Drawer */}
+            <motion.div
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', damping: 25, stiffness: 220 }}
+              className="fixed bottom-0 left-0 right-0 max-h-[85vh] bg-white dark:bg-neutral-900 z-50 rounded-t-feature shadow-2xl flex flex-col font-sans"
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between p-4 border-b border-neutral-100 dark:border-neutral-800">
+                <h3 className="font-bold text-lg text-neutral-900 dark:text-white flex items-center gap-2">
+                  <Filter className="w-5 h-5 text-primary-500" />
+                  {t('shop.filter_title', 'Filters')}
+                </h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={handleClearAll}
+                    className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 py-1"
+                  >
+                    {t('shop.clear_all', 'Reset')}
+                  </button>
+                  <button
+                    onClick={() => setIsMobileFiltersOpen(false)}
+                    className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-850 text-neutral-650"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Scrollable Filters Body */}
+              <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                {/* Categories */}
+                <div className="pb-6 border-b border-neutral-100 dark:border-neutral-800">
+                  <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                    {t('shop.category', 'Categories')}
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {mockCategories.map(cat => {
+                      const displayName = currentLang === 'ta' && cat.nameTamil ? cat.nameTamil : cat.name;
+                      const isChecked = selectedCategories.includes(cat.name);
+                      return (
+                        <button
+                          key={cat.id}
+                          onClick={() => toggleCategory(cat.name)}
+                          className={`text-xs font-semibold px-3 py-2 rounded-badge transition-colors border ${
+                            isChecked
+                              ? 'bg-primary-500/10 text-primary-500 border-primary-500'
+                              : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-750 text-neutral-700 dark:text-neutral-300'
+                          }`}
+                        >
+                          {displayName} ({categoryCounts[cat.name] || 0})
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Price */}
+                <div className="pb-6 border-b border-neutral-100 dark:border-neutral-800">
+                  <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                    {t('shop.price_range', 'Price Range')}
+                  </h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between text-sm font-semibold text-neutral-900 dark:text-white">
+                      <span>₹{minPrice}</span>
+                      <span>₹{maxPrice}</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="500"
+                      step="10"
+                      value={maxPrice}
+                      onChange={(e) => setMaxPrice(Number(e.target.value))}
+                      className="w-full h-1.5 bg-neutral-200 dark:bg-neutral-700 rounded-lg appearance-none cursor-pointer accent-primary-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Rating */}
+                <div className="pb-6 border-b border-neutral-100 dark:border-neutral-800">
+                  <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                    {t('shop.rating', 'Customer Rating')}
+                  </h4>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[5, 4, 3, 2].map(stars => (
+                      <button
+                        key={stars}
+                        onClick={() => setSelectedRating(selectedRating === stars ? null : stars)}
+                        className={`flex items-center justify-between px-3 py-2 rounded-card text-left transition-colors border ${
+                          selectedRating === stars
+                            ? 'bg-primary-500/10 text-primary-500 border-primary-500 font-bold'
+                            : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-750 text-neutral-700 dark:text-neutral-300'
+                        }`}
+                      >
+                        <div className="flex items-center gap-1">
+                          <span className="text-sm font-bold text-secondary-400">{stars}★</span>
+                          <span className="text-[10px] text-neutral-600 dark:text-neutral-500 select-none">
+                            {stars === 5 ? 'Only' : '& Up'}
+                          </span>
+                        </div>
+                        {selectedRating === stars && <Check className="w-3.5 h-3.5 text-primary-500" />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Stock availability */}
+                <div>
+                  <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
+                    {t('shop.availability', 'Availability')}
+                  </h4>
+                  <button
+                    onClick={() => setInStockOnly(!inStockOnly)}
+                    className={`flex items-center justify-between w-full px-4 py-3 rounded-card transition-colors border ${
+                      inStockOnly
+                        ? 'bg-primary-500/10 text-primary-500 border-primary-500 font-bold'
+                        : 'bg-neutral-50 dark:bg-neutral-800 border-neutral-200 dark:border-neutral-750 text-neutral-700 dark:text-neutral-300'
+                    }`}
+                  >
+                    <span className="text-sm">{t('shop.in_stock', 'Hide Out of Stock')}</span>
+                    {inStockOnly && <Check className="w-4 h-4 text-primary-500" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Apply Filters Footer */}
+              <div className="p-4 border-t border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 flex gap-4">
+                <Button
+                  variant="primary"
+                  size="lg"
+                  onClick={applyMobileFilters}
+                  className="w-full font-bold text-sm"
+                >
+                  {t('shop.apply_filters', 'Apply Filters')}
+                </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
+export default function Shop() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
+        <Loader2 className="w-10 h-10 animate-spin text-primary-500" />
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
+  );
+}
