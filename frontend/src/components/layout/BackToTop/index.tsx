@@ -5,12 +5,18 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { BackToTopProps } from './BackToTop.types';
 import { ChevronUp } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 export const BackToTop: React.FC<BackToTopProps> = ({ threshold = 300, className }) => {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   useEffect(() => {
     const handleScroll = () => {

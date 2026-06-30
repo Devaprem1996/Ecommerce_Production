@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WhatsAppFloatProps } from './WhatsAppFloat.types';
 import { MessageSquare } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -14,7 +15,12 @@ export const WhatsAppFloat: React.FC<WhatsAppFloatProps> = ({
   className,
 }) => {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [showTooltip, setShowTooltip] = useState(false);
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   const encodedMsg = encodeURIComponent(message);
   const waUrl = `https://wa.me/${phoneNumber}?text=${encodedMsg}`;

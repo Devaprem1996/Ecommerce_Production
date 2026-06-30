@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FooterProps } from './Footer.types';
 import { ChevronDown, CreditCard, ShieldCheck } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -31,6 +32,7 @@ const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
 
 export const Footer: React.FC<FooterProps> = ({ className }) => {
   const { t } = useTranslation();
+  const pathname = usePathname();
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -62,6 +64,10 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
       { label: t('footer.privacy', 'Privacy Policy'), path: '/privacy' },
     ],
   };
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <footer

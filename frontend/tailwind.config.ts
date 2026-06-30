@@ -17,9 +17,17 @@ const config: Config = {
     extend: {
       colors: {
         primary: {
-          500: '#2D6A4F', // Main brand color, CTAs
-          700: '#1B4332', // Headers, dark sections
-          400: '#52B788', // Hover states, accents
+          100: '#D8F3DC',
+          200: '#B7E4C7',
+          250: '#95D5B2',
+          300: '#74C69D',
+          400: '#52B788',
+          500: '#2D6A4F',
+          600: '#204E37',
+          700: '#1B4332',
+          750: '#143527',
+          800: '#081C15',
+          900: '#0B251A',
           DEFAULT: '#2D6A4F',
           dark: '#1B4332',
           light: '#52B788',
@@ -31,9 +39,24 @@ const config: Config = {
           orange: '#F77F00',
         },
         neutral: {
-          900: '#212529', // Body text
-          600: '#6C757D', // Secondary text
-          100: '#F1F3F5', // Backgrounds
+          50: '#F8F9FA',
+          100: '#F1F3F5',
+          150: '#E9ECEF',
+          200: '#E2E8F0',
+          250: '#DEE2E6',
+          300: '#CBD5E1',
+          400: '#CED4DA',
+          450: '#ADB5BD',
+          500: '#6C757D',
+          600: '#6C757D',
+          650: '#495057',
+          700: '#343A40',
+          750: '#2C302E',
+          800: '#212529',
+          850: '#1A1D20',
+          900: '#212529',
+          905: '#0F111A',
+          950: '#08090C',
         },
         success: '#28A745', // In stock, order confirmed
         warning: '#FFC107', // Low stock, alerts

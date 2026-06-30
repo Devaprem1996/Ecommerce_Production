@@ -65,13 +65,19 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
     open: { rotate: -45, y: -6 },
   };
 
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
+
+  const shouldRenderTransparent = pathname === '/' && !isScrolled;
+
   return (
     <>
       <header
         className={twMerge(
           clsx(
             'sticky top-0 w-full transition-all duration-normal z-[1020]',
-            isScrolled
+            !shouldRenderTransparent
               ? 'bg-white dark:bg-neutral-900 shadow-md py-3 text-neutral-900 dark:text-white border-b border-neutral-100 dark:border-neutral-800/10'
               : 'bg-transparent py-5 text-white'
           ),
@@ -85,24 +91,24 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className={clsx(
                 'flex flex-col items-center justify-center w-9 h-9 gap-1 rounded-full cursor-pointer focus:outline-none focus:ring-1 focus:ring-primary-500',
-                isScrolled ? 'text-neutral-950 dark:text-white' : 'text-white'
+                !shouldRenderTransparent ? 'text-neutral-950 dark:text-white' : 'text-white'
               )}
               aria-label="Toggle main menu"
             >
               <motion.span
                 animate={isMobileMenuOpen ? 'open' : 'closed'}
                 variants={line1Variants}
-                className={clsx('w-5 h-0.5 rounded-full block transition-transform', isScrolled ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
+                className={clsx('w-5 h-0.5 rounded-full block transition-transform', !shouldRenderTransparent ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
               />
               <motion.span
                 animate={isMobileMenuOpen ? 'open' : 'closed'}
                 variants={line2Variants}
-                className={clsx('w-5 h-0.5 rounded-full block', isScrolled ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
+                className={clsx('w-5 h-0.5 rounded-full block', !shouldRenderTransparent ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
               />
               <motion.span
                 animate={isMobileMenuOpen ? 'open' : 'closed'}
                 variants={line3Variants}
-                className={clsx('w-5 h-0.5 rounded-full block transition-transform', isScrolled ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
+                className={clsx('w-5 h-0.5 rounded-full block transition-transform', !shouldRenderTransparent ? 'bg-neutral-950 dark:bg-white' : 'bg-white')}
               />
             </button>
           </div>
@@ -112,7 +118,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
             <span
               className={clsx(
                 'text-2xl font-bold font-heading tracking-wide transition-colors',
-                isScrolled ? 'text-primary-700 dark:text-primary-400' : 'text-white'
+                !shouldRenderTransparent ? 'text-primary-700 dark:text-primary-400' : 'text-white'
               )}
             >
               Aether
@@ -132,10 +138,10 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                     clsx(
                       'relative py-1 text-sm font-semibold tracking-wide hover:text-secondary-400 transition-colors focus:outline-none',
                       isActive
-                        ? isScrolled
+                        ? !shouldRenderTransparent
                           ? 'text-primary-700 dark:text-primary-400'
                           : 'text-secondary-400'
-                        : isScrolled
+                        : !shouldRenderTransparent
                         ? 'text-neutral-700 dark:text-neutral-300'
                         : 'text-white/90'
                     )
@@ -173,7 +179,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className={clsx(
                         'w-full h-8 text-xs px-3 rounded-full border bg-white dark:bg-neutral-800 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-neutral-900 dark:text-white',
-                        isScrolled ? 'border-neutral-300' : 'border-white/20'
+                        !shouldRenderTransparent ? 'border-neutral-300' : 'border-white/20'
                       )}
                       autoFocus
                     />
