@@ -1,0 +1,116 @@
+{
+  "announcement": {
+    "text": "Free Delivery on ₹499+",
+    "phone": "📞 +91-XXX"
+  },
+  "nav": {
+    "home": "Home",
+    "shop": "Shop",
+    "search": "Search Products...",
+    "wishlist": "Wishlist",
+    "account": "Account",
+    "cart": "Cart"
+  },
+  "hero": {
+    "slide1": {
+      "title": "Fresh & Organic Produce",
+      "subtitle": "Directly from local farms to your kitchen counter."
+    },
+    "slide2": {
+      "title": "100% Pure Lab Tested",
+      "subtitle": "Certified quality checks on every product we offer."
+    },
+    "slide3": {
+      "title": "Fast & Secure Delivery",
+      "subtitle": "Deliveries at your convenience, safely processed."
+    },
+    "cta": {
+      "shop": "Shop Now",
+      "explore": "Explore"
+    }
+  },
+  "trust": {
+    "free_delivery": "Free Delivery",
+    "organic": "100% Organic",
+    "lab_tested": "Lab Tested",
+    "secure_pay": "Secure Pay"
+  },
+  "category": {
+    "title": "Shop by Category",
+    "items": "items"
+  },
+  "products": {
+    "best_sellers": "Best Sellers",
+    "new_arrivals": "New Arrivals",
+    "view_all": "View All →",
+    "add_to_cart": "Add to Cart",
+    "in_stock": "In Stock",
+    "out_of_stock": "Out of Stock",
+    "low_stock": "Low Stock"
+  },
+  "promo": {
+    "offer": "Get 20% Off Your First Purchase",
+    "code": "Use Code: FIRST20",
+    "cta": "Claim Offer"
+  },
+  "why_choose_us": {
+    "title": "Why Choose Us",
+    "organic_desc": "Certified organic and natural farming methods.",
+    "direct_farm": "Direct Farm Sourcing",
+    "eco_friendly": "Eco-Friendly Packing",
+    "certified": "Quality Certified"
+  },
+  "testimonials": {
+    "title": "What Our Customers Say",
+    "verified": "Verified Buyer"
+  },
+  "newsletter": {
+    "title": "Subscribe to Our Newsletter",
+    "placeholder": "Enter your email",
+    "subscribe": "Subscribe",
+    "privacy": "We care about your privacy. Unsubscribe anytime."
+  },
+  "footer": {
+    "about": "About",
+    "quick_links": "Quick Links",
+    "customer": "Customer Service",
+    "social": "Social Media"
+  },
+  "pincode": {
+    "title": "Check Delivery Availability",
+    "placeholder": "Enter 6-digit Pincode",
+    "check": "Check",
+    "checking": "Checking...",
+    "available": "Delivery available to {{pincode}}!",
+    "expected": "Expected: {{days}} business days",
+    "free_info": "Free Delivery (order ₹499+)",
+    "failed": "Sorry, we don't deliver to this area yet",
+    "error": "Something went wrong, please try again"
+  },
+  "otp": {
+    "title": "Quick Checkout",
+    "subtitle": "No password needed!",
+    "mobile_label": "Your Mobile Number:",
+    "mobile_placeholder": "Enter mobile number",
+    "send_otp": "Send OTP →",
+    "already_have_account": "Already have account?",
+    "login": "Login",
+    "otp_sent": "OTP Sent to +91-{{mobile}}",
+    "check_sms": "Check your SMS",
+    "resend_timer": "Resend OTP in {{seconds}}s",
+    "resend_now": "Resend OTP",
+    "verify": "Verify & Continue →",
+    "change_number": "← Change Number",
+    "invalid_otp": "Wrong OTP. {{attempts}} attempts remaining",
+    "expired_otp": "OTP expired. Please resend",
+    "max_attempts": "Too many attempts. Try after 10 minutes",
+    "network_error": "Something went wrong. Please try again"
+  },
+  "badge": {
+    "hot": "Hot",
+    "new": "New",
+    "discount": "Discount",
+    "sold-out": "Sold Out",
+    "organic": "100% Organic"
+  }
+}

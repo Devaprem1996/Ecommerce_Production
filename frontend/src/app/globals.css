@@ -1,26 +1,52 @@
 @import "tailwindcss";
+@config "../../tailwind.config.ts";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+  --background: #FFFFFF;
+  --foreground: #212529;
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --primary-500: #2D6A4F;
+  --primary-700: #1B4332;
+  --primary-400: #52B788;
+
+  --secondary-400: #E09F3E;
+  --secondary-600: #F77F00;
+
+  --neutral-900: #212529;
+  --neutral-600: #6C757D;
+  --neutral-100: #F1F3F5;
+  --white: #FFFFFF;
+
+  --success: #28A745;
+  --warning: #FFC107;
+  --error: #DC3545;
+  --info: #17A2B8;
+
+  --font-inter: 'Inter', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+  --font-tamil: 'Noto Sans Tamil', sans-serif;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: #212529;
+    --foreground: #F1F3F5;
   }
 }
 
 body {
-  background: var(--background);
+  background-color: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-inter);
+}
+
+/* Accessibility: prefers-reduced-motion rules as per agent rules */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: 0s !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
