@@ -10,6 +10,8 @@ import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { BackToTop } from "@/components/layout/BackToTop";
 import { I18nProvider } from "@/components/layout/I18nProvider";
+import { MiniCart } from "@/components/layout/MiniCart";
+
 
 const inter = Inter({
   subsets: ["latin"],
@@ -51,7 +53,9 @@ export default function RootLayout({
           <MobileBottomNav />
           <WhatsAppFloat />
           <BackToTop />
+          <MiniCart />
         </I18nProvider>
+
         <Toaster />
       </body>
     </html>

@@ -9,6 +9,7 @@ import { NavbarProps } from './Navbar.types';
 import { MobileMenu } from '../MobileMenu';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
+import { useCartStore } from '@/store/cartStore';
 import { Search, Heart, ShoppingBag, X } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -21,8 +22,10 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
-  const cartCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
+  const cartCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
+  const openMiniCart = useCartStore((state) => state.openMiniCart);
   const wishlistCount = useWishlist((state) => state.items.length);
+
 
   // Monitor scroll height
   useEffect(() => {
@@ -207,9 +210,9 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
             </Link>
 
             {/* Cart Icon */}
-            <Link
-              href="/cart"
-              className="p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] flex items-center justify-center"
+            <button
+              onClick={(e) => { e.preventDefault(); openMiniCart(); }}
+              className="p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer"
               aria-label={`View Cart (${cartCount} items)`}
             >
               <ShoppingBag className="w-5 h-5" />
@@ -223,7 +226,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                   {cartCount}
                 </motion.span>
               )}
-            </Link>
+            </button>
           </div>
         </div>
       </header>
