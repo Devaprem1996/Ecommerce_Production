@@ -53,6 +53,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
       { label: t('nav.shop', 'Shop'), path: '/shop' },
       { label: t('nav.blog', 'Blog'), path: '/blog' },
       { label: t('nav.faq', 'FAQs'), path: '/faq' },
+      { label: t('nav.reviews', 'Reviews'), path: '/reviews' },
     ],
     customer: [
       { label: t('footer.track_order', 'Track Order'), path: '/track-order' },
