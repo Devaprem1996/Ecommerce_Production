@@ -14,10 +14,6 @@ export const BackToTop: React.FC<BackToTopProps> = ({ threshold = 300, className
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(false);
 
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   useEffect(() => {
     const handleScroll = () => {
       if (window.scrollY > threshold) {
@@ -36,6 +32,10 @@ export const BackToTop: React.FC<BackToTopProps> = ({ threshold = 300, className
       behavior: 'smooth',
     });
   };
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <AnimatePresence>

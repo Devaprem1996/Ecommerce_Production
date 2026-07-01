@@ -14,11 +14,6 @@ export const MiniCart: React.FC = () => {
   const currentLang = i18n.language;
   const router = useRouter();
   const pathname = usePathname();
-
-  if (pathname?.startsWith('/admin')) {
-    return null;
-  }
-
   const {
     items,
     isMiniCartOpen,
@@ -52,6 +47,10 @@ export const MiniCart: React.FC = () => {
     closeMiniCart();
     router.push(path);
   };
+
+  if (pathname?.startsWith('/admin')) {
+    return null;
+  }
 
   return (
     <AnimatePresence>

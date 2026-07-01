@@ -25,6 +25,7 @@ import {
   Settings
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
+import { useAuthStore } from '@/store/auth-store';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -33,6 +34,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const logout = useAuthStore((state) => state.logout);
   
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -72,8 +74,14 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     setShowNotifications(false);
   }, [pathname]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/admin/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout API failed:', err);
+    }
     localStorage.removeItem('admin_logged_in');
+    logout();
     toast.success('Logged out successfully!');
     router.replace('/admin/login');
   };
