@@ -19,7 +19,10 @@ import {
   Bell, 
   User,
   ShieldAlert,
-  Loader2
+  Loader2,
+  Ticket,
+  MapPin,
+  Settings
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 
@@ -85,6 +88,10 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { label: 'Products', path: '/admin/products', icon: ShoppingBag },
     { label: 'Categories', path: '/admin/categories', icon: FolderTree },
     { label: 'Orders', path: '/admin/orders', icon: ClipboardList },
+    { label: 'Coupons', path: '/admin/coupons', icon: Ticket },
+    { label: 'Notifications', path: '/admin/notifications', icon: Bell },
+    { label: 'Pincodes', path: '/admin/settings/pincodes', icon: MapPin },
+    { label: 'Settings', path: '/admin/settings', icon: Settings },
     { label: 'Content', path: '/admin/content', icon: FileText },
     { label: 'Reports', path: '/admin/reports', icon: BarChart3 },
   ];
