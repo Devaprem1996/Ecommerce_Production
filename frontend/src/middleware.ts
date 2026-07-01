@@ -54,8 +54,13 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 2. Admin Protected Routes (/admin/* except /admin/login)
-  if (pathname.startsWith('/admin') && pathname !== '/admin/login') {
+  // 2. Admin Protected Routes (/admin/* except /admin/login, /admin/forgot-password, /admin/reset-password)
+  const isAdminGuestPath = 
+    pathname === '/admin/login' || 
+    pathname === '/admin/forgot-password' || 
+    pathname === '/admin/reset-password';
+
+  if (pathname.startsWith('/admin') && !isAdminGuestPath) {
     if (!isTokenValid || !user || user.role !== 'admin') {
       // If not logged in or role is not admin
       if (user && user.role === 'customer') {
@@ -75,8 +80,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 4. Admin Auth Page (/admin/login)
-  if (pathname === '/admin/login') {
+  // 4. Admin Auth Pages (/admin/login, /admin/forgot-password, /admin/reset-password)
+  if (isAdminGuestPath) {
     if (isTokenValid && user && user.role === 'admin') {
       return NextResponse.redirect(new URL('/admin/dashboard', request.url));
     }
