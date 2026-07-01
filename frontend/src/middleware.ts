@@ -22,6 +22,32 @@ function decodeJwt(token: string): any {
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Maintenance Mode Routing Checks
+  const isMaintenanceMode = 
+    process.env.MAINTENANCE_MODE === 'true' || 
+    process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
+
+  if (isMaintenanceMode) {
+    const isMaintenancePath = pathname === '/maintenance';
+    const isAdminPath = pathname.startsWith('/admin');
+    const isStaticAsset = 
+      pathname.startsWith('/_next') || 
+      pathname.startsWith('/assets') || 
+      pathname.startsWith('/images') || 
+      pathname === '/favicon.ico' || 
+      pathname === '/offline.html';
+    const isApiPath = pathname.startsWith('/api/');
+
+    if (!isMaintenancePath && !isAdminPath && !isStaticAsset && !isApiPath) {
+      return NextResponse.redirect(new URL('/maintenance', request.url));
+    }
+  } else {
+    // If not in maintenance mode, redirect /maintenance to home page
+    if (pathname === '/maintenance') {
+      return NextResponse.redirect(new URL('/', request.url));
+    }
+  }
   
   // Read access_token from cookies
   const accessTokenCookie = request.cookies.get('access_token');
