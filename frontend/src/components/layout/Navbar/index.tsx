@@ -10,9 +10,10 @@ import { MobileMenu } from '../MobileMenu';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartStore } from '@/store/cartStore';
-import { Search, Heart, ShoppingBag, X } from 'lucide-react';
+import { Search, Heart, ShoppingBag, X, User } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useAuthStore } from '@/store/auth-store';
 
 export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const { t } = useTranslation();
@@ -26,6 +27,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const cartCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const openMiniCart = useCartStore((state) => state.openMiniCart);
   const wishlistCount = useWishlist((state) => state.items.length);
+  const { isLoggedIn } = useAuthStore();
 
 
   // Monitor scroll height
@@ -240,6 +242,15 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 </motion.span>
               )}
             </button>
+
+            {/* Account Icon (Desktop) */}
+            <Link
+              href={isLoggedIn ? "/account" : "/login"}
+              className="hidden md:flex p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] items-center justify-center"
+              aria-label="View Account"
+            >
+              <User className={`w-5 h-5 ${isLoggedIn ? 'text-primary-500' : ''}`} />
+            </Link>
           </div>
         </div>
       </header>

@@ -10,6 +10,7 @@ import { useWishlist } from '@/hooks/useWishlist';
 import { X, ChevronDown, User, Heart, ShoppingBag, Truck, Globe } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { useAuthStore } from '@/store/auth-store';
 
 const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" {...props}>
@@ -34,6 +35,7 @@ const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
   const [shopExpanded, setShopExpanded] = useState(false);
+  const { user, isLoggedIn } = useAuthStore();
 
   const cartCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const wishlistCount = useWishlist((state) => state.items.length);
@@ -95,14 +97,25 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                 <div className="bg-white/10 p-2.5 rounded-full text-white">
                   <User className="w-6 h-6" />
                 </div>
-                <div className="flex flex-col">
-                  <span className="text-sm text-primary-200 leading-tight">
-                    {t('nav.welcome', 'Welcome Guest')}
-                  </span>
-                  <span className="text-base font-semibold leading-tight">
-                    {t('nav.login_signup', 'Login / Signup')}
-                  </span>
-                </div>
+                {isLoggedIn && user ? (
+                  <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none">
+                    <span className="text-sm text-primary-200 leading-tight font-medium">
+                      {t('nav.welcome', 'Welcome')},
+                    </span>
+                    <span className="text-base font-bold leading-tight hover:text-primary-205 transition-colors">
+                      {user.name}
+                    </span>
+                  </Link>
+                ) : (
+                  <Link href="/login" onClick={onClose} className="flex flex-col text-left focus:outline-none">
+                    <span className="text-sm text-primary-200 leading-tight font-medium">
+                      {t('nav.welcome_guest', 'Welcome Guest')}
+                    </span>
+                    <span className="text-base font-bold leading-tight hover:text-primary-205 transition-colors">
+                      {t('nav.login_signup', 'Login / Signup')}
+                    </span>
+                  </Link>
+                )}
               </div>
             </div>
 
