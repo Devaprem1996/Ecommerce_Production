@@ -1,0 +1,135 @@
+# Customer & Admin Flow Diagrams
+
+This document contains visual representations of the core workflows in the E-Commerce platform. These diagrams are designed using Mermaid.js flowcharts to map out key transition states, actors, integrations, and database interactions for your Project Manager.
+
+---
+
+## 1. Customer (User) Flow
+
+This diagram illustrates the lifecycle of a customer journey, from browsing the catalog, validating the delivery postcode, using fast OTP login, performing checkout, to order tracking and product reviewing.
+
+```mermaid
+flowchart TD
+    %% Define Nodes
+    Start([1. Guest Lands on Homepage]) --> Browse[Browse Categories & Best Sellers]
+    Browse --> Search[Search Products / Apply Filters]
+    Search --> SelectVariant[Select Product Variant & Weight]
+    
+    %% Pincode Verification Check
+    SelectVariant --> PincodeModal{Pincode Checked?}
+    PincodeModal -- No --> EnterPincode[Prompt Pincode Validator Modal]
+    EnterPincode --> PincodeCheck{Pincode Serviceable?}
+    PincodeCheck -- No --> OutOfZone[Show Out-of-Zone Warning] --> EnterPincode
+    PincodeCheck -- Yes --> SavePincode[Save to SessionStorage & Enable Add-to-Cart]
+    PincodeModal -- Yes --> AddToCart[Add Item to Cart Zustand Store]
+    SavePincode --> AddToCart
+
+    %% Cart to Checkout Transition
+    AddToCart --> ViewCart[View Cart Drawer / Cart Page]
+    ViewCart --> ProceedCheckout{Is User Logged In?}
+    
+    %% OTP Quick Authentication
+    ProceedCheckout -- No --> OTPLogin[Open OTP Quick-Checkout Modal]
+    OTPLogin --> InputMobile[Enter Mobile Number +91]
+    InputMobile --> SendSMS[Send 6-digit SMS OTP]
+    SendSMS --> InputOTP[Enter OTP in 6-digit autofocus boxes]
+    InputOTP --> VerifyOTP{OTP Valid?}
+    VerifyOTP -- No --> OTPError[Show Error & Shake Animation] --> InputOTP
+    VerifyOTP -- Yes --> UserSession[Authenticate User & Sync Profile]
+    UserSession --> AddressStep
+    
+    %% Checkout Details Step
+    ProceedCheckout -- Yes --> AddressStep[Select / Add Shipping Address]
+    AddressStep --> AutoFillCityState[Autofill City/State based on Pincode]
+    AutoFillCityState --> ReviewOrder[Review Order Items, Charges & Apply Coupon]
+    ReviewOrder --> PlaceOrder[Place Order - Hold Inventory Stock for 15 mins]
+
+    %% Payment Integrations
+    PlaceOrder --> PaymentGateway[Initialize Razorpay Sandbox Modal]
+    PaymentGateway --> PaymentVerify{Payment Authorized?}
+    PaymentVerify -- No --> PaymentFail[Set Order to DRAFT/FAILED & Release Stock] --> ViewCart
+    PaymentVerify -- Yes --> RazorpaySuccess[Redirect to Thank You Page]
+    
+    %% Webhook Listener (Secure Backend)
+    PaymentGateway -.-> WebhookListen[POST /api/v1/payments/webhook]
+    WebhookListen --> VerifySignature{Verify Signature with Raw Request Buffer?}
+    VerifySignature -- Yes --> UpdateDBOrders[Update Order status to PAYMENT_VERIFIED & Deduct Stock]
+    VerifySignature -- No --> AuditLogFail[Log Failed Webhook Signature & Security Warning]
+
+    %% Fulfillment & After-sales
+    UpdateDBOrders --> ShippingShip[Shipment & Tracking Updates]
+    ShippingShip --> OrderDelivered[Mark Order as DELIVERED]
+    OrderDelivered --> ReviewCheck{Is Verified Purchaser?}
+    ReviewCheck -- Yes --> SubmitReview[Submit 1-5 Star Product Review] --> EndNode([Customer Journey Complete])
+    ReviewCheck -- No --> BlockReview[Disable Review Submission]
+    
+    %% Styling Classes
+    classDef guest fill:#e3f2fd,stroke:#1565c0,stroke-width:2px;
+    classDef check fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
+    classDef auth fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+    classDef payment fill:#fce4ec,stroke:#c2185b,stroke-width:2px;
+    
+    class Start,Browse,Search,SelectVariant guest;
+    class PincodeCheck,SavePincode,AddressStep,AutoFillCityState,UpdateDBOrders,OrderDelivered check;
+    class OTPLogin,InputMobile,SendSMS,InputOTP,VerifyOTP,UserSession auth;
+    class PaymentGateway,PaymentVerify,WebhookListen,VerifySignature payment;
+```
+
+---
+
+## 2. Administrator Flow
+
+This diagram illustrates the operations available to platform administrators, including analytics monitoring, Content Management (CRUD), category nesting, order dispatch updates, and security log audits.
+
+```mermaid
+flowchart TD
+    %% Define Nodes
+    AdminStart([Admin Enters /admin Route]) --> AdminAuthCheck{Authenticated & Role == ADMIN?}
+    
+    %% Authentication Layer
+    AdminAuthCheck -- No --> AdminLogin[Redirect to Admin Login Page]
+    AdminLogin --> EnterCredentials[Enter Admin Credentials]
+    EnterCredentials --> VerifyCredentials{Credentials Correct?}
+    VerifyCredentials -- No --> AdminLoginError[Show Invalid Login Attempt] --> AdminLogin
+    VerifyCredentials -- Yes --> CreateAdminSession[Establish Admin Session & Cookie] --> DashboardMain
+    
+    %% Admin Actions Menu
+    AdminAuthCheck -- Yes --> DashboardMain[Dashboard Main Overview]
+    DashboardMain --> ViewKPIs[Monitor Sales KPIs & Recharts Trends]
+    
+    %% Module Toggles
+    DashboardMain --> ActionSelect{Select Admin Tool}
+    
+    %% Product CMS (CRUD)
+    ActionSelect --> ProductCMS[Product Management Panel]
+    ProductCMS --> AddProduct[Add New Product Form]
+    AddProduct --> ValidateForm[Validate Fields via React Hook Form & Zod]
+    ValidateForm --> ImageCompress[Auto-compress Product Image via Sharp]
+    ImageCompress --> CloudinaryUpload[Upload WebP Asset to Cloudinary CDN]
+    CloudinaryUpload --> SaveProductDB[Insert Product, SKU & Initial Inventory in Database]
+    SaveProductDB --> RefreshProductsList[Refresh Products Catalog Table]
+    
+    %% Category Management
+    ActionSelect --> CategoryCMS[Category Configuration]
+    CategoryCMS --> CategoryNesting[Build Parent-Child Nested Associations]
+    CategoryCMS --> LinkProduct[Link Categories to Active Products]
+
+    %% Order Fulfillment Control
+    ActionSelect --> OrderFulfillment[Order Management Panel]
+    OrderFulfillment --> FilterOrders[Filter Orders by Status: Confirmed / Shipped / Out for Delivery]
+    FilterOrders --> UpdateStatus[Update Order Status & Send Notifications]
+    UpdateStatus --> UpdateInventoryStatus{Is Order Delivered?}
+    UpdateInventoryStatus -- Yes --> LockInvoice[Lock Order Item Prices & Generate Invoice]
+    
+    %% Security & Audit Tracking
+    ActionSelect --> AuditAuditing[Security Logs & Auditing]
+    AuditAuditing --> InspectLogs[Inspect Audit Log Table]
+    InspectLogs --> FilterIPs[Trace Logged IP Addresses, User Agents & JSON Diffs]
+
+    %% Styling Classes
+    classDef admin fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px;
+    classDef db fill:#efebe9,stroke:#5d4037,stroke-width:2px;
+    
+    class AdminStart,AdminAuthCheck,AdminLogin,EnterCredentials,DashboardMain,ActionSelect admin;
+    class SaveProductDB,LinkProduct,LockInvoice,InspectLogs db;
+```

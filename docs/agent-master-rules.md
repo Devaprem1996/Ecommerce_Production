@@ -3,7 +3,7 @@
 ## AGENT BEHAVIOR RULES
 
 ### RULE 1: ALWAYS READ BEFORE BUILDING
-- Read ALL files in /docs folder before writing any code
+- Read ALL files in /docs folder, including /docs/auth/ and /docs/pages/, before writing any code
 - Read design-system/ before building any component
 - Read ux-rules/ before building any page
 - Read features/ before implementing any feature
@@ -80,3 +80,42 @@
 - Hooks      : camelCase with use prefix (useCart.ts)
 - Utils      : camelCase (formatPrice.ts)
 - Types      : PascalCase with Type suffix (ProductType.ts)
+
+## AUTH RULES (ADD TO MASTER RULES)
+
+### RULE 11: AUTHENTICATION RULES
+- Customer login  : OTP ONLY (mobile number)
+- Admin login     : Email + Password ONLY
+- NO password for customers (OTP is the password)
+- Token storage   : httpOnly cookies ONLY (never localStorage)
+- Auth state      : Zustand authStore
+- Route protection: Next.js middleware.ts
+
+### RULE 12: PROTECTED ROUTES
+Customer protected (/account/*):
+  → No token → redirect /login?redirect=[path]
+  → Has token → allow access
+
+Admin protected (/admin/* except /admin/login):
+  → No admin token → redirect /admin/login
+  → Has admin token → allow access
+  → Has CUSTOMER token → redirect to / (not admin)
+
+Already logged in:
+  → Visits /login or /register → redirect /account
+  → Admin visits /admin/login → redirect /admin/dashboard
+
+### RULE 13: AUTH PAGES STYLING
+- Login/Register pages: centered card layout
+- White card on light background
+- Same brand colors (Primary Green)
+- Mobile full-width card (no padding on small screens)
+- Logo prominently at top
+- Back to home link at bottom
+
+### RULE 14: FORM SECURITY
+- All auth forms: CSRF protection
+- Rate limiting on OTP send (max 3 per hour per number)
+- Rate limiting on admin login (max 5 per 15 minutes)
+- Input sanitization on all fields
+- No sensitive data in URL params
