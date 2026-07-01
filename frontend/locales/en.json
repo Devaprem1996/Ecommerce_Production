@@ -269,6 +269,41 @@
       "out": "Out for Delivery",
       "delivered": "Delivered"
     }
+  },
+  "auth": {
+    "welcome_back": "Welcome Back! 👋",
+    "login_subtitle": "Login to your account",
+    "or_divider": "OR",
+    "google_login": "Continue with Google",
+    "new_here": "New here?",
+    "create_account": "Create Account",
+    "back_to_home": "← Back to Home",
+    "otp_sent_title": "📱 OTP Sent!",
+    "otp_sent_subtitle": "We sent a 6-digit code to +91 {{mobile}}",
+    "change": "Change",
+    "verify_login": "Verify & Login →",
+    "create_account_title": "Create Your Account",
+    "create_account_subtitle": "Join thousands of happy customers 🌿",
+    "step_1_of_2": "Step 1 of 2",
+    "step_2_of_2": "Step 2 of 2",
+    "verify_otp_title": "Verify OTP",
+    "your_name": "Your Name *",
+    "your_name_placeholder": "Enter your full name",
+    "email_optional": "Email Address (optional)",
+    "email_placeholder": "Enter your email address",
+    "email_info": "📧 For order confirmations & receipts",
+    "language_pref": "Preferred Language:",
+    "terms_agree": "I agree to Terms & Conditions",
+    "whatsapp_opt": "I want offers & updates on WhatsApp",
+    "create_and_continue": "Create Account & Continue →",
+    "validation": {
+      "invalid_phone": "Enter a valid 10-digit mobile number",
+      "invalid_name": "Enter your full name",
+      "invalid_email": "Enter a valid email address",
+      "accept_terms": "Please accept terms",
+      "already_registered": "This number is already registered. Login instead?",
+      "login_with_number": "Login with this number"
+    }
   }
 }
 
