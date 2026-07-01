@@ -231,7 +231,6 @@ export default function CheckoutPage() {
 
     // Simulate payment transaction
     setTimeout(() => {
-      // Record order details before clearing cart
       const mockOrderNo = 'AETH-' + Math.floor(100000 + Math.random() * 900000);
       
       // Determine delivery estimate based on pincode
@@ -243,15 +242,63 @@ export default function CheckoutPage() {
         if (activeAddr && activeAddr.pincode.startsWith('6')) days = 3;
       }
 
-      setOrderNumber(mockOrderNo);
-      setEstimatedDays(days);
-      setConfirmedTotal(totalAmount);
-      
-      // Clear Cart Store
-      clearCart();
+      // 1. Create the new order structure and save to localStorage
+      const itemsList = items.map((item) => ({
+        productId: item.product.id,
+        price: item.product.price,
+        quantity: item.quantity
+      }));
+
+      const activeAddr = useNewAddress 
+        ? addressForm 
+        : mockSavedAddresses.find(a => a.id === selectedAddressId);
+
+      const newOrder = {
+        id: mockOrderNo,
+        date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
+        status: paymentMethod === 'cod' ? 'processing' : 'pending',
+        total: totalAmount,
+        items: itemsList,
+        shippingAddress: activeAddr ? {
+          name: activeAddr.name,
+          street: useNewAddress 
+            ? `${addressForm.addressLine1}${addressForm.addressLine2 ? ', ' + addressForm.addressLine2 : ''}`
+            : `${activeAddr.addressLine1}${activeAddr.addressLine2 ? ', ' + activeAddr.addressLine2 : ''}`,
+          city: activeAddr.city,
+          state: activeAddr.state,
+          pincode: activeAddr.pincode,
+          mobile: activeAddr.mobile
+        } : undefined,
+        paymentMethod: paymentMethod,
+        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+        trackingNumber: "TRK-" + Math.floor(10000000 + Math.random() * 90000000)
+      };
+
+      const existingOrdersStr = localStorage.getItem('user_orders');
+      const existingOrders = existingOrdersStr ? JSON.parse(existingOrdersStr) : [];
+      existingOrders.unshift(newOrder);
+      localStorage.setItem('user_orders', JSON.stringify(existingOrders));
+
       setIsProcessingPayment(false);
-      setActiveStep('confirm');
-      toast.success('Payment completed successfully!');
+
+      // 2. Redirect based on payment channel simulation rules
+      if (paymentMethod === 'card' && cardCvv === '999') {
+        // Simulating failed card transaction
+        toast.error('Payment declined by payment gateway.');
+        router.push(`/checkout/failed?orderId=${mockOrderNo}&reason=Declined by issuing bank (CVV validation error)`);
+      } else if (paymentMethod === 'cod') {
+        // Cash on delivery goes straight to success
+        toast.success('Order placed successfully!');
+        router.push(`/checkout/success?orderId=${mockOrderNo}`);
+      } else if (paymentMethod === 'card') {
+        // Standard card payment completes successfully
+        toast.success('Payment completed successfully!');
+        router.push(`/checkout/success?orderId=${mockOrderNo}`);
+      } else {
+        // UPI and Net Banking trigger the callback verification (pending screen)
+        toast.success('Authentication request sent to your app.');
+        router.push(`/checkout/pending?orderId=${mockOrderNo}`);
+      }
     }, 2000);
   };
 

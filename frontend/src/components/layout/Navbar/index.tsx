@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { NavbarProps } from './Navbar.types';
@@ -17,6 +17,7 @@ import { twMerge } from 'tailwind-merge';
 export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const { t } = useTranslation();
   const pathname = usePathname();
+  const router = useRouter();
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -177,6 +178,12 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                       placeholder={t('nav.search', 'Search Products...')}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && searchQuery.trim().length >= 1) {
+                          router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+                          setIsSearchExpanded(false);
+                        }
+                      }}
                       className={clsx(
                         'w-full h-8 text-xs px-3 rounded-full border bg-white dark:bg-neutral-800 outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500 text-neutral-900 dark:text-white',
                         !shouldRenderTransparent ? 'border-neutral-300' : 'border-white/20'
