@@ -1,0 +1,1741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E-Commerce Production Platform Interactive Flowcharts</title>
+  <!-- Google Fonts Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-color: #0b0f19;
+      --card-bg: #1e293b;
+      --text-color: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #10b981;
+      --primary-glow: rgba(16, 185, 129, 0.35);
+      --action: #3b82f6;
+      --action-glow: rgba(59, 130, 246, 0.35);
+      --border: #334155;
+      
+      /* Legend Node colors */
+      --color-start: #3b82f6;
+      --color-process: #10b981;
+      --color-decision: #f59e0b;
+      --color-db: #ec4899;
+      --color-client: #8b5cf6;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 20px;
+      overflow-x: hidden;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+      user-select: none;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+      margin-bottom: 6px;
+      background: linear-gradient(to right, #10b981, #3b82f6, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    p.subtitle {
+      color: var(--text-muted);
+      font-size: 0.9rem;
+    }
+
+    /* GLASSMORPHISM DASHBOARD CONFIG PANEL */
+    .dashboard-panel {
+      background: rgba(30, 41, 59, 0.7);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px 24px;
+      margin: 0 auto 20px auto;
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+      z-index: 100;
+    }
+
+    .panel-section {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+
+    /* Buttons */
+    .tab-btn {
+      background-color: #334155;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .tab-btn:hover {
+      color: var(--text-color);
+      border-color: var(--text-muted);
+    }
+
+    .tab-btn.active {
+      background-color: var(--primary);
+      color: #ffffff;
+      border-color: var(--primary);
+      box-shadow: 0 0 15px var(--primary-glow);
+    }
+
+    .toggle-group {
+      display: flex;
+      background-color: #0f172a;
+      border: 1px solid var(--border);
+      padding: 3px;
+      border-radius: 8px;
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .toggle-btn.active {
+      background-color: var(--action);
+      color: #ffffff;
+      box-shadow: 0 0 10px var(--action-glow);
+    }
+
+    .action-btn {
+      background-color: #1e293b;
+      color: var(--text-color);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .action-btn:hover {
+      background-color: #334155;
+      border-color: var(--text-muted);
+    }
+
+    .action-btn.primary {
+      background-color: var(--action);
+      border-color: var(--action);
+    }
+
+    .action-btn.primary:hover {
+      background-color: var(--action-hover);
+    }
+
+    /* SEARCH FILTER BAR */
+    .search-container {
+      position: relative;
+    }
+
+    .search-input {
+      background-color: #0f172a;
+      border: 1px solid var(--border);
+      padding: 8px 12px 8px 32px;
+      border-radius: 8px;
+      color: var(--text-color);
+      font-size: 0.8rem;
+      width: 200px;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .search-input:focus {
+      outline: none;
+      border-color: var(--action);
+      width: 260px;
+      box-shadow: 0 0 10px var(--action-glow);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* LEGEND PANEL */
+    .legend-panel {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      user-select: none;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* VIEWPORT STYLING */
+    .viewport {
+      width: 100%;
+      background-color: #060913;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      min-height: 750px;
+      box-shadow: inset 0 0 40px rgba(0, 0, 0, 0.6);
+      cursor: grab;
+    }
+
+    .viewport:fullscreen {
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      border-radius: 0;
+      border: none;
+    }
+
+    .viewport:active {
+      cursor: grabbing;
+    }
+
+    /* Canvas that transforms (Pan & Zoom) */
+    .canvas {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform-origin: 0 0;
+      transition: transform 0.03s linear;
+      padding: 80px 100px;
+      display: flex;
+      width: max-content;
+      height: max-content;
+    }
+
+    /* LAYOUT PATTERNS */
+    
+    /* 1. Vertical Layout (Default) */
+    .canvas.layout-vertical {
+      display: grid;
+      grid-template-columns: repeat(5, 340px);
+      grid-row-gap: 60px;
+      grid-column-gap: 30px;
+      justify-content: center;
+    }
+    
+    /* 2. Horizontal Layout */
+    .canvas.layout-horizontal {
+      display: grid;
+      grid-template-rows: repeat(5, 200px);
+      grid-template-columns: repeat(20, 360px);
+      grid-row-gap: 30px;
+      grid-column-gap: 80px;
+      justify-content: flex-start;
+    }
+
+    /* 3. Grid Matrix Layout */
+    .canvas.layout-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 340px);
+      gap: 40px;
+    }
+
+    /* CARD STYLING */
+    .flow-card {
+      background-color: var(--card-bg);
+      border: 2px solid var(--border);
+      border-radius: 14px;
+      width: 320px;
+      padding: 18px;
+      position: relative;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      user-select: none;
+      z-index: 10;
+      flex-shrink: 0;
+    }
+
+    .flow-card:hover {
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 0 15px var(--action-glow);
+      border-color: var(--action);
+    }
+
+    .flow-card.start { border-color: var(--color-start); }
+    .flow-card.process { border-color: var(--color-process); }
+    .flow-card.decision { border-color: var(--color-decision); }
+    .flow-card.db { border-color: var(--color-db); }
+    .flow-card.client { border-color: var(--color-client); }
+
+    .card-badge {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+      display: inline-block;
+    }
+
+    .flow-card.start .card-badge { color: var(--color-start); }
+    .flow-card.process .card-badge { color: var(--color-process); }
+    .flow-card.decision .card-badge { color: var(--color-decision); }
+    .flow-card.db .card-badge { color: var(--color-db); }
+    .flow-card.client .card-badge { color: var(--color-client); }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-color);
+      margin-bottom: 6px;
+    }
+
+    .card-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    /* LOOP BACK INDICATOR & PULSE ANIMATION */
+    .loop-badge {
+      background-color: rgba(245, 158, 11, 0.15);
+      border: 1px solid var(--color-decision);
+      color: var(--color-decision);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 6px;
+      margin-top: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: loopPulse 2s infinite alternate;
+    }
+
+    @keyframes loopPulse {
+      0% { box-shadow: 0 0 2px rgba(245, 158, 11, 0.2); }
+      100% { box-shadow: 0 0 10px rgba(245, 158, 11, 0.6); }
+    }
+
+    /* TECHNICAL DETAIL SPEC BOX */
+    .tech-spec-box {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed var(--border);
+      background-color: rgba(15, 23, 42, 0.4);
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.75rem;
+      display: none;
+      animation: slideDown 0.2s ease-out;
+    }
+
+    .tech-spec-box.visible {
+      display: block;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tech-row {
+      display: flex;
+      margin-bottom: 6px;
+    }
+
+    .tech-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .tech-label {
+      font-weight: 700;
+      color: var(--action);
+      width: 85px;
+      flex-shrink: 0;
+    }
+
+    .tech-val {
+      font-family: 'Courier New', Courier, monospace;
+      color: #34d399;
+      word-break: break-all;
+    }
+
+    /* SEARCH HIGHLIGHT PULSE EFFECT */
+    .flow-card.highlighted {
+      border-color: #fff !important;
+      box-shadow: 0 0 25px #fff, 0 0 35px var(--action) !important;
+      animation: cardPulse 1.2s infinite alternate;
+    }
+
+    @keyframes cardPulse {
+      0% { transform: translateY(-6px) scale(1.02); }
+      100% { transform: translateY(-6px) scale(1.06); }
+    }
+
+    /* FLOATING NAVIGATION HUD & SLIDER */
+    .hud-controls {
+      position: absolute;
+      bottom: 24px;
+      right: 24px;
+      background: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      z-index: 101;
+      backdrop-filter: blur(8px);
+      user-select: none;
+    }
+
+    .hud-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .hud-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100px;
+      height: 4px;
+      border-radius: 2px;
+      background: var(--border);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .hud-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--action);
+      cursor: pointer;
+      box-shadow: 0 0 8px var(--action-glow);
+    }
+
+    /* MODAL WINDOWS */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(6px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 500;
+      animation: fadeIn 0.2s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-content {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      width: 100%;
+      max-width: 480px;
+      padding: 24px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .modal-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .close-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+    }
+
+    .close-btn:hover {
+      color: #fff;
+    }
+
+    .modal-options-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .export-option-card {
+      background-color: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.15s ease-in-out;
+    }
+
+    .export-option-card:hover {
+      border-color: var(--action);
+      background-color: rgba(59, 130, 246, 0.05);
+    }
+
+    .export-icon {
+      font-size: 1.5rem;
+    }
+
+    .export-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .export-opt-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .export-opt-desc {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    footer {
+      text-align: center;
+      margin-top: 24px;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+    }
+
+    /* Print styling overrides */
+    @media print {
+      body { background-color: white; color: black; }
+      .dashboard-panel, .hud-controls, .instruction-note, footer { display: none !important; }
+      .viewport { border: none; overflow: visible; min-height: auto; cursor: default; }
+      .canvas { position: relative; padding: 0; transform: none !important; }
+      .flow-card { background-color: white; color: black; border-color: #ccc; box-shadow: none; }
+      .card-title, .card-desc { color: black; }
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>E-Commerce Platform Visual Flowcharts</h1>
+    <p class="subtitle">Client, PM, and Developer aligned production blueprints & flow paths</p>
+  </header>
+
+  <!-- Interactive Configuration Dashboard -->
+  <div class="dashboard-panel">
+    
+    <!-- Flow Selection Tabs -->
+    <div class="panel-section">
+      <span class="section-label">Select View:</span>
+      <div class="tab-group">
+        <button class="tab-btn active" onclick="switchTab('customer')">Customer Flow</button>
+        <button class="tab-btn" onclick="switchTab('admin')">Admin Flow</button>
+        <button class="tab-btn" onclick="switchTab('guest')">Guest Flow</button>
+      </div>
+    </div>
+
+    <!-- Layout Pattern Selector -->
+    <div class="panel-section">
+      <span class="section-label">Layout Pattern:</span>
+      <div class="toggle-group" id="layout-toggle">
+        <button class="toggle-btn active" onclick="switchLayout('vertical')">Vertical Tree</button>
+        <button class="toggle-btn" onclick="switchLayout('horizontal')">Horizontal Pipe</button>
+        <button class="toggle-btn" onclick="switchLayout('grid')">Grid Matrix</button>
+      </div>
+    </div>
+
+    <!-- Business vs Technical Toggle -->
+    <div class="panel-section">
+      <span class="section-label">Stakeholder Focus:</span>
+      <div class="toggle-group" id="mode-toggle">
+        <button class="toggle-btn active" onclick="switchMode('business')">Client & PM (Business)</button>
+        <button class="toggle-btn" onclick="switchMode('technical')">Developer (Tech Proof)</button>
+      </div>
+    </div>
+
+    <!-- Search / Filter -->
+    <div class="panel-section">
+      <div class="search-container">
+        <span class="search-icon">🔍</span>
+        <input type="text" class="search-input" id="search-box" placeholder="Find step name..." oninput="handleSearch()">
+      </div>
+    </div>
+
+    <!-- Controls & Fullscreen -->
+    <div class="panel-section">
+      <button class="action-btn" id="fullscreen-btn" onclick="toggleFullscreen()">📺 Fullscreen</button>
+      <button class="action-btn primary" onclick="openExportModal()">📥 Export Diagram</button>
+    </div>
+
+  </div>
+
+  <!-- Legend -->
+  <div class="legend-panel">
+    <div class="legend-item"><div class="legend-dot" style="background-color: var(--color-start);"></div><span>Start Block</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background-color: var(--color-process);"></div><span>System Process</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background-color: var(--color-decision);"></div><span>User Decision</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background-color: var(--color-client);"></div><span>Storefront UI Action</span></div>
+    <div class="legend-item"><div class="legend-dot" style="background-color: var(--color-db);"></div><span>Database Sync (Lock)</span></div>
+  </div>
+
+  <div class="instruction-note" style="text-align: center; margin-bottom: 12px; font-size: 0.8rem; color: var(--text-muted);">
+    💡 <strong>Tips:</strong> Left-click and drag anywhere on the grid viewport below to PAN. Mouse wheel or HUD slider to ZOOM.
+  </div>
+
+  <!-- Viewport Grid -->
+  <div class="viewport" id="viewport">
+    <div class="canvas layout-vertical" id="canvas">
+      <!-- RENDERED DYNAMICALLY BY JAVASCRIPT ENGINE -->
+    </div>
+
+    <!-- Floating HUD HUD controls -->
+    <div class="hud-controls">
+      <span class="hud-label" id="zoom-indicator">Zoom: 55%</span>
+      <input type="range" class="hud-slider" id="zoom-range" min="30" max="250" value="55" oninput="handleSliderZoom(this.value)">
+      <button class="action-btn" onclick="resetView()" style="padding: 4px 8px; font-size: 0.7rem;">Center View</button>
+      <button class="action-btn" id="hud-fullscreen-btn" onclick="toggleFullscreen()" style="padding: 4px 8px; font-size: 0.7rem;">Fullscreen</button>
+    </div>
+  </div>
+
+  <!-- EXPORT DOWNLOAD CENTER MODAL -->
+  <div class="modal-overlay" id="export-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title">Export Flowchart</h3>
+        <button class="close-btn" onclick="closeExportModal()">✕</button>
+      </div>
+      
+      <div class="modal-options-grid">
+        <!-- SVG Vector -->
+        <div class="export-option-card" onclick="exportVectorSVG()">
+          <div class="export-icon">📐</div>
+          <div class="export-details">
+            <span class="export-opt-title">Vector SVG File (.svg)</span>
+            <span class="export-opt-desc">High-quality, infinite scaling. Perfect for presentations.</span>
+          </div>
+        </div>
+
+        <!-- HTML Document Bundle -->
+        <div class="export-option-card" onclick="exportHTMLReport()">
+          <div class="export-icon">📄</div>
+          <div class="export-details">
+            <span class="export-opt-title">Printable PDF / HTML Document</span>
+            <span class="export-opt-desc">Creates a clean text checklist of all steps for documentation.</span>
+          </div>
+        </div>
+
+        <!-- JSON State Schema -->
+        <div class="export-option-card" onclick="exportJSONSchema()">
+          <div class="export-icon">⚙️</div>
+          <div class="export-details">
+            <span class="export-opt-title">JSON Config Schema (.json)</span>
+            <span class="export-opt-desc">Exports raw flow arrays. Used to restore or edit flows.</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="font-size: 0.7rem; color: var(--text-muted); line-height: 1.3;">
+        💡 <strong>PNG Export Note:</strong> For clean image captures to drop directly in Microsoft Teams, press <strong>Win + Shift + S</strong> (Windows) or <strong>Cmd + Shift + 4</strong> (Mac) to capture the exact layout of the canvas.
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p>Premium E-Commerce platform architecture dashboard. Updates made to flows can be written directly to the JSON object inside the code.</p>
+  </footer>
+
+  <script>
+    // =========================================================================
+    // DYNAMIC FLOWCHART CONFIGURATION DATA (EDIT THIS OBJECT TO UPDATE FLOWS)
+    // =========================================================================
+    const flowData = {
+      customer: [
+        { 
+          id: 'cust_start', 
+          type: 'start', 
+          title: 'Customer Enters Storefront', 
+          desc: 'Customer launches the storefront home page.', 
+          tech: { Route: '/', Engine: 'Next.js 16 App Router' },
+          row: 1, col: 3, next: 'cust_lang'
+        },
+        { 
+          id: 'cust_lang', 
+          type: 'process', 
+          title: 'Language Localization', 
+          desc: 'Customer toggles between English and Tamil translations.', 
+          tech: { i18n: 'i18next framework', Field: 'nameEn / nameTa' },
+          row: 2, col: 3, next: 'cust_catalog'
+        },
+        { 
+          id: 'cust_catalog', 
+          type: 'client', 
+          title: 'Select Product & Weight', 
+          desc: 'Customer clicks product card and selects weight/volume variant (e.g. 500g, 1kg).', 
+          tech: { Query: 'GET /api/v1/products/:slug', Model: 'ProductVariant' },
+          row: 3, col: 3, next: 'cust_pincode_check'
+        },
+        { 
+          id: 'cust_pincode_check', 
+          type: 'decision', 
+          title: 'Pincode Cached?', 
+          desc: 'System checks if delivery pincode is cached in state to lock checkout.', 
+          tech: { Store: 'Zustand persists lookup' },
+          row: 4, col: 3,
+          branches: [
+            { label: 'Yes', next: 'cust_add_cart' },
+            { label: 'No', next: 'cust_prompt_pin' }
+          ]
+        },
+        { 
+          id: 'cust_prompt_pin', 
+          type: 'process', 
+          title: 'Input Pincode Validation', 
+          desc: 'Customer inputs 6-digit Pincode. System checks if address is deliverable.', 
+          tech: { API: 'GET /api/pincode/:pincode', Table: 'Pincode' },
+          row: 5, col: 4, next: 'cust_pin_deliver'
+        },
+        {
+          id: 'cust_pin_deliver',
+          type: 'decision',
+          title: 'Is Pincode Deliverable?',
+          desc: 'Validates delivery region rules.',
+          row: 6, col: 4,
+          branches: [
+            { label: 'No', next: 'cust_pin_error' },
+            { label: 'Yes', next: 'cust_cache_pin' }
+          ]
+        },
+        {
+          id: 'cust_pin_error',
+          type: 'process',
+          title: 'Display Delivery Error',
+          desc: 'Display "Delivery Unavailable" message to user.',
+          row: 6, col: 5,
+          loopBack: 'cust_prompt_pin'
+        },
+        {
+          id: 'cust_cache_pin',
+          type: 'process',
+          title: 'Cache Code in State',
+          desc: 'Saves validated pincode in Zustand local state to enable shopping actions.',
+          tech: { Store: 'Zustand persists' },
+          row: 7, col: 4, next: 'cust_add_cart'
+        },
+        { 
+          id: 'cust_add_cart', 
+          type: 'db', 
+          title: 'POST to Cart API', 
+          desc: 'Saves selected variant and quantity into DB cart, syncing client states.', 
+          tech: { API: 'POST /api/v1/cart', Prisma: 'upsert Cart Table', Sync: 'React Query invalidate' },
+          row: 8, col: 3, next: 'cust_checkout'
+        },
+        { 
+          id: 'cust_checkout', 
+          type: 'client', 
+          title: 'Proceed to Checkout', 
+          desc: 'Customer opens cart drawer and proceeds to shipping address summaries.',
+          tech: { State: 'React Query data lookup' },
+          row: 9, col: 3, next: 'cust_address'
+        },
+        { 
+          id: 'cust_address', 
+          type: 'process', 
+          title: 'Select Shipping Address', 
+          desc: 'Customer picks a default shipping destination or inputs checkout coordinates.', 
+          tech: { API: 'POST /api/v1/addresses' },
+          row: 10, col: 3, next: 'cust_coupon_choice'
+        },
+        { 
+          id: 'cust_coupon_choice', 
+          type: 'decision', 
+          title: 'Apply Coupon Discount?', 
+          desc: 'Option to insert coupon codes. Validates dates and minimum order totals.', 
+          tech: { API: 'POST /api/v1/coupons/validate' },
+          row: 11, col: 3,
+          branches: [
+            { label: 'Yes', next: 'cust_apply_coupon' },
+            { label: 'No', next: 'cust_calc_totals' }
+          ]
+        },
+        { 
+          id: 'cust_apply_coupon', 
+          type: 'process', 
+          title: 'Apply Cart Discount', 
+          desc: 'Deduct discount rate and update billing layout.', 
+          tech: { Table: 'Coupon relation' },
+          row: 12, col: 4, next: 'cust_calc_totals'
+        },
+        { 
+          id: 'cust_calc_totals', 
+          type: 'process', 
+          title: 'Calculate Totals', 
+          desc: 'Aggregates item rates, GST tax, shipping, and grand totals.',
+          row: 13, col: 3, next: 'cust_draft_order'
+        },
+        { 
+          id: 'cust_draft_order', 
+          type: 'db', 
+          title: 'Create Order Draft', 
+          desc: 'Prisma transaction locks variant inventory, decrements stock, and inserts order.', 
+          tech: { Transaction: 'prisma.$transaction', Status: 'DRAFT' },
+          row: 14, col: 3, next: 'cust_gateway'
+        },
+        { 
+          id: 'cust_gateway', 
+          type: 'client', 
+          title: 'Secure Payment Gateway', 
+          desc: 'Launches Razorpay checkout box. Validates transaction success via webhooks.', 
+          tech: { SDK: 'Razorpay checkout', SigCheck: 'crypto.createHmac (sha256)' },
+          row: 15, col: 3, next: 'cust_pay_verify'
+        },
+        { 
+          id: 'cust_pay_verify', 
+          type: 'decision', 
+          title: 'Is Payment Complete?', 
+          desc: 'Verifies signature webhook status.',
+          row: 16, col: 3,
+          branches: [
+            { label: 'Yes', next: 'cust_order_success' },
+            { label: 'No', next: 'cust_pay_fail' }
+          ]
+        },
+        { 
+          id: 'cust_pay_fail', 
+          type: 'process', 
+          title: 'Handle Payment Failure', 
+          desc: 'Update order status to pending payment. Prompt user to retry.', 
+          tech: { Status: 'PENDING_PAYMENT' },
+          row: 16, col: 4,
+          loopBack: 'cust_gateway'
+        },
+        { 
+          id: 'cust_order_success', 
+          type: 'process', 
+          title: 'Order Complete & Tracking', 
+          desc: 'Clears shopping cart and loads delivery tracking timeline.', 
+          tech: { API: 'GET /api/v1/orders/:id', Status: 'CONFIRMED' },
+          row: 17, col: 3
+        }
+      ],
+      admin: [
+        { 
+          id: 'adm_start', 
+          type: 'start', 
+          title: 'Access Dashboard', 
+          desc: 'Admin enters url endpoint mapping. Triggers security gates if unauthenticated.', 
+          tech: { Route: '/admin/dashboard' },
+          row: 1, col: 3, next: 'adm_rbac'
+        },
+        { 
+          id: 'adm_rbac', 
+          type: 'decision', 
+          title: 'Verify Role Credentials', 
+          desc: 'Validates JWT session cookie values. Rejects user with 403 error if role !== ADMIN.', 
+          tech: { Session: 'HttpOnly JWT token validation', DB: 'User Role check' },
+          row: 2, col: 3,
+          branches: [
+            { label: 'Yes', next: 'adm_menu' },
+            { label: 'No', next: 'adm_reject' }
+          ]
+        },
+        {
+          id: 'adm_reject',
+          type: 'process',
+          title: 'Access Denied',
+          desc: 'User is blocked with a 403 Forbidden status page.',
+          tech: { Status: '403 Forbidden' },
+          row: 2, col: 1
+        },
+        { 
+          id: 'adm_menu', 
+          type: 'client', 
+          title: 'Dashboard Overview', 
+          desc: 'Launches control panels menu. Selects catalog CRUD, order fulfillment, or coupon settings.',
+          tech: { State: 'React Query state sync' },
+          row: 3, col: 3, next: 'adm_action'
+        },
+        {
+          id: 'adm_action',
+          type: 'decision',
+          title: 'Select Panel Console',
+          desc: 'Admin navigates sidebar views.',
+          row: 4, col: 3,
+          branches: [
+            { label: 'Product CMS', next: 'adm_product_cms' },
+            { label: 'Order Dispatch', next: 'adm_order_dispatch' },
+            { label: 'Coupons Control', next: 'adm_coupon_engine' }
+          ]
+        },
+        { 
+          id: 'adm_product_cms', 
+          type: 'process', 
+          title: 'Add/Edit Product Forms', 
+          desc: 'Inputs bilingual details, weight variant prices, and uploads optimized photo file.', 
+          tech: { API: 'POST /api/v1/products', Image: 'Sharp compression + Cloudinary CDN' },
+          row: 5, col: 2, next: 'adm_audit_log'
+        },
+        { 
+          id: 'adm_order_dispatch', 
+          type: 'process', 
+          title: 'Update Dispatch Progress', 
+          desc: 'Selects active customer order. Sets stage to Packed, Shipped, or Delivered.', 
+          tech: { API: 'PATCH /api/v1/orders/:id/status', Webhook: 'Triggers transactional emails' },
+          row: 5, col: 3, next: 'adm_audit_log'
+        },
+        { 
+          id: 'adm_coupon_engine', 
+          type: 'process', 
+          title: 'Create Promo Code', 
+          desc: 'Inputs code name, discount percentages/limits, dates, and publishes code.', 
+          tech: { API: 'POST /api/v1/coupons' },
+          row: 5, col: 4, next: 'adm_audit_log'
+        },
+        {
+          id: 'adm_audit_log',
+          type: 'db',
+          title: 'Write Security Audit Log',
+          desc: 'Logs change parameters, user IDs, timestamp, and client IP in database logs.',
+          tech: { Prisma: 'insert into AuditLog table', Winston: 'Sanitized debug details on disk' },
+          row: 6, col: 3
+        }
+      ],
+      guest: [
+        { 
+          id: 'gst_start', 
+          type: 'start', 
+          title: 'Visitor Lands on URL', 
+          desc: 'Unauthenticated user enters. Renders home page widgets.', 
+          tech: { API: 'GET /api/v1/products/featured' },
+          row: 1, col: 3, next: 'gst_lang'
+        },
+        { 
+          id: 'gst_lang', 
+          type: 'client', 
+          title: 'Toggle Language Selector', 
+          desc: 'Translates page labels. Renders database English/Tamil text values.', 
+          tech: { Locale: 'i18next translations context' },
+          row: 2, col: 3, next: 'gst_nav'
+        },
+        { 
+          id: 'gst_nav', 
+          type: 'decision', 
+          title: 'Choose Catalog Path', 
+          desc: 'Visitor searches product names or filters category grid.',
+          row: 3, col: 3,
+          branches: [
+            { label: 'Search Bar', next: 'gst_search' },
+            { label: 'Category Filter', next: 'gst_cat_filter' }
+          ]
+        },
+        { 
+          id: 'gst_search', 
+          type: 'process', 
+          title: 'Type in Search bar', 
+          desc: 'Queries database matching titles, description blocks, or tags. Renders grid.', 
+          tech: { API: 'GET /api/v1/products?search=query' },
+          row: 4, col: 2, next: 'gst_pdp'
+        },
+        { 
+          id: 'gst_cat_filter', 
+          type: 'process', 
+          title: 'Click Category icons', 
+          desc: 'Filters product grid dynamically by selected category identifier slugs.', 
+          tech: { API: 'GET /api/v1/products?category=slug' },
+          row: 4, col: 4, next: 'gst_pdp'
+        },
+        { 
+          id: 'gst_pdp', 
+          type: 'process', 
+          title: 'View Product Details', 
+          desc: 'Displays product page. Loads variants selection, ratings averages, and pincode validators.', 
+          tech: { API: 'GET /api/v1/products/:slug', Pincode: 'GET /api/pincode/:pincode' },
+          row: 5, col: 3, next: 'gst_action'
+        },
+        { 
+          id: 'gst_action', 
+          type: 'decision', 
+          title: 'Select Card Action', 
+          desc: 'Visitor chooses wishlist or add to cart actions.',
+          row: 6, col: 3,
+          branches: [
+            { label: 'Add Wishlist', next: 'gst_wishlist_gate' },
+            { label: 'Add to Cart', next: 'gst_cart_local' }
+          ]
+        },
+        { 
+          id: 'gst_wishlist_gate', 
+          type: 'process', 
+          title: 'Redirect to Login Screen', 
+          desc: 'Blocks unauthenticated wishlist adds and prompts user login.',
+          tech: { Redirect: '/login?callback=/wishlist' },
+          row: 7, col: 2
+        },
+        { 
+          id: 'gst_cart_local', 
+          type: 'process', 
+          title: 'Save in local Cart state', 
+          desc: 'Stores items in local browser memory. updates quantity counter.', 
+          tech: { Zustand: 'local storage sync' },
+          row: 7, col: 4, next: 'gst_checkout_gate'
+        },
+        { 
+          id: 'gst_checkout_gate', 
+          type: 'process', 
+          title: 'Redirect on Checkout', 
+          desc: 'Redirects user to authenticate before shipping address form loads.',
+          tech: { Redirect: '/login?callback=/checkout' },
+          row: 8, col: 4, next: 'gst_session_merge'
+        },
+        { 
+          id: 'gst_session_merge', 
+          type: 'db', 
+          title: 'Merge Guest Cart to DB', 
+          desc: 'Authentication complete. Copies local browser cart items into database user tables.', 
+          tech: { Auth: 'Google OAuth / OTP validator', Prisma: 'upsert database Cart records' },
+          row: 9, col: 3
+        }
+      ]
+    };
+
+    // =========================================================================
+    // RENDER ENGINE, ANIMATIONS & CONNECTORS LAYER
+    // =========================================================================
+    let activeTab = 'customer';
+    let activeLayout = 'vertical';
+    let activeMode = 'business'; // business or technical
+
+    // Pan & Zoom Coordinate State
+    let zoomScale = 0.55; // Default overview scale
+    let panX = 0;
+    let panY = 20;
+    let isDragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    const canvas = document.getElementById('canvas');
+    const viewport = document.getElementById('viewport');
+    const zoomIndicator = document.getElementById('zoom-indicator');
+    const zoomRange = document.getElementById('zoom-range');
+
+    // Compile and Render HTML nodes dynamically
+    function renderDiagram() {
+      const flowSteps = flowData[activeTab];
+      canvas.innerHTML = ''; // reset content
+
+      // Append SVG Wires element
+      const svgOverlay = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      svgOverlay.id = 'wires-svg';
+      svgOverlay.style.position = 'absolute';
+      svgOverlay.style.top = '0';
+      svgOverlay.style.left = '0';
+      svgOverlay.style.width = '100%';
+      svgOverlay.style.height = '100%';
+      svgOverlay.style.pointerEvents = 'none';
+      svgOverlay.style.zIndex = '1';
+      canvas.appendChild(svgOverlay);
+      
+      const titleElem = document.createElement('h2');
+      titleElem.textContent = `${activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Platform Journey`;
+      titleElem.style.fontSize = '1.3rem';
+      titleElem.style.marginBottom = '32px';
+      titleElem.style.userSelect = 'none';
+      titleElem.style.gridColumn = '1 / -1'; // Spans full grid width
+      canvas.appendChild(titleElem);
+
+      // Render Loop Helper Map
+      const stepMap = {};
+      flowSteps.forEach(step => {
+        stepMap[step.id] = step;
+      });
+
+      // Render step builder
+      function createCard(step) {
+        const card = document.createElement('div');
+        card.className = `flow-card ${step.type}`;
+        card.id = step.id;
+        
+        // Add badges
+        const badge = document.createElement('div');
+        badge.className = 'badge card-badge';
+        badge.textContent = step.type;
+        card.appendChild(badge);
+
+        // Add title
+        const title = document.createElement('div');
+        title.className = 'card-title';
+        title.innerHTML = getIconForType(step.type) + ' ' + step.title;
+        card.appendChild(title);
+
+        // Add description
+        const desc = document.createElement('div');
+        desc.className = 'card-desc';
+        desc.textContent = step.desc;
+        card.appendChild(desc);
+
+        // Add loopback notices if present
+        if (step.loopBack) {
+          const targetStepName = stepMap[step.loopBack] ? stepMap[step.loopBack].title : step.loopBack;
+          const loopBadge = document.createElement('div');
+          loopBadge.className = 'loop-badge';
+          loopBadge.innerHTML = `🔄 Loops back to: <strong>${targetStepName}</strong>`;
+          card.appendChild(loopBadge);
+        }
+
+        // Add technical specification box
+        if (step.tech) {
+          const techBox = document.createElement('div');
+          techBox.className = `tech-spec-box ${activeMode === 'technical' ? 'visible' : ''}`;
+          
+          for (const [key, value] of Object.entries(step.tech)) {
+            const row = document.createElement('div');
+            row.className = 'tech-row';
+            
+            const label = document.createElement('div');
+            label.className = 'tech-label';
+            label.textContent = `${key}:`;
+            
+            const val = document.createElement('div');
+            val.className = 'tech-val';
+            val.textContent = value;
+            
+            row.appendChild(label);
+            row.appendChild(val);
+            techBox.appendChild(row);
+          }
+          card.appendChild(techBox);
+        }
+
+        return card;
+      }
+
+      // Main Grid builder
+      flowSteps.forEach(step => {
+        const card = createCard(step);
+        if (activeLayout === 'vertical') {
+          card.style.gridRow = step.row + 1; // offset for title row
+          card.style.gridColumn = step.col;
+        } else if (activeLayout === 'horizontal') {
+          card.style.gridRow = step.col;
+          card.style.gridColumn = step.row + 1;
+        } else {
+          // Grid Matrix Layout
+          card.style.gridRow = '';
+          card.style.gridColumn = '';
+        }
+        canvas.appendChild(card);
+      });
+
+      // Apply Layout classes
+      canvas.className = `canvas layout-${activeLayout}`;
+      updateTransformation();
+    }
+
+    // SVG Wire drawing engine using offset positions relative to canvas
+    function drawConnectorWires() {
+      const svg = document.getElementById('wires-svg');
+      if (!svg) return;
+
+      // Initial marker defs for arrowheads
+      svg.innerHTML = `
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#3b82f6" />
+          </marker>
+          <marker id="loop-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 9 5 L 0 9 z" fill="#f59e0b" />
+          </marker>
+        </defs>
+      `;
+
+      const flowSteps = flowData[activeTab];
+
+      // Helper map to find steps by ID
+      const stepMap = {};
+      flowSteps.forEach(step => {
+        stepMap[step.id] = step;
+      });
+
+      flowSteps.forEach((step, index) => {
+        const sourceCard = document.getElementById(step.id);
+        if (!sourceCard) return;
+
+        // Bounding measurements using simple unscaled offset coordinates
+        let x1 = sourceCard.offsetLeft + sourceCard.offsetWidth / 2;
+        let y1 = sourceCard.offsetTop + sourceCard.offsetHeight;
+        if (activeLayout === 'horizontal') {
+          x1 = sourceCard.offsetLeft + sourceCard.offsetWidth;
+          y1 = sourceCard.offsetTop + sourceCard.offsetHeight / 2;
+        }
+
+        // Draw helper connections
+        function drawConnection(targetId, label = '', isLoop = false) {
+          const targetCard = document.getElementById(targetId);
+          if (!targetCard) return;
+
+          let x2 = targetCard.offsetLeft + targetCard.offsetWidth / 2;
+          let y2 = targetCard.offsetTop;
+          if (activeLayout === 'horizontal') {
+            x2 = targetCard.offsetLeft;
+            y2 = targetCard.offsetTop + targetCard.offsetHeight / 2;
+          }
+
+          let dPath = '';
+          if (isLoop) {
+            // Loopback paths
+            if (activeLayout === 'vertical') {
+              const srcLeftX = sourceCard.offsetLeft;
+              const srcLeftY = sourceCard.offsetTop + sourceCard.offsetHeight / 2;
+              const tgtLeftX = targetCard.offsetLeft;
+              const tgtLeftY = targetCard.offsetTop + targetCard.offsetHeight / 2;
+              
+              const controlOffset = 80;
+              dPath = `M ${srcLeftX} ${srcLeftY} C ${srcLeftX - controlOffset} ${srcLeftY}, ${tgtLeftX - controlOffset} ${tgtLeftY}, ${tgtLeftX} ${tgtLeftY}`;
+
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', dPath);
+              path.setAttribute('stroke', '#f59e0b');
+              path.setAttribute('stroke-width', '3');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('stroke-dasharray', '5,5');
+              path.setAttribute('marker-end', 'url(#loop-arrow)');
+              svg.appendChild(path);
+
+              const midY = (srcLeftY + tgtLeftY) / 2;
+              const midX = srcLeftX - controlOffset / 1.5;
+              drawTextLabel(midX, midY, 'Retry Loop', '#f59e0b');
+            } else {
+              // Horizontal Loopback
+              const srcTopX = sourceCard.offsetLeft + sourceCard.offsetWidth / 2;
+              const srcTopY = sourceCard.offsetTop;
+              const tgtTopX = targetCard.offsetLeft + targetCard.offsetWidth / 2;
+              const tgtTopY = targetCard.offsetTop;
+              
+              const controlOffset = 80;
+              dPath = `M ${srcTopX} ${srcTopY} C ${srcTopX} ${srcTopY - controlOffset}, ${tgtTopX} ${tgtTopY - controlOffset}, ${tgtTopX} ${tgtTopY}`;
+
+              const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+              path.setAttribute('d', dPath);
+              path.setAttribute('stroke', '#f59e0b');
+              path.setAttribute('stroke-width', '3');
+              path.setAttribute('fill', 'none');
+              path.setAttribute('stroke-dasharray', '5,5');
+              path.setAttribute('marker-end', 'url(#loop-arrow)');
+              svg.appendChild(path);
+
+              const midX = (srcTopX + tgtTopX) / 2;
+              const midY = srcTopY - controlOffset / 1.5;
+              drawTextLabel(midX, midY, 'Retry Loop', '#f59e0b');
+            }
+          } else {
+            // Standard S-Curves
+            if (activeLayout === 'vertical') {
+              const yMid = (y1 + y2) / 2;
+              dPath = `M ${x1} ${y1} C ${x1} ${yMid}, ${x2} ${yMid}, ${x2} ${y2}`;
+            } else if (activeLayout === 'horizontal') {
+              const xMid = (x1 + x2) / 2;
+              dPath = `M ${x1} ${y1} C ${xMid} ${y1}, ${xMid} ${y2}, ${x2} ${y2}`;
+            } else {
+              // Grid Layout
+              dPath = `M ${x1} ${y1} L ${x2} ${y2}`;
+            }
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', dPath);
+            path.setAttribute('stroke', '#3b82f6');
+            path.setAttribute('stroke-width', '3');
+            path.setAttribute('fill', 'none');
+            path.setAttribute('marker-end', 'url(#arrow)');
+            svg.appendChild(path);
+
+            // Add animated pulsing dot along the curve path
+            const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
+            animateMotion.setAttribute('dur', '1.8s');
+            animateMotion.setAttribute('repeatCount', 'indefinite');
+            
+            const mPath = document.createElementNS('http://www.w3.org/2000/svg', 'mpath');
+            const pathId = `path_${step.id}_to_${targetId}`;
+            path.setAttribute('id', pathId);
+            mPath.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${pathId}`);
+            animateMotion.appendChild(mPath);
+
+            const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            circle.setAttribute('r', '4');
+            circle.setAttribute('fill', '#fff');
+            circle.setAttribute('style', 'filter: drop-shadow(0 0 4px #3b82f6);');
+            circle.appendChild(animateMotion);
+            svg.appendChild(circle);
+
+            // Midpoint Text Label
+            if (label) {
+              const labelX = (x1 + x2) / 2;
+              const labelY = (y1 + y2) / 2;
+              drawTextLabel(labelX, labelY, label, '#3b82f6');
+            }
+          }
+        }
+
+        function drawTextLabel(x, y, text, color) {
+          const textNode = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          textNode.setAttribute('x', x);
+          textNode.setAttribute('y', y + 3);
+          textNode.setAttribute('text-anchor', 'middle');
+          textNode.setAttribute('font-size', '8px');
+          textNode.setAttribute('font-weight', '700');
+          textNode.setAttribute('fill', '#fff');
+          textNode.textContent = text.toUpperCase();
+
+          const rectNode = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+          const width = text.length * 5 + 10;
+          rectNode.setAttribute('x', x - width / 2);
+          rectNode.setAttribute('y', y - 7);
+          rectNode.setAttribute('width', width);
+          rectNode.setAttribute('height', '14');
+          rectNode.setAttribute('rx', '4');
+          rectNode.setAttribute('fill', '#1e293b');
+          rectNode.setAttribute('stroke', color);
+          rectNode.setAttribute('stroke-width', '1');
+
+          svg.appendChild(rectNode);
+          svg.appendChild(textNode);
+        }
+
+        // Draw loop wires
+        if (step.loopBack) {
+          drawConnection(step.loopBack, '', true);
+        }
+
+        // Draw branches or next connections
+        if (step.branches) {
+          step.branches.forEach(branch => {
+            drawConnection(branch.next, branch.label);
+          });
+        } else if (step.next) {
+          drawConnection(step.next);
+        }
+      });
+    }
+
+    function getIconForType(type) {
+      switch (type) {
+        case 'start': return '🏁';
+        case 'process': return '⚙️';
+        case 'decision': return '❓';
+        case 'db': return '💾';
+        case 'client': return '💻';
+        default: return '📄';
+      }
+    }
+
+    // =========================================================================
+    // SEARCH ENGINE FILTER
+    // =========================================================================
+    window.handleSearch = function() {
+      const query = document.getElementById('search-box').value.toLowerCase().trim();
+      const cards = document.querySelectorAll('.flow-card');
+      
+      cards.forEach(card => {
+        const title = card.querySelector('.card-title').textContent.toLowerCase();
+        const desc = card.querySelector('.card-desc').textContent.toLowerCase();
+        
+        if (query.length > 1 && (title.includes(query) || desc.includes(query))) {
+          card.classList.add('highlighted');
+        } else {
+          card.classList.remove('highlighted');
+        }
+      });
+    };
+
+    // =========================================================================
+    // PAN AND ZOOM ENGINE
+    // =========================================================================
+    function updateTransformation() {
+      canvas.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+      zoomIndicator.textContent = `Zoom: ${Math.round(zoomScale * 100)}%`;
+      zoomRange.value = Math.round(zoomScale * 100);
+    }
+
+    viewport.addEventListener('mousedown', (e) => {
+      if (e.target.closest('button') || e.target.closest('.flow-card') || e.target.closest('input')) return;
+      isDragging = true;
+      startX = e.clientX - panX;
+      startY = e.clientY - panY;
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      panX = e.clientX - startX;
+      panY = e.clientY - startY;
+      updateTransformation();
+    });
+
+    window.addEventListener('mouseup', () => {
+      isDragging = false;
+    });
+
+    viewport.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const zoomFactor = 1.08;
+      
+      const rect = viewport.getBoundingClientRect();
+      const mouseX = e.clientX - rect.left;
+      const mouseY = e.clientY - rect.top;
+
+      const prevScale = zoomScale;
+      if (e.deltaY < 0) {
+        zoomScale = Math.min(zoomScale * zoomFactor, 2.5);
+      } else {
+        zoomScale = Math.max(zoomScale / zoomFactor, 0.3);
+      }
+
+      panX = mouseX - (mouseX - panX) * (zoomScale / prevScale);
+      panY = mouseY - (mouseY - panY) * (zoomScale / prevScale);
+      updateTransformation();
+    });
+
+    window.handleSliderZoom = function(val) {
+      const prevScale = zoomScale;
+      zoomScale = parseFloat(val) / 100;
+      
+      const rect = viewport.getBoundingClientRect();
+      const midX = rect.width / 2;
+      const midY = rect.height / 2;
+
+      panX = midX - (midX - panX) * (zoomScale / prevScale);
+      panY = midY - (midY - panY) * (zoomScale / prevScale);
+      updateTransformation();
+    };
+
+    window.resetView = function() {
+      const rect = viewport.getBoundingClientRect();
+      zoomScale = 0.55; // Default overview scale
+      panX = (rect.width - 1820 * zoomScale) / 2;
+      if (panX < 20) panX = 20;
+      panY = 20;
+      updateTransformation();
+    };
+
+    window.adjustZoom = function(factor) {
+      const prevScale = zoomScale;
+      zoomScale = Math.max(Math.min(zoomScale * factor, 2.5), 0.3);
+
+      const rect = viewport.getBoundingClientRect();
+      const midX = rect.width / 2;
+      const midY = rect.height / 2;
+
+      panX = midX - (midX - panX) * (zoomScale / prevScale);
+      panY = midY - (midY - midY) * (zoomScale / prevScale);
+      updateTransformation();
+    };
+
+    // Fullscreen toggles
+    window.toggleFullscreen = function() {
+      const elem = document.getElementById('viewport');
+      if (!document.fullscreenElement) {
+        elem.requestFullscreen().then(() => {
+          setTimeout(resetView, 100);
+        }).catch(err => {
+          alert(`Error entering full-screen mode: ${err.message}`);
+        });
+      } else {
+        document.exitFullscreen();
+      }
+    };
+
+    document.addEventListener('fullscreenchange', () => {
+      const fsBtn = document.getElementById('fullscreen-btn');
+      const hudFsBtn = document.getElementById('hud-fullscreen-btn');
+      if (document.fullscreenElement) {
+        if (fsBtn) fsBtn.innerHTML = '📴 Exit Fullscreen';
+        if (hudFsBtn) hudFsBtn.innerHTML = 'Exit Fullscreen';
+      } else {
+        if (fsBtn) fsBtn.innerHTML = '📺 Fullscreen';
+        if (hudFsBtn) hudFsBtn.innerHTML = 'Fullscreen';
+      }
+      setTimeout(() => {
+        resetView();
+        drawConnectorWires();
+      }, 150);
+    });
+
+    // switchTab
+    window.switchTab = function(tabId) {
+      activeTab = tabId;
+      document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.getAttribute('onclick').includes(tabId));
+      if (activeBtn) activeBtn.classList.add('active');
+      
+      renderDiagram();
+      resetView();
+      setTimeout(drawConnectorWires, 60);
+    };
+
+    // switchLayout
+    window.switchLayout = function(layoutPattern) {
+      activeLayout = layoutPattern;
+      document.querySelectorAll('#layout-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('#layout-toggle .toggle-btn')).find(b => b.getAttribute('onclick').includes(layoutPattern));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      renderDiagram();
+      resetView();
+      setTimeout(drawConnectorWires, 60);
+    };
+
+    // switchMode
+    window.switchMode = function(viewMode) {
+      activeMode = viewMode;
+      document.querySelectorAll('#mode-toggle .toggle-btn').forEach(btn => btn.classList.remove('active'));
+      const activeBtn = Array.from(document.querySelectorAll('#mode-toggle .toggle-btn')).find(b => b.getAttribute('onclick').includes(viewMode));
+      if (activeBtn) activeBtn.classList.add('active');
+
+      const boxes = document.querySelectorAll('.tech-spec-box');
+      boxes.forEach(box => {
+        if (viewMode === 'technical') {
+          box.classList.add('visible');
+        } else {
+          box.classList.remove('visible');
+        }
+      });
+      setTimeout(drawConnectorWires, 60);
+    };
+
+    // Resize recalculation
+    window.addEventListener('resize', () => {
+      setTimeout(drawConnectorWires, 100);
+    });
+
+    // =========================================================================
+    // MODALS AND EXPORTS DATA LAYER
+    // =========================================================================
+    window.openExportModal = function() {
+      document.getElementById('export-modal').style.display = 'flex';
+    };
+
+    window.closeExportModal = function() {
+      document.getElementById('export-modal').style.display = 'none';
+    };
+
+    document.getElementById('export-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'export-modal') closeExportModal();
+    });
+
+    // 1. Export SVG Vector Graphic
+    window.exportVectorSVG = function() {
+      const flowSteps = flowData[activeTab];
+      const width = activeLayout === 'horizontal' ? flowSteps.length * 400 : 1000;
+      const height = activeLayout === 'horizontal' ? 600 : flowSteps.length * 150 + 100;
+
+      const cssStyles = `
+        svg { background-color: #0b0f19; font-family: 'Inter', sans-serif; }
+        .flow-card { fill: #1e293b; stroke: #334155; stroke-width: 2px; }
+        .flow-card.start { stroke: #3b82f6; }
+        .flow-card.process { stroke: #10b981; }
+        .flow-card.decision { stroke: #f59e0b; }
+        .flow-card.db { stroke: #ec4899; }
+        .flow-card.client { stroke: #8b5cf6; }
+        .wire { fill: none; stroke: #3b82f6; stroke-width: 3px; }
+        text { fill: #f8fafc; font-size: 14px; }
+        .badge { font-weight: bold; font-size: 11px; fill: #94a3b8; }
+        .desc { fill: #94a3b8; font-size: 12px; }
+      `;
+
+      let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}">`;
+      svgContent += `<style>${cssStyles}</style>`;
+      svgContent += `<rect width="100%" height="100%" fill="#0b0f19" />`;
+
+      let yOffset = 50;
+      flowSteps.forEach((step, index) => {
+        let strokeColor = '#334155';
+        if (step.type === 'start') strokeColor = '#3b82f6';
+        if (step.type === 'process') strokeColor = '#10b981';
+        if (step.type === 'decision') strokeColor = '#f59e0b';
+        if (step.type === 'db') strokeColor = '#ec4899';
+        if (step.type === 'client') strokeColor = '#8b5cf6';
+
+        svgContent += `<rect x="150" y="${yOffset}" width="300" height="100" rx="10" ry="10" class="flow-card" style="stroke: ${strokeColor}" />`;
+        svgContent += `<text x="170" y="${yOffset + 30}" class="badge">${step.type.toUpperCase()}</text>`;
+        svgContent += `<text x="170" y="${yOffset + 55}" font-weight="bold">${step.title}</text>`;
+        
+        const truncatedDesc = step.desc.length > 36 ? step.desc.slice(0, 36) + "..." : step.desc;
+        svgContent += `<text x="170" y="${yOffset + 80}" class="desc">${truncatedDesc}</text>`;
+
+        if (index < flowSteps.length - 1) {
+          svgContent += `<line x1="300" y1="${yOffset + 100}" x2="300" y2="${yOffset + 150}" class="wire" />`;
+        }
+        yOffset += 150;
+      });
+
+      svgContent += `</svg>`;
+
+      const svgBlob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      const link = document.createElement("a");
+      link.href = svgUrl;
+      link.download = `${activeTab}_flow_vector.svg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(svgUrl);
+      closeExportModal();
+    };
+
+    // 2. Export HTML printable check report
+    window.exportHTMLReport = function() {
+      const flowSteps = flowData[activeTab];
+      let htmlDoc = `
+        <html>
+        <head>
+          <title>${activeTab.toUpperCase()} Flow Checklist</title>
+          <style>
+            body { font-family: sans-serif; padding: 40px; color: #333; }
+            h1 { border-bottom: 2px solid #ccc; padding-bottom: 10px; }
+            .step-card { border: 1px solid #ddd; border-radius: 8px; padding: 15px; margin-bottom: 15px; }
+            .type { font-weight: bold; font-size: 10px; color: #3b82f6; text-transform: uppercase; }
+            .title { font-size: 16px; font-weight: bold; margin: 4px 0; }
+            .desc { font-size: 14px; color: #555; }
+            .tech { margin-top: 10px; background-color: #f9f9f9; padding: 8px; font-size: 12px; font-family: monospace; }
+          </style>
+        </head>
+        <body>
+          <h1>E-Commerce Platform - ${activeTab.toUpperCase()} Flow Steps List</h1>
+      `;
+
+      flowSteps.forEach(step => {
+        htmlDoc += `
+          <div class="step-card">
+            <div class="type">${step.type}</div>
+            <div class="title">${step.title}</div>
+            <div class="desc">${step.desc}</div>
+        `;
+        if (step.tech) {
+          htmlDoc += `<div class="tech">`;
+          for (const [key, value] of Object.entries(step.tech)) {
+            htmlDoc += `<strong>${key}:</strong> ${value}<br>`;
+          }
+          htmlDoc += `</div>`;
+        }
+        htmlDoc += `</div>`;
+      });
+
+      htmlDoc += `</div>`;
+
+      const blob = new Blob([htmlDoc], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${activeTab}_flow_checklist.html`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      closeExportModal();
+    };
+
+    // 3. Export raw JSON Schema
+    window.exportJSONSchema = function() {
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(flowData[activeTab], null, 2));
+      const link = document.createElement("a");
+      link.setAttribute("href", dataStr);
+      link.setAttribute("download", `${activeTab}_flow_schema.json`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      closeExportModal();
+    };
+
+    // Initialize rendering on load
+    window.addEventListener('load', () => {
+      renderDiagram();
+      resetView();
+      setTimeout(drawConnectorWires, 100);
+    });
+  </script>
+</body>
+</html>
