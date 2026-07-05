@@ -2,15 +2,10 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(
   request: NextRequest,
-  context: { params: Promise<{ pincode: string }> | { pincode: string } }
+  context: { params: Promise<{ pincode: string }> }
 ) {
   try {
-    // Support both Next.js 14/15 synchronous params and Next.js 15+/16 Promise params
-    const resolvedParams = typeof (context.params as any).then === 'function' 
-      ? await context.params 
-      : (context.params as { pincode: string });
-      
-    const { pincode } = resolvedParams;
+    const { pincode } = await context.params;
 
     if (!pincode || !/^\d{6}$/.test(pincode)) {
       return NextResponse.json(

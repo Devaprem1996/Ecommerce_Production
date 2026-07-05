@@ -42,7 +42,7 @@ const productFormSchema = z.object({
 type ProductFormData = z.infer<typeof productFormSchema>;
 
 interface EditProductPageProps {
-  params: Promise<{ id: string }> | { id: string };
+  params: Promise<{ id: string }>;
 }
 
 export default function EditProductPage({ params }: EditProductPageProps) {
@@ -50,7 +50,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [productId, setProductId] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.resolve(params).then((resolved) => {
+    params.then((resolved) => {
       setProductId(resolved.id);
     });
   }, [params]);

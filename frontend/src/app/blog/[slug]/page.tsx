@@ -35,7 +35,7 @@ const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
 );
 
 interface PageProps {
-  params: Promise<{ slug: string }> | { slug: string };
+  params: Promise<{ slug: string }>;
 }
 
 export default function BlogDetailPage({ params }: PageProps) {
@@ -46,7 +46,7 @@ export default function BlogDetailPage({ params }: PageProps) {
   // Resolve params slug
   const [slug, setSlug] = useState<string | null>(null);
   useEffect(() => {
-    Promise.resolve(params).then((resolved) => {
+    params.then((resolved) => {
       setSlug(resolved.slug);
     });
   }, [params]);
