@@ -10,6 +10,18 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  webpack: (config, { dev, isServer }) => {
+    // Enable polling watch options in development mode to fix file watching issues
+    // on Windows (especially within OneDrive/Desktop/WSL/Docker paths)
+    if (dev && !isServer) {
+      config.watchOptions = {
+        poll: 1000, // Check for changes every 1 second
+        aggregateTimeout: 300, // Delay before rebuilding
+        ignored: /node_modules/, // Ignore node_modules to keep performance high
+      };
+    }
+    return config;
+  },
 };
 
 export default nextConfig;
