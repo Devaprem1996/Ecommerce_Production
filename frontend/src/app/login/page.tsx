@@ -180,7 +180,7 @@ function LoginForm() {
             <Flame className="w-5 h-5 text-white animate-pulse" />
           </div>
           <span className="text-xl font-black tracking-wider bg-gradient-to-r from-primary-600 to-emerald-600 bg-clip-text text-transparent">
-            AETHER
+            YATHU IYARKAIYAGAM
           </span>
         </Link>
       </div>

@@ -233,7 +233,7 @@ export default function OrderInvoicePage() {
             <div className="space-y-2.5">
               <div className="flex items-center gap-2">
                 <span className="text-2xl font-bold font-heading tracking-wide text-primary-700 dark:text-primary-400">
-                  Aether Organic<span className="text-secondary-400">.</span>
+                  Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
                 </span>
                 <span className="text-[10px] font-bold text-primary-600 dark:text-primary-400 bg-primary-500/5 px-2 py-0.5 rounded border border-primary-500/10 uppercase tracking-widest">
                   Organic & Fresh
@@ -242,7 +242,7 @@ export default function OrderInvoicePage() {
               <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed font-medium">
                 Plot No. 42, Green Farms Road,<br />
                 Alwarpet, Chennai, Tamil Nadu - 600018<br />
-                Phone: +91 98765 43210 | Email: support@aetherorganic.com<br />
+                Phone: +91 98765 43210 | Email: support@yathuiyarkaiyagam.com<br />
                 <span className="font-bold text-neutral-700 dark:text-neutral-300">GSTIN: 33AAAAA1111A1Z1</span>
               </p>
             </div>
@@ -328,7 +328,7 @@ export default function OrderInvoicePage() {
                 <h4 className="font-bold text-neutral-750 dark:text-neutral-300 uppercase tracking-wider">Terms & Conditions</h4>
                 <p>&bull; This is a computer-generated tax invoice. No signature is required.</p>
                 <p>&bull; All organic products are non-returnable unless damaged upon arrival.</p>
-                <p>&bull; For customer support, reach out to support@aetherorganic.com or call +91-98765-43210.</p>
+                <p>&bull; For customer support, reach out to support@yathuiyarkaiyagam.com or call +91-98765-43210.</p>
               </div>
             </div>
 

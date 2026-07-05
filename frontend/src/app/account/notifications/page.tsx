@@ -95,7 +95,7 @@ export default function NotificationsPage() {
           Notification Preferences
         </h2>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-          Control how and when you receive alerts from Aether Organic.
+          Control how and when you receive alerts from Yathu Iyarkaiyagam.
         </p>
       </div>
 
@@ -193,7 +193,7 @@ export default function NotificationsPage() {
           <div className="flex items-center justify-between text-xs">
             <div className="space-y-0.5 pr-4">
               <h4 className="font-bold text-neutral-900 dark:text-white">
-                Aether Organic Digest
+                Yathu Iyarkaiyagam Digest
               </h4>
               <p className="text-[10px] text-neutral-500 dark:text-neutral-450 leading-relaxed font-medium">
                 Our bi-weekly journal covering organic agricultural tips, nutritional chemistry, and kitchen recipes.

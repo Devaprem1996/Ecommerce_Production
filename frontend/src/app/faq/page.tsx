@@ -273,7 +273,7 @@ export default function FAQPage() {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a
-              href="mailto:support@aetherorganic.com"
+              href="mailto:support@yathuiyarkaiyagam.com"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card text-xs font-bold text-neutral-700 dark:text-white hover:border-neutral-350 shadow-sm"
             >
               <Mail className="w-4 h-4 text-primary-500" />

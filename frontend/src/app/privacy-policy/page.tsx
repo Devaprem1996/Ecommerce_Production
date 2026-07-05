@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
             Last Updated: January 2026
           </p>
           <p className="text-xs sm:text-sm font-semibold text-neutral-500 dark:text-neutral-455 max-w-xl mx-auto">
-            Your trust is our priority. Read how Aether Organic gathers, uses, stores, and protects your personal credentials.
+            Your trust is our priority. Read how Yathu Iyarkaiyagam gathers, uses, stores, and protects your personal credentials.
           </p>
 
           <button
@@ -160,7 +160,7 @@ export default function PrivacyPolicyPage() {
                 2. How We Use Information
               </h2>
               <p>
-                Aether Organic processes your information for the following specific purposes:
+                Yathu Iyarkaiyagam processes your information for the following specific purposes:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2 text-xs">
                 <li>Processing transactions and delivering organic shipments.</li>
@@ -240,7 +240,7 @@ export default function PrivacyPolicyPage() {
                 For questions on data privacy, cookie settings, or user rights, connect with our protection officer:
               </p>
               <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-150 dark:border-neutral-850 text-xs space-y-1">
-                <p>Data Privacy Officer: <span className="font-bold text-primary-500">privacy@aetherorganic.com</span></p>
+                <p>Data Privacy Officer: <span className="font-bold text-primary-500">privacy@yathuiyarkaiyagam.com</span></p>
                 <p>Hotline: +91-98765-43210</p>
               </div>
             </section>

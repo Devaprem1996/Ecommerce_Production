@@ -313,7 +313,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Email Addresses</h4>
                     <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 mt-1">
-                      support@aetherorganic.com / sourcing@aether.org
+                      support@yathuiyarkaiyagam.com / sourcing@yathuiyarkaiyagam.org
                     </p>
                   </div>
                 </div>

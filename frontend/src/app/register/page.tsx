@@ -220,7 +220,7 @@ export default function RegisterPage() {
         // Sync details to Zustand auth store
         login(data.user, data.accessToken);
         
-        toast.success(`Welcome to Aether Organic, ${name}! 🎉`);
+        toast.success(`Welcome to Yathu Iyarkaiyagam, ${name}! 🎉`);
 
         setTimeout(() => {
           router.replace('/account');
@@ -258,7 +258,7 @@ export default function RegisterPage() {
             <Flame className="w-5 h-5 text-white animate-pulse" />
           </div>
           <span className="text-xl font-black tracking-wider bg-gradient-to-r from-primary-600 to-emerald-600 bg-clip-text text-transparent">
-            AETHER
+            YATHU IYARKAIYAGAM
           </span>
         </Link>
       </div>

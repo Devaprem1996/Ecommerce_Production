@@ -101,7 +101,7 @@ export default function AdminSettingsPage() {
   const { register, handleSubmit, watch, formState: { errors: rawErrors, isDirty } } = useForm<any>({
     resolver: zodResolver(settingsSchema),
     defaultValues: {
-      siteName: "Aether Organic",
+      siteName: "Yathu Iyarkaiyagam",
       siteTagline: "Farm Fresh Organic Produce Delivered To Your Doorstep",
       logoUrl: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400",
       faviconUrl: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=32",
@@ -134,13 +134,13 @@ export default function AdminSettingsPage() {
       smtpUsername: "postmaster@aetherorganic.com",
       smtpPassword: "smtpSecretPassword123!",
       fromEmail: "orders@aetherorganic.com",
-      fromName: "Aether Organic Store",
+      fromName: "Yathu Iyarkaiyagam Store",
 
       smsProvider: "twilio",
       smsApiKey: "SKdf80sh3jkf29hs81j3k9f02s",
       smsSenderId: "AETHOR",
 
-      defaultMetaTitle: "Aether Organic - Order Farm Fresh Spices & Honey Online",
+      defaultMetaTitle: "Yathu Iyarkaiyagam - Order Farm Fresh Spices & Honey Online",
       defaultMetaDescription: "Buy standard lab-tested 100% organic honey, cold-pressed oils, and farm vegetables in Chennai. Best local quality guaranteed.",
       googleAnalyticsId: "G-AETH99XX",
       facebookPixelId: "FB-PX-12345",

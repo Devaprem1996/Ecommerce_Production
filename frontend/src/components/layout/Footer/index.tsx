@@ -86,7 +86,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-1 focus:outline-none">
               <span className="text-2xl font-bold font-heading tracking-wide text-white">
-                Aether
+                Yathu Iyarkaiyagam
                 <span className="text-secondary-400">.</span>
               </span>
             </Link>
@@ -245,7 +245,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
         {/* Footer Bottom (Payment details and copyright) */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-xs text-primary-200/70 text-center sm:text-left leading-tight">
-            © {new Date().getFullYear()} Aether E-Commerce. All rights reserved. Sourced organically and lab verified.
+            © {new Date().getFullYear()} Yathu Iyarkaiyagam E-Commerce. All rights reserved. Sourced organically and lab verified.
           </p>
 
           {/* Payment method icons mock */}

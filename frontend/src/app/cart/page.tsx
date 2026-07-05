@@ -58,12 +58,12 @@ export default function CartPage() {
       setActiveCoupon(code);
       setDiscountAmount(Math.round(subtotal * 0.1));
       toast.success('Coupon "ORGANIC10" applied! 10% Discount saved.');
-    } else if (code === 'AETHERFREE') {
+    } else if (code === 'YATHUFREE') {
       setActiveCoupon(code);
       setDiscountAmount(0); // Handled in delivery calculations
-      toast.success('Coupon "AETHERFREE" applied! Free Delivery enabled.');
+      toast.success('Coupon "YATHUFREE" applied! Free Delivery enabled.');
     } else {
-      toast.error('Invalid coupon code. Try ORGANIC10 or AETHERFREE');
+      toast.error('Invalid coupon code. Try ORGANIC10 or YATHUFREE');
     }
   };
 
@@ -77,7 +77,7 @@ export default function CartPage() {
   // Delivery Calculations
   const freeShippingThreshold = 499;
   const standardShippingCost = 50;
-  const isFreeDelivery = subtotal >= freeShippingThreshold || activeCoupon === 'AETHERFREE';
+  const isFreeDelivery = subtotal >= freeShippingThreshold || activeCoupon === 'YATHUFREE';
   const deliveryFee = itemCount > 0 && !isFreeDelivery ? standardShippingCost : 0;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const orderTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
@@ -338,7 +338,7 @@ export default function CartPage() {
                         type="text"
                         value={couponCode}
                         onChange={(e) => setCouponCode(e.target.value)}
-                        placeholder="ORGANIC10 / AETHERFREE"
+                        placeholder="ORGANIC10 / YATHUFREE"
                         className="flex-1 text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white uppercase outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
                       />
                       <Button
@@ -388,7 +388,7 @@ export default function CartPage() {
                     )}
                   </div>
 
-                  {remainingForFreeShipping > 0 && activeCoupon !== 'AETHERFREE' && (
+                  {remainingForFreeShipping > 0 && activeCoupon !== 'YATHUFREE' && (
                     <div className="bg-primary-500/5 rounded-card p-3 text-xs text-neutral-700 dark:text-neutral-450 border border-primary-500/10">
                       Add <span className="font-bold text-primary-500">₹{remainingForFreeShipping}</span> more for <span className="font-bold">Free Delivery</span>!
                     </div>

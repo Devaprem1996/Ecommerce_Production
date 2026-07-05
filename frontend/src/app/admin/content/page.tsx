@@ -54,7 +54,7 @@ interface FAQ {
 }
 const initialFAQs: FAQ[] = [
   { id: 'faq-1', category: 'Delivery', question: 'How long does delivery take inside Chennai?', answer: 'Orders placed before 12 PM are delivered on the next calendar day.' },
-  { id: 'faq-2', category: 'Products', question: 'Is all Aether honey chemical free?', answer: 'Yes! We collect wild mountain honey that is certified organic.' }
+  { id: 'faq-2', category: 'Products', question: 'Is all Yathu Iyarkaiyagam honey chemical free?', answer: 'Yes! We collect wild mountain honey that is certified organic.' }
 ];
 
 export default function ContentManagementPage() {

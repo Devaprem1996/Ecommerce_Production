@@ -11,7 +11,7 @@ import { twMerge } from 'tailwind-merge';
 
 export const WhatsAppFloat: React.FC<WhatsAppFloatProps> = ({
   phoneNumber = '919876543210',
-  message = 'Hi Aether! I want to know more about organic farm products.',
+  message = 'Hi Yathu Iyarkaiyagam! I want to know more about organic farm products.',
   className,
 }) => {
   const { t } = useTranslation();

@@ -23,7 +23,7 @@ export const useWishlist = create<WishlistState>()(
       hasItem: (productId) => get().items.some((item) => item.id === productId),
     }),
     {
-      name: 'aether-wishlist-storage',
+      name: 'yathu-wishlist-storage',
     }
   )
 );

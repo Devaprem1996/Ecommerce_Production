@@ -79,7 +79,7 @@ export default function MaintenancePage() {
       {/* Top Header Logo */}
       <header className="w-full flex justify-center py-4 select-none">
         <span className="text-2xl font-bold font-heading tracking-wide text-primary-700 dark:text-primary-400">
-          Aether Organic<span className="text-secondary-400">.</span>
+          Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
         </span>
       </header>
 
@@ -180,7 +180,7 @@ export default function MaintenancePage() {
 
       {/* Bottom Footer block */}
       <footer className="w-full text-center text-[10px] text-neutral-400 border-t border-neutral-100 dark:border-neutral-850 pt-4 select-none">
-        &copy; {new Date().getFullYear()} Aether Organic. All rights reserved.
+        &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam. All rights reserved.
       </footer>
 
     </div>

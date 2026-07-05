@@ -192,7 +192,7 @@ export default function AdminLoginPage() {
                   disabled={loading}
                   {...register('email')}
                   className="w-full text-xs font-semibold pl-10 pr-4 py-3 border border-neutral-800 rounded-card bg-neutral-950 text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50"
-                  placeholder="admin@aether.com"
+                  placeholder="admin@yathuiyarkaiyagam.com"
                   autoComplete="email"
                 />
               </div>

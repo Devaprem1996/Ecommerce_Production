@@ -27,7 +27,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
         <div className="max-w-7xl mx-auto px-4 flex justify-center sm:justify-start">
           <Link href="/" className="flex items-center gap-1.5">
             <span className="text-xl font-bold font-heading tracking-wide text-primary-700 dark:text-primary-400">
-              Aether Organic<span className="text-secondary-400">.</span>
+              Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
             </span>
           </Link>
         </div>
@@ -108,7 +108,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
 
       {/* Minimal Footer */}
       <footer className="w-full py-4 text-center text-[10px] text-neutral-400 border-t border-neutral-100 dark:border-neutral-850 select-none bg-white dark:bg-neutral-900">
-        &copy; {new Date().getFullYear()} Aether Organic. All rights reserved.
+        &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam. All rights reserved.
       </footer>
 
     </div>

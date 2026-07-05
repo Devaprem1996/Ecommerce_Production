@@ -29,7 +29,7 @@ const calculateDiscount = (items: CartItemType[], coupon: string | null): number
     if (subtotal < 499) return 0;
     return Math.min(Math.round(subtotal * 0.2), 150);
   }
-  return 0; // AETHERFREE is handled in delivery calculations
+  return 0; // YATHUFREE is handled in delivery calculations
 };
 
 export const useCartStore = create<CartState>()(
@@ -116,12 +116,12 @@ export const useCartStore = create<CartState>()(
           const discount = Math.min(Math.round(subtotal * 0.2), 150);
           set({ appliedCoupon: 'FRESH20', discountAmount: discount });
           return { success: true, message: `Coupon "FRESH20" applied! You save ₹${discount}.` };
-        } else if (cleanedCode === 'AETHERFREE') {
-          set({ appliedCoupon: 'AETHERFREE', discountAmount: 0 });
-          return { success: true, message: 'Coupon "AETHERFREE" applied! Free Delivery enabled.' };
+        } else if (cleanedCode === 'YATHUFREE') {
+          set({ appliedCoupon: 'YATHUFREE', discountAmount: 0 });
+          return { success: true, message: 'Coupon "YATHUFREE" applied! Free Delivery enabled.' };
         }
 
-        return { success: false, message: 'Invalid coupon code. Try ORGANIC10, FRESH20 or AETHERFREE' };
+        return { success: false, message: 'Invalid coupon code. Try ORGANIC10, FRESH20 or YATHUFREE' };
       },
 
       removeCoupon: () => {
@@ -129,7 +129,7 @@ export const useCartStore = create<CartState>()(
       },
     }),
     {
-      name: 'aether-cart-storage',
+      name: 'yathu-cart-storage',
       partialize: (state) => ({ 
         items: state.items,
         appliedCoupon: state.appliedCoupon,

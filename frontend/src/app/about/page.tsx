@@ -94,7 +94,7 @@ export default function AboutPage() {
             className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest"
           >
             <Leaf className="w-3.5 h-3.5 text-primary-300" />
-            <span>Aether Organic Story</span>
+            <span>Yathu Iyarkaiyagam Story</span>
           </motion.div>
           
           <motion.h1
@@ -124,10 +124,10 @@ export default function AboutPage() {
             {t('about.our_story', 'Our Story')}
           </div>
           <h2 className="text-2.5xl sm:text-3.5xl font-black font-heading text-neutral-900 dark:text-white leading-tight">
-            How Aether Organic Was Born
+            How Yathu Iyarkaiyagam Was Born
           </h2>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed font-semibold">
-            {t('about.our_story_desc', 'Founded with a vision to connect local farmers directly with consumers, Aether Organic ensures 100% lab-tested, certified organic food products that are wholesome, pure, and nutritious.')}
+            {t('about.our_story_desc', 'Founded with a vision to connect local farmers directly with consumers, Yathu Iyarkaiyagam ensures 100% lab-tested, certified organic food products that are wholesome, pure, and nutritious.')}
           </p>
           <div className="border-l-4 border-primary-500 pl-4 py-1 italic text-xs font-bold text-neutral-500 dark:text-neutral-450 leading-relaxed">
             "We believe that everyone deserves food free from pesticides and chemical growth hormones, sourced transparently, directly from organic caretakers."
@@ -298,7 +298,7 @@ export default function AboutPage() {
               {t('about.team_title', 'Meet Our Team')}
             </h2>
             <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-              {t('about.team_desc', 'The passionate individuals behind Aether Organic making direct-farm sourcing possible.')}
+              {t('about.team_desc', 'The passionate individuals behind Yathu Iyarkaiyagam making direct-farm sourcing possible.')}
             </p>
           </div>
 

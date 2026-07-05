@@ -232,7 +232,7 @@ function ShopContent() {
             </div>
 
             {/* Mobile Filter Toggle & Controls */}
-            <div className="flex items-center gap-2 sm:hidden w-full">
+            <div className="flex items-center gap-2 lg:hidden w-full">
               <Button
                 variant="secondary"
                 size="sm"

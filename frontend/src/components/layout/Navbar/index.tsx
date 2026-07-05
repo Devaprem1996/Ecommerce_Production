@@ -124,13 +124,13 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 !shouldRenderTransparent ? 'text-primary-700 dark:text-primary-400' : 'text-white'
               )}
             >
-              Aether
+              Yathu Iyarkaiyagam
               <span className="text-secondary-400">.</span>
             </span>
           </Link>
 
           {/* Center Navigation Links (Desktop) */}
-          <nav className="hidden sm:flex items-center gap-7">
+          <nav className="hidden md:flex items-center gap-7">
             {navLinks.map((link) => {
               const isActive = pathname === link.path;
               return (

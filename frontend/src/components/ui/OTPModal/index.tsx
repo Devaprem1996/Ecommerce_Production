@@ -141,7 +141,7 @@ export const OTPModal: React.FC<OTPModalProps> = ({ isOpen, onClose, onSuccess }
           setAuth(
             {
               id: 'cust-' + Math.floor(Math.random() * 10000),
-              email: 'customer@aether.org',
+              email: 'customer@yathuiyarkaiyagam.org',
               role: 'CUSTOMER',
               firstName: 'Ganesh',
               lastName: 'Prabhu',

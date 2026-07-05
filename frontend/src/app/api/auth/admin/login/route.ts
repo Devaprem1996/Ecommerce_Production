@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Default admin mock credentials
-    const validEmail = 'admin@aether.com';
+    const validEmail = 'admin@yathuiyarkaiyagam.com';
     const validPassword = 'Password123';
 
     if (email.toLowerCase() !== validEmail || password !== validPassword) {
@@ -27,8 +27,8 @@ export async function POST(request: NextRequest) {
     const secret = process.env.JWT_SECRET || 'default_jwt_secret_change_me_in_prod';
 
     const adminPayload = {
-      id: 'adm_aether_super',
-      name: 'Aether Administrator',
+      id: 'adm_yathu_super',
+      name: 'Yathu Administrator',
       mobile: '9876543210',
       email: email.toLowerCase(),
       avatar: null,

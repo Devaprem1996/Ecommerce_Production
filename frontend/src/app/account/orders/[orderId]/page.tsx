@@ -169,7 +169,7 @@ export default function OrderDetailPage() {
       <div className="flex flex-col sm:flex-row justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-6">
         <div className="space-y-1">
           <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block select-none">
-            AETHER ORGANIC ORDER DETAILS
+            YATHU IYARKAIYAGAM ORGANIC ORDER DETAILS
           </span>
           <h2 className="text-xl font-black font-heading text-neutral-900 dark:text-white">
             Order #{order.id}

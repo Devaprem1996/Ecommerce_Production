@@ -148,7 +148,7 @@ export default function TermsConditionsPage() {
                 1. Acceptance of Terms
               </h2>
               <p>
-                These terms constitute a legally binding agreement between you ("Customer", "User", or "You") and Aether Organic. If you do not agree to these terms, please do not access or use our services.
+                These terms constitute a legally binding agreement between you ("Customer", "User", or "You") and Yathu Iyarkaiyagam. If you do not agree to these terms, please do not access or use our services.
               </p>
             </section>
 
@@ -211,7 +211,7 @@ export default function TermsConditionsPage() {
                 8. Intellectual Property
               </h2>
               <p>
-                All graphics, brand logo designs, text content, database schemas, and custom code on this site are the intellectual property of Aether Organic, protected by copyright and international intellectual property laws.
+                All graphics, brand logo designs, text content, database schemas, and custom code on this site are the intellectual property of Yathu Iyarkaiyagam, protected by copyright and international intellectual property laws.
               </p>
             </section>
 
@@ -229,7 +229,7 @@ export default function TermsConditionsPage() {
                 10. Limitation of Liability
               </h2>
               <p>
-                Aether Organic is not liable for any indirect, incidental, or consequential damages arising from your use of the website or consumption of products, to the maximum extent permitted by applicable laws.
+                Yathu Iyarkaiyagam is not liable for any indirect, incidental, or consequential damages arising from your use of the website or consumption of products, to the maximum extent permitted by applicable laws.
               </p>
             </section>
 
@@ -251,7 +251,7 @@ export default function TermsConditionsPage() {
                 If you have questions, feedback, or concerns regarding these Terms, contact us:
               </p>
               <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-150 dark:border-neutral-850 text-xs space-y-1">
-                <p>Legal Counsel Email: <span className="font-bold text-primary-500">legal@aetherorganic.com</span></p>
+                <p>Legal Counsel Email: <span className="font-bold text-primary-500">legal@yathuiyarkaiyagam.com</span></p>
                 <p>Support Hotline: +91-98765-43210</p>
               </div>
             </section>

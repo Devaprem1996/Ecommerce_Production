@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     // Mock customer payload
     const userPayload: Omit<JWTPayload, 'exp'> = {
       id: `usr_${crypto.randomUUID().substring(0, 8)}`,
-      name: name || 'Aether Customer',
+      name: name || 'Yathu Customer',
       mobile: mobile,
       email: email || null,
       avatar: null,

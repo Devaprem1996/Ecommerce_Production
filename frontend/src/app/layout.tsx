@@ -30,7 +30,7 @@ const tamil = Noto_Sans_Tamil({
 });
 
 export const metadata: Metadata = {
-  title: "Aether Organic | Pure & Lab Tested E-Commerce",
+  title: "Yathu Iyarkaiyagam | Pure & Lab Tested E-Commerce",
   description: "Premium organic products sourced directly from local farms. 100% certified organic and lab tested.",
 };
 

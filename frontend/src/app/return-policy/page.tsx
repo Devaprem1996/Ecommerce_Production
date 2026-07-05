@@ -90,7 +90,7 @@ export default function ReturnPolicyPage() {
                 {t("return_policy.sec_window_title", "1. Return Window")}
               </h2>
               <p>
-                {t("return_policy.window_desc_1", "At Aether Organic, we strive to deliver the freshest products from our farms to your table. If you are not completely satisfied with your purchase, you may initiate a return or exchange request within")} <span className="font-bold text-primary-600 dark:text-primary-400">7 {t("return_policy.days", "days")}</span> {t("return_policy.window_desc_2", "of the delivery date.")}
+                {t("return_policy.window_desc_1", "At Yathu Iyarkaiyagam, we strive to deliver the freshest products from our farms to your table. If you are not completely satisfied with your purchase, you may initiate a return or exchange request within")} <span className="font-bold text-primary-600 dark:text-primary-400">7 {t("return_policy.days", "days")}</span> {t("return_policy.window_desc_2", "of the delivery date.")}
               </p>
               <p>
                 Requests initiated after 7 days will not be accepted. We kindly ask you to verify the condition and freshness of your organic grocery items upon arrival.
@@ -142,7 +142,7 @@ export default function ReturnPolicyPage() {
                   <span className="font-bold">Original Payment Method:</span> {t("return_policy.refund_original_desc", "Refund will be credited to your credit card, debit card, or UPI bank account within 3 to 5 business days.")}
                 </li>
                 <li>
-                  <span className="font-bold">Store Credit:</span> {t("return_policy.refund_credit_desc", "Refund is issued instantly as Aether Wallet credit that can be applied to any future order.")}
+                  <span className="font-bold">Store Credit:</span> {t("return_policy.refund_credit_desc", "Refund is issued instantly as Yathu Iyarkaiyagam Wallet credit that can be applied to any future order.")}
                 </li>
               </ul>
             </section>
@@ -185,7 +185,7 @@ export default function ReturnPolicyPage() {
                 If you have any questions or require support regarding returns, please connect with us:
               </p>
               <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-100 dark:border-neutral-850 space-y-1 text-xs">
-                <p>Email Support: <span className="font-bold text-primary-500">support@aetherorganic.com</span></p>
+                <p>Email Support: <span className="font-bold text-primary-500">support@yathuiyarkaiyagam.com</span></p>
                 <p>Customer Care: <span className="font-bold text-neutral-900 dark:text-white">+91-98765-43210</span> (9:00 AM to 6:00 PM, Mon-Sat)</p>
                 <p>Chat Support: WhatsApp us using the live float icon on our homepage.</p>
               </div>

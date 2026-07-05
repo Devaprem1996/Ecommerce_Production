@@ -74,7 +74,7 @@ export const useAuthStore = create<AuthState>()(
       setLoading: (isLoading) => set({ isLoading }),
     }),
     {
-      name: "aether-auth-storage",
+      name: "yathu-auth-storage",
       storage: createJSONStorage(() => localStorage),
       // Partialize to only save safe user meta, never the raw access token
       partialize: (state) => ({

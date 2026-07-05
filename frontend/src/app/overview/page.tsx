@@ -60,7 +60,7 @@ export default function OverviewPage() {
   // Testimonial quotes
   const testimonials = [
     {
-      quote: currentLang === "ta" ? "“ஏத்தர் ஆர்கானிக் தயாரிப்புகளின் தரம் மிகவும் அற்புதம். உண்மையான பண்ணை சுவை!”" : "“The quality of Aether Organic products is outstanding. Authentic farm-fresh taste!”",
+      quote: currentLang === "ta" ? "“யாது இயற்கையகம் தயாரிப்புகளின் தரம் மிகவும் அற்புதம். உண்மையான பண்ணை சுவை!”" : "“The quality of Yathu Iyarkaiyagam products is outstanding. Authentic farm-fresh taste!”",
       author: currentLang === "ta" ? "கார்த்திக் ஆர்." : "Karthik R.",
       role: currentLang === "ta" ? "சரிபார்க்கப்பட்ட வாங்குபவர்" : "Verified Buyer",
       stars: 5
