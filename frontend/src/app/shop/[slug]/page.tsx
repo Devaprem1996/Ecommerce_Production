@@ -644,7 +644,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
               )}
 
               {/* Cart Buttons */}
-              {product.stock > 0 && (
+              {product.stock > 0 ? (
                 <div className="flex flex-col sm:flex-row gap-3 pt-3">
                   <Button
                     variant="cta"
@@ -662,6 +662,17 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                     className="flex-1 font-bold text-base border-neutral-200 dark:border-neutral-850 text-neutral-850 dark:text-white"
                   >
                     {t('product.buy_now', 'Buy Now')}
+                  </Button>
+                </div>
+              ) : (
+                <div className="pt-3">
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    disabled
+                    className="w-full font-bold text-base border-neutral-200 dark:border-neutral-850 opacity-60 cursor-not-allowed"
+                  >
+                    {t('badge.sold-out', 'Sold Out')}
                   </Button>
                 </div>
               )}

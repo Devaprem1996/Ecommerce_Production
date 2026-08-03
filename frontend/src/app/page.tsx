@@ -246,16 +246,26 @@ export default function Home() {
 
                 {/* CTA Buttons */}
                 <div className="flex gap-3 w-full">
-                  {selectedProduct.stock > 0 && (
+                  {selectedProduct.stock > 0 ? (
                     <Button
                       type="button"
                       variant="cta"
                       size="lg"
                       onClick={handleAddToCart}
-                      className="flex-1 font-bold text-base"
+                      className="flex-1 font-bold text-base bg-gradient-to-r from-primary-500 to-primary-700 text-white animate-pulse"
                       leftIcon={<ShoppingBag className="w-5 h-5" />}
                     >
                       {t('quick_view.add_to_cart', 'Add to Cart')}
+                    </Button>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="lg"
+                      disabled
+                      className="flex-1 font-bold text-base border border-neutral-200 dark:border-neutral-800 opacity-60 cursor-not-allowed"
+                    >
+                      {currentLang === 'ta' ? 'விற்றுத்தீர்ந்தது' : 'Sold Out'}
                     </Button>
                   )}
 

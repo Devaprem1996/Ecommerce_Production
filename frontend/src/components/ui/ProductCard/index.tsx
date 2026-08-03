@@ -150,7 +150,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </span>
           </div>
 
-          {!isSoldOut && (
+          {!isSoldOut ? (
             <Button
               variant="primary"
               size="sm"
@@ -159,6 +159,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               className="min-w-[40px] px-3 font-semibold h-9 rounded-card"
             >
               {t('products.add_to_cart', 'Add')}
+            </Button>
+          ) : (
+            <Button
+              variant="secondary"
+              size="sm"
+              disabled
+              className="min-w-[40px] px-3 font-semibold h-9 rounded-card opacity-50 cursor-not-allowed text-xs"
+            >
+              {t('badge.sold-out', 'Sold Out')}
             </Button>
           )}
         </div>
