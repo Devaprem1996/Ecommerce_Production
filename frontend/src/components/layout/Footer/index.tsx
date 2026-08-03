@@ -53,7 +53,6 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
     quickLinks: [
       { label: t('nav.home', 'Home'), path: '/' },
       { label: t('nav.shop', 'Shop'), path: '/shop' },
-      { label: t('nav.blog', 'Blog'), path: '/blog' },
       { label: t('nav.faq', 'FAQs'), path: '/faq' },
       { label: t('nav.reviews', 'Reviews'), path: '/reviews' },
     ],

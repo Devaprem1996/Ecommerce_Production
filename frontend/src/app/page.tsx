@@ -124,10 +124,10 @@ export default function Home() {
       <Testimonials />
 
       {/* 9. BlogPreview Articles */}
-      <BlogPreview />
+      {/* <BlogPreview /> */}
 
       {/* 10. Newsletter Form */}
-      <Newsletter />
+      {/* <Newsletter /> */}
 
       {/* Central Product Quick View Modal */}
       <Modal
@@ -245,18 +245,19 @@ export default function Home() {
                 )}
 
                 {/* CTA Buttons */}
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant="cta"
-                    size="lg"
-                    disabled={selectedProduct.stock === 0}
-                    onClick={handleAddToCart}
-                    className="flex-1 font-bold text-base"
-                    leftIcon={<ShoppingBag className="w-5 h-5" />}
-                  >
-                    {t('quick_view.add_to_cart', 'Add to Cart')}
-                  </Button>
+                <div className="flex gap-3 w-full">
+                  {selectedProduct.stock > 0 && (
+                    <Button
+                      type="button"
+                      variant="cta"
+                      size="lg"
+                      onClick={handleAddToCart}
+                      className="flex-1 font-bold text-base"
+                      leftIcon={<ShoppingBag className="w-5 h-5" />}
+                    >
+                      {t('quick_view.add_to_cart', 'Add to Cart')}
+                    </Button>
+                  )}
 
                   <Button
                     type="button"

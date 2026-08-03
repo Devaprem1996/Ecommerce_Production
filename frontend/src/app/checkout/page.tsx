@@ -231,7 +231,7 @@ export default function CheckoutPage() {
 
     // Simulate payment transaction
     setTimeout(() => {
-      const mockOrderNo = 'AETH-' + Math.floor(100000 + Math.random() * 900000);
+      const mockOrderNo = 'YATHU-' + Math.floor(100000 + Math.random() * 900000);
       
       // Determine delivery estimate based on pincode
       let days = 5;

@@ -105,7 +105,7 @@ export default function AdminSettingsPage() {
       siteTagline: "Farm Fresh Organic Produce Delivered To Your Doorstep",
       logoUrl: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400",
       faviconUrl: "https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=32",
-      contactEmail: "care@aetherorganic.com",
+      contactEmail: "care@yathuiyarkaiyagam.com",
       contactPhone: "+91 9876543210",
       whatsappNumber: "+91 9876543210",
       businessAddress: "No. 42, Organic Green Fields, Alwarpet, Chennai, Tamil Nadu - 600018",
@@ -131,14 +131,14 @@ export default function AdminSettingsPage() {
 
       smtpHost: "smtp.mailgun.org",
       smtpPort: 587,
-      smtpUsername: "postmaster@aetherorganic.com",
+      smtpUsername: "postmaster@yathuiyarkaiyagam.com",
       smtpPassword: "smtpSecretPassword123!",
-      fromEmail: "orders@aetherorganic.com",
+      fromEmail: "orders@yathuiyarkaiyagam.com",
       fromName: "Yathu Iyarkaiyagam Store",
 
       smsProvider: "twilio",
       smsApiKey: "SKdf80sh3jkf29hs81j3k9f02s",
-      smsSenderId: "AETHOR",
+      smsSenderId: "YATHUI",
 
       defaultMetaTitle: "Yathu Iyarkaiyagam - Order Farm Fresh Spices & Honey Online",
       defaultMetaDescription: "Buy standard lab-tested 100% organic honey, cold-pressed oils, and farm vegetables in Chennai. Best local quality guaranteed.",
@@ -146,10 +146,10 @@ export default function AdminSettingsPage() {
       facebookPixelId: "FB-PX-12345",
       robotsTxt: "User-agent: *\nDisallow: /admin\nDisallow: /api",
 
-      facebookUrl: "https://facebook.com/aetherorganic",
-      instagramUrl: "https://instagram.com/aetherorganic",
-      twitterUrl: "https://twitter.com/aetherorganic",
-      youtubeUrl: "https://youtube.com/aetherorganic",
+      facebookUrl: "https://facebook.com/yathuiyarkaiyagam",
+      instagramUrl: "https://instagram.com/yathuiyarkaiyagam",
+      twitterUrl: "https://twitter.com/yathuiyarkaiyagam",
+      youtubeUrl: "https://youtube.com/yathuiyarkaiyagam",
 
       maintenanceMode: false,
       maintenanceMessage: "Our store is undergoing scheduled farm harvest updates. We will be back shortly!",

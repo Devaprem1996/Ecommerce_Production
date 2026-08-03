@@ -140,7 +140,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
   // States
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState<'description' | 'nutrition' | 'usage' | 'reviews'>('description');
+  const [activeTab, setActiveTab] = useState<'description' | 'nutrition' | 'usage' | 'reviews'>('usage');
   
   // Interactive Size/Weight options
   const sizeOptions = useMemo(() => {
@@ -493,10 +493,10 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                   onClick={scrollToReviews}
                   className="text-xs sm:text-sm font-semibold text-primary-500 hover:underline hover:text-primary-400 transition-colors"
                 >
-                  {reviews.length}{' '}
-                  {reviews.length === 1 
-                    ? t('product.reviews_count', 'review') 
-                    : t('product.reviews_count_plural', 'reviews')}
+                  {t(
+                    reviews.length === 1 ? 'product.reviews_count' : 'product.reviews_count_plural',
+                    { count: reviews.length }
+                  )}
                 </button>
               </div>
 
@@ -540,8 +540,8 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                 </div>
               </div>
 
-              {/* Pincode Validator */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature p-4 space-y-3 shadow-inner">
+              {/* Pincode Validator - Hidden */}
+              {/* <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature p-4 space-y-3 shadow-inner">
                 <div className="flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-white">
                   <MapPin className="w-5 h-5 text-primary-500" />
                   <span>{t('pincode.title', 'Check Delivery Availability')}</span>
@@ -566,7 +566,6 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                   </Button>
                 </div>
 
-                {/* Status messages */}
                 <AnimatePresence mode="wait">
                   {pincodeStatus === 'success' && pincodeResult && (
                     <motion.div
@@ -614,7 +613,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                     </motion.div>
                   )}
                 </AnimatePresence>
-              </div>
+              </div> */}
 
               {/* Quantity selector */}
               {product.stock > 0 && (
@@ -645,27 +644,27 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
               )}
 
               {/* Cart Buttons */}
-              <div className="flex flex-col sm:flex-row gap-3 pt-3">
-                <Button
-                  variant="cta"
-                  size="lg"
-                  onClick={handleAddToCart}
-                  disabled={product.stock === 0}
-                  className="flex-1 font-bold text-base bg-gradient-to-r from-primary-500 to-primary-700 text-white"
-                  leftIcon={<ShoppingBag className="w-5 h-5" />}
-                >
-                  {t('product.add_to_cart', 'Add to Cart')}
-                </Button>
-                <Button
-                  variant="secondary"
-                  size="lg"
-                  onClick={handleBuyNow}
-                  disabled={product.stock === 0}
-                  className="flex-1 font-bold text-base border-neutral-200 dark:border-neutral-850 text-neutral-850 dark:text-white"
-                >
-                  {t('product.buy_now', 'Buy Now')}
-                </Button>
-              </div>
+              {product.stock > 0 && (
+                <div className="flex flex-col sm:flex-row gap-3 pt-3">
+                  <Button
+                    variant="cta"
+                    size="lg"
+                    onClick={handleAddToCart}
+                    className="flex-1 font-bold text-base bg-gradient-to-r from-primary-500 to-primary-700 text-white"
+                    leftIcon={<ShoppingBag className="w-5 h-5" />}
+                  >
+                    {t('product.add_to_cart', 'Add to Cart')}
+                  </Button>
+                  <Button
+                    variant="secondary"
+                    size="lg"
+                    onClick={handleBuyNow}
+                    className="flex-1 font-bold text-base border-neutral-200 dark:border-neutral-850 text-neutral-850 dark:text-white"
+                  >
+                    {t('product.buy_now', 'Buy Now')}
+                  </Button>
+                </div>
+              )}
 
             </div>
 
@@ -700,10 +699,8 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
           
           {/* Tab Headers */}
           <div className="flex border-b border-neutral-100 dark:border-neutral-800 overflow-x-auto pb-px">
-            {(['description', 'nutrition', 'usage', 'reviews'] as const).map(tab => {
+            {(['usage', 'reviews'] as const).map(tab => {
               const label = 
-                tab === 'description' ? t('product.description', 'Description') :
-                tab === 'nutrition' ? t('product.nutrition', 'Nutrition') :
                 tab === 'usage' ? t('product.how_to_use', 'How to Use') :
                 t('product.reviews', 'Reviews');
               return (

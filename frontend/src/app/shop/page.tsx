@@ -222,17 +222,17 @@ function ShopContent() {
               <h1 className="text-2xl sm:text-3.5xl font-bold font-heading text-neutral-900 dark:text-white leading-tight">
                 {selectedCategories.length === 1 ? selectedCategories[0] : t('shop.title', 'Organic Shop')}
               </h1>
-              <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400 mt-1">
-                {filteredProducts.length}{' '}
-                {filteredProducts.length === 1 
-                  ? t('shop.results_count', 'product') 
-                  : t('shop.results_count_plural', 'products')}{' '}
+              <p className="text-xs sm:text-sm font-semibold text-neutral-650 dark:text-neutral-400 mt-1">
+                {t(
+                  filteredProducts.length === 1 ? 'shop.results_count' : 'shop.results_count_plural',
+                  { count: filteredProducts.length }
+                )}{' '}
                 {t('products.in_stock', 'available')}
               </p>
             </div>
 
             {/* Mobile Filter Toggle & Controls */}
-            <div className="flex items-center gap-2 lg:hidden w-full">
+            {/* <div className="flex items-center gap-2 sm:hidden w-full">
               <Button
                 variant="secondary"
                 size="sm"
@@ -242,7 +242,7 @@ function ShopContent() {
               >
                 {t('shop.filter_title', 'Filters')}
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -251,8 +251,8 @@ function ShopContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           
-          {/* Desktop Filter Sidebar */}
-          <aside className="hidden lg:block lg:col-span-1 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sticky top-24 self-start max-h-[85vh] overflow-y-auto shadow-sm">
+          {/* Desktop Filter Sidebar - Removed/Hidden */}
+          {/* <aside className="hidden lg:block lg:col-span-1 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sticky top-24 self-start max-h-[85vh] overflow-y-auto shadow-sm">
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-6">
               <h3 className="font-bold text-lg text-neutral-900 dark:text-white flex items-center gap-2">
                 <SlidersHorizontal className="w-5 h-5 text-primary-500" />
@@ -269,7 +269,6 @@ function ShopContent() {
               )}
             </div>
 
-            {/* Categories */}
             <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
               <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
                 {t('shop.category', 'Categories')}
@@ -300,7 +299,6 @@ function ShopContent() {
               </div>
             </div>
 
-            {/* Price Filter */}
             <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
               <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
                 {t('shop.price_range', 'Price Range')}
@@ -346,7 +344,6 @@ function ShopContent() {
               </div>
             </div>
 
-            {/* Ratings Filter */}
             <div className="mb-6 pb-6 border-b border-neutral-100 dark:border-neutral-800">
               <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
                 {t('shop.rating', 'Customer Rating')}
@@ -381,7 +378,6 @@ function ShopContent() {
               </div>
             </div>
 
-            {/* Availability */}
             <div className="mb-2">
               <h4 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider mb-3">
                 {t('shop.availability', 'Availability')}
@@ -396,10 +392,10 @@ function ShopContent() {
                 <span className="font-medium">{t('shop.in_stock', 'Hide Out of Stock')}</span>
               </label>
             </div>
-          </aside>
+          </aside> */}
 
           {/* Product Listing Main Section */}
-          <main className="col-span-1 lg:col-span-3 flex flex-col">
+          <main className="col-span-1 lg:col-span-4 flex flex-col">
             
             {/* Top Toolbar Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature px-4 py-3 mb-6 shadow-sm">
@@ -604,19 +600,20 @@ function ShopContent() {
                                     <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
                                   </svg>
                                 </Button>
-                                <Button
-                                  variant={product.stock === 0 ? 'secondary' : 'primary'}
-                                  size="sm"
-                                  disabled={product.stock === 0}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleAddToCart(product);
-                                  }}
-                                  leftIcon={<ShoppingBag className="w-4 h-4" />}
-                                  className="font-bold text-xs"
-                                >
-                                  {product.stock === 0 ? t('products.out_of_stock', 'Sold Out') : t('products.add_to_cart', 'Add to Cart')}
-                                </Button>
+                                {product.stock > 0 && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddToCart(product);
+                                    }}
+                                    leftIcon={<ShoppingBag className="w-4 h-4" />}
+                                    className="font-bold text-xs"
+                                  >
+                                    {t('products.add_to_cart', 'Add to Cart')}
+                                  </Button>
+                                )}
                               </div>
                             </div>
                           </div>

@@ -374,7 +374,7 @@ export default function OrderInvoicePage() {
               Thank you for supporting organic agriculture! 🌿
             </p>
             <p className="text-[10px] text-neutral-400 mt-1">
-              Visit again at www.aetherorganic.com
+              Visit again at www.yathuiyarkaiyagam.com
             </p>
           </div>
 

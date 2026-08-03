@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   // Notification States
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New order #AETH-8910 received from Priya K.', time: '5m ago', read: false },
+    { id: 1, text: 'New order #YATHU-8910 received from Priya K.', time: '5m ago', read: false },
     { id: 2, text: 'Product "Raw Mountain Honey" stock low (12 units)', time: '2h ago', read: false },
     { id: 3, text: 'System update completed successfully', time: '1d ago', read: true }
   ]);
@@ -162,7 +162,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="h-16 flex items-center justify-between px-5 border-b border-primary-800/40">
           <Link href="/admin" className="flex items-center gap-2 focus:outline-none">
             <span className={`font-heading font-black tracking-wide ${isCollapsed ? 'text-lg text-center w-full' : 'text-xl'}`}>
-              {isCollapsed ? 'A.' : 'Yathu Iyarkaiyagam Admin'}
+              {isCollapsed ? 'Y.I.' : 'Yathu Iyarkaiyagam Admin'}
             </span>
           </Link>
 

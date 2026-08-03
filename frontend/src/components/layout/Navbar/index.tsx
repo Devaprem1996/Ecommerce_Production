@@ -47,7 +47,6 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
     { label: t('nav.home', 'Home'), path: '/' },
     { label: t('nav.shop', 'Shop'), path: '/shop' },
     { label: t('footer.about', 'About'), path: '/about' },
-    { label: t('nav.blog', 'Blog'), path: '/blog' },
     { label: t('nav.faq', 'FAQs'), path: '/faq' },
     { label: t('nav.contact', 'Contact'), path: '/contact' },
   ];

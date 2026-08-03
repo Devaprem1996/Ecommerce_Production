@@ -84,7 +84,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     if (!localStorage.getItem('user_orders')) {
       const defaultOrders = [
         {
-          id: 'AETH-78901',
+          id: 'YATHU-78901',
           date: '2026-06-25',
           items: [
             { productId: 'prod-1', quantity: 2, price: 60 },
@@ -94,11 +94,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           status: 'delivered',
           paymentMethod: 'online',
           paymentStatus: 'paid',
-          trackingNumber: 'AETH-TRK-78901',
+          trackingNumber: 'YATHU-TRK-78901',
           courier: 'Delhivery'
         },
         {
-          id: 'AETH-98319',
+          id: 'YATHU-98319',
           date: '2026-06-30',
           items: [
             { productId: 'prod-2', quantity: 1, price: 350 },
@@ -108,11 +108,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           status: 'processing',
           paymentMethod: 'cod',
           paymentStatus: 'pending',
-          trackingNumber: 'AETH-TRK-98319',
+          trackingNumber: 'YATHU-TRK-98319',
           courier: 'Shadowfax'
         },
         {
-          id: 'AETH-45612',
+          id: 'YATHU-45612',
           date: '2026-07-01',
           items: [
             { productId: 'prod-6', quantity: 1, price: 90 }
@@ -121,7 +121,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           status: 'pending',
           paymentMethod: 'online',
           paymentStatus: 'pending',
-          trackingNumber: 'AETH-TRK-45612',
+          trackingNumber: 'YATHU-TRK-45612',
           courier: 'Ecom Express'
         }
       ];
@@ -180,7 +180,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       ...paths.slice(1).map((p, idx) => {
         const fullPath = '/' + paths.slice(0, idx + 2).join('/');
         let label = p.charAt(0).toUpperCase() + p.slice(1);
-        if (p.startsWith('AETH-')) {
+        if (p.startsWith('YATHU-')) {
           label = `Order ${p}`;
         }
         return { label, path: fullPath };

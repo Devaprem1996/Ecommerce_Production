@@ -74,7 +74,7 @@ export default function ReportsPage() {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.setAttribute('href', url);
-      link.setAttribute('download', `aether_sales_report_${dateRange}.csv`);
+      link.setAttribute('download', `yathu_sales_report_${dateRange}.csv`);
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);

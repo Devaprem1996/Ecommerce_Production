@@ -150,21 +150,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             </span>
           </div>
 
-          <Button
-            variant={isSoldOut ? 'ghost' : 'primary'}
-            size="sm"
-            disabled={isSoldOut}
-            onClick={handleAddToCart}
-            leftIcon={<ShoppingBag className="w-4 h-4" />}
-            className={twMerge(
-              clsx(
-                'min-w-[40px] px-3 font-semibold h-9 rounded-card',
-                isSoldOut && 'bg-neutral-100 text-neutral-600 border-none'
-              )
-            )}
-          >
-            {isSoldOut ? t('products.out_of_stock', 'Sold Out') : t('products.add_to_cart', 'Add')}
-          </Button>
+          {!isSoldOut && (
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={handleAddToCart}
+              leftIcon={<ShoppingBag className="w-4 h-4" />}
+              className="min-w-[40px] px-3 font-semibold h-9 rounded-card"
+            >
+              {t('products.add_to_cart', 'Add')}
+            </Button>
+          )}
         </div>
       </div>
     </div>
