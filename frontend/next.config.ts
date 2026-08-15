@@ -10,6 +10,14 @@ const nextConfig: NextConfig = {
       },
     ],
   },
+  async rewrites() {
+    return [
+      {
+        source: "/api/v1/:path*",
+        destination: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1"}/:path*`,
+      },
+    ];
+  },
   webpack: (config, { dev, isServer }) => {
     // Enable polling watch options in development mode to fix file watching issues
     // on Windows (especially within OneDrive/Desktop/WSL/Docker paths)

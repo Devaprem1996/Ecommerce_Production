@@ -1,0 +1,92 @@
+Key components of an ecommerce backend
+Backends can be highly complex and include systems that touch most parts of your business. Though not every site is the same — from beginners and startups to enterprise — most typical ecommerce businesses will include the following:
+
+Inventory management.
+There should be a direct connection between products that are shown on the frontend and what is sitting in warehouses ready to ship. It’s on the backend to connect these two and keep customers from ordering items that are out of stock.
+
+Order processing.
+The complicated process of taking an order and routing through logistics ensures a seamless delivery. This is often handled by a specific system that is well integrated in the online store.
+
+Shipping and fulfillment.
+Moving further through the process above, the logistics of order management and delivering a product from warehouses is complicated. It requires an automated solution that reduces the potential of human error and gets products to customers quickly and efficiently. Think of the efficiency of Amazon.
+
+User authentication.
+Ideally, you have a host of returning customers with existing accounts that make checkouts a breeze. Managing — and protecting — these accounts are the burden of your backend.
+
+Payment gateway integration.
+Making it easy for customers to pay you means less items left in shopping carts. A best-in-class payments solution (think: Stripe) that accepts a variety of payment methods means more completed sales.
+
+Content Management System (CMS).
+Then, there’s the CMS, used by content authors and managers to manage all content on the site. From product descriptions to privacy policies, this is where words and media live. 
+
+Commonly used CMSs such as WordPress include pre-built templates and tutorials to ease web development or building an ecommerce app. Some open-source options are possibilities as well.
+
+Choosing the right backend tech stack
+There are many factors to consider when building out your tech stack, but these should be top of mind:
+
+Data storage.
+Where will your data live? How will it be protected? Can it live in the cloud or do you need an on-premise option? Figuring out where and how critical data will be stored is an important first step.
+
+You’ll also have cost considerations, so plan to optimize your data to keep expenses in check.
+
+Programming languages.
+What language you follow may be dictated to you if you already have a site in place. If you’re already coding in PHP, for example, it makes sense to continue to follow that approach. If you’re starting new, there’s more freedom in deciding what best suits your needs.
+
+API integration.
+This will include two parts: what APIs will you use and how will they work within your tech stack.
+
+You may want best-in-breed web applications for every function, but if they don’t work well in your ecosystem, you’re best served looking elsewhere. The number of providers for web apps has grown significantly, so you’ll need to do research to determine what’s best for your specific needs. Knowledge of REST API will help here.
+
+Headless architecture.
+Headless architecture is an increasingly popular approach in ecommerce. In headless ecommerce, the frontend and the backend are decoupled, allowing for more flexibility in designing and delivering the user experience.
+
+Main functionality for building a backend
+After deciding what your tech stack will constitute, you should also consider these factors before development of your backend commences:
+
+Compatibility.
+Everything should work well together, including databases, applications, microservices, plug-ins as well as the frontend. All these parts working as they should and in concert with one another is vital to a successful ecommerce platform.
+
+Scalability.
+Hopefully your ecommerce business is a success and you have the need to scale up. Being able to add — or subtract — resources, without taking on significant costs, enables you to grow efficiently.
+
+Efficiency.
+Related to the above, you want to get the most out of your technology budget. This means optimizing the tech stack and considering the time and resources needed to build the platform.
+
+Frugality.
+Standing up a robust backend can be expensive, both in time and money. You’ll need to consider where your budget will get the best return on investment. This extends to ongoing management and maintenance as well.
+
+Security.
+Security is always vitally important, especially if you’re storing customer data. You should aim to meet the highest ecommerce standards — because the alternative could be disastrous.
+
+Ecommerce backend development challenges
+The development of an ecommerce backend doesn’t always go as planned. There are always the unknown challenges that can slow the process or cause unexpected expenses.
+
+Ensuring high availability and uptime.
+If your site is down, your business is effectively closed. There should be redundancies in place in case a server fails or there are network issues. This should at least keep your lights on.
+
+Overcoming technical debt.
+If you already have an ecommerce solution, you have a pre-existing ecosystem to consider. This can be a positive as some of the heavy lifting is already done. However, it can also be limiting as old systems create a technical burden that restricts what you can do.
+
+Dealing with integration challenges.
+Everything may look good on paper, but integrating new systems introduces the unknown. You’re not really sure if a system will work as it should until you actually integrate it.
+
+Often, everything works well as applications have improved the process. However, sometimes they don’t, and new problems arise.
+
+Maintaining ecommerce backend for success
+An ecommerce website is not a fire and forget platform. Ecommerce is in a constant state of flux and you should never consider your site “finished.”
+
+Ecommerce platforms, including smaller modules and mobile apps, require constant maintenance and iterative changes to improve the customer experience and keep the site optimized.
+
+Performance monitoring tools.
+You should have key performance indicators that show if your site is meeting the most important metrics and the tools to measure it. Having a healthy analytics suite that operates in real-time shows where a site is performing well and where it isn’t, providing key insights that lead to good decision making.
+
+Regular updates and patches.
+As mentioned above, a modern ecommerce site is never done. Providing regular updates to performance, security, and design keeps the site refreshed and in a constant state of improvement.
+
+Disaster recovery and backup strategies.
+Hope for the best, but prepare for the worst. Have regular automated backups of your site server-side and the functionality to restore it to a previous state just in case something goes wrong.
+
+The final word
+Backends are crucial to the success of any ecommerce site, touching almost every part of the business. Frontend development is also important, but has different goals and functionality.
+
+From security to logistics to payments, your backend is the foundation from which the rest of your site grows. Great care should be taken when building them out as you don’t want to have to go back and make changes that would greatly impact other parts of your ecosystem.

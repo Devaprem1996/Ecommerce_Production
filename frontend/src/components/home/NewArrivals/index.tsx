@@ -7,6 +7,8 @@ import useEmblaCarousel from 'embla-carousel-react';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { mockProducts } from '@/constants/mockData';
+import apiClient from '@/lib/apiClient';
+import { mapProductToFrontend } from '@/utils/apiMapper';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
@@ -23,6 +25,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
   const { addItem } = useCart();
   const { toggleItem, hasItem } = useWishlist();
 
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [emblaRef] = useEmblaCarousel({
     align: 'start',
@@ -30,12 +33,22 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
     dragFree: true,
   });
 
-  // Simulate API fetching to show skeleton loaders
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    apiClient.get('/api/v1/cms/products?limit=8&sortBy=createdAt&sortOrder=desc')
+      .then((res) => {
+        if (res?.data?.products && Array.isArray(res.data.products)) {
+          setProducts(res.data.products.map(mapProductToFrontend));
+        } else {
+          setProducts([...mockProducts].reverse().slice(0, 8));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load new arrivals:", err);
+        setProducts([...mockProducts].reverse().slice(0, 8));
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const handleAddToCart = (product: ProductType) => {
@@ -64,7 +77,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
   };
 
   // Reverse list for New Arrivals demonstration
-  const newArrivals = [...mockProducts].reverse().slice(0, 8);
+  const newArrivals = products;
 
   return (
     <section id="new-arrivals" className="w-full py-16 bg-white dark:bg-neutral-905 border-b border-neutral-100 dark:border-neutral-800/10 font-sans">

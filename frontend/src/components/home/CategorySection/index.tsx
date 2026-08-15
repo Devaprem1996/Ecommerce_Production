@@ -1,14 +1,30 @@
 "use client";
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { mockCategories } from '@/constants/mockData';
+import apiClient from '@/lib/apiClient';
+import { mapCategoryToFrontend } from '@/utils/apiMapper';
+import { CategoryType } from '@/types';
 
 export const CategorySection: React.FC = () => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const [categories, setCategories] = useState<CategoryType[]>(mockCategories);
+
+  useEffect(() => {
+    apiClient.get('/api/v1/cms/categories')
+      .then((res) => {
+        if (res?.data?.categories && Array.isArray(res.data.categories)) {
+          setCategories(res.data.categories.map(mapCategoryToFrontend));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load backend categories:", err);
+      });
+  }, []);
 
   return (
     <section id="categories" className="w-full py-16 bg-white dark:bg-neutral-905 border-b border-neutral-100 dark:border-neutral-800/10 font-sans">
@@ -33,7 +49,7 @@ export const CategorySection: React.FC = () => {
               display: none;
             }
           `}</style>
-          {mockCategories.map((category, index) => {
+          {categories.map((category, index) => {
             const displayName = currentLang === 'ta' && category.nameTamil ? category.nameTamil : category.name;
             return (
               <Link

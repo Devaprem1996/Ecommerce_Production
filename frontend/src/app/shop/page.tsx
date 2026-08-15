@@ -27,8 +27,10 @@ import { Button } from '@/components/ui/Button';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
-import { ProductType } from '@/types';
+import { ProductType, CategoryType } from '@/types';
 import { slugify } from '@/utils/slugify';
+import apiClient from '@/lib/apiClient';
+import { mapProductToFrontend, mapCategoryToFrontend } from '@/utils/apiMapper';
 
 const categorySlugMap: Record<string, string> = {
   'fruits-vegetables': 'Fruits & Vegetables',
@@ -52,6 +54,8 @@ function ShopContent() {
   const initialCategoryQuery = searchParams.get('category');
   
   // Filtering & Sorting States
+  const [categories, setCategories] = useState<CategoryType[]>(mockCategories);
+  const [dbProducts, setDbProducts] = useState<ProductType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(500);
@@ -67,18 +71,23 @@ function ShopContent() {
   const [isFilterLoading, setIsFilterLoading] = useState<boolean>(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
 
+  // 1. Fetch Categories on mount
+  useEffect(() => {
+    apiClient.get('/api/v1/cms/categories')
+      .then((res) => {
+        if (res?.data?.categories && Array.isArray(res.data.categories)) {
+          setCategories(res.data.categories.map(mapCategoryToFrontend));
+        }
+      })
+      .catch((err) => console.error("Failed to fetch categories:", err));
+  }, []);
+
   // Set initial category from query parameters if present
   useEffect(() => {
     if (initialCategoryQuery) {
       const mappedCategory = categorySlugMap[initialCategoryQuery] || initialCategoryQuery;
       setSelectedCategories([mappedCategory]);
     }
-    
-    // Simulate loading on mount
-    const timer = setTimeout(() => {
-      setIsPageLoading(false);
-    }, 800);
-    return () => clearTimeout(timer);
   }, [initialCategoryQuery]);
 
   // Sync category state when URL changes
@@ -89,6 +98,66 @@ function ShopContent() {
       setSelectedCategories([mappedCategory]);
     }
   }, [searchParams]);
+
+  // 2. Fetch Products whenever filters change
+  useEffect(() => {
+    setIsPageLoading(true);
+
+    const queryParams: Record<string, string> = {
+      limit: '100',
+    };
+
+    // Category filter matching slugs
+    if (selectedCategories.length > 0) {
+      const found = categories.find(c => selectedCategories.includes(c.name));
+      if (found) {
+        queryParams.category = found.slug;
+      } else {
+        queryParams.category = slugify(selectedCategories[0]);
+      }
+    }
+
+    // Price filters
+    queryParams.minPrice = minPrice.toString();
+    queryParams.maxPrice = maxPrice.toString();
+
+    // Search query
+    const searchVal = searchParams.get('search') || searchParams.get('q') || '';
+    if (searchVal) {
+      queryParams.search = searchVal;
+    }
+
+    // Sort mappings
+    if (sortBy === 'price-low-high') {
+      queryParams.sortBy = 'price';
+      queryParams.sortOrder = 'asc';
+    } else if (sortBy === 'price-high-low') {
+      queryParams.sortBy = 'price';
+      queryParams.sortOrder = 'desc';
+    } else if (sortBy === 'rating') {
+      queryParams.sortBy = 'rating';
+      queryParams.sortOrder = 'desc';
+    } else if (sortBy === 'newest') {
+      queryParams.sortBy = 'createdAt';
+      queryParams.sortOrder = 'desc';
+    }
+
+    apiClient.get('/api/v1/cms/products', { params: queryParams })
+      .then((res) => {
+        if (res?.data?.products && Array.isArray(res.data.products)) {
+          setDbProducts(res.data.products.map(mapProductToFrontend));
+        } else {
+          setDbProducts(mockProducts);
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch products:", err);
+        setDbProducts(mockProducts);
+      })
+      .finally(() => {
+        setIsPageLoading(false);
+      });
+  }, [selectedCategories, minPrice, maxPrice, sortBy, searchParams, categories]);
 
   // Handle Add to Cart
   const handleAddToCart = (product: ProductType) => {
@@ -145,15 +214,7 @@ function ShopContent() {
 
   // Processed Products
   const filteredProducts = useMemo(() => {
-    let result = [...mockProducts];
-
-    // Category Filter
-    if (selectedCategories.length > 0) {
-      result = result.filter(product => selectedCategories.includes(product.category));
-    }
-
-    // Price Filter
-    result = result.filter(product => product.price >= minPrice && product.price <= maxPrice);
+    let result = [...dbProducts];
 
     // Rating Filter
     if (selectedRating !== null) {
@@ -165,20 +226,8 @@ function ShopContent() {
       result = result.filter(product => product.stock > 0);
     }
 
-    // Sort Logic
-    if (sortBy === 'price-low-high') {
-      result.sort((a, b) => a.price - b.price);
-    } else if (sortBy === 'price-high-low') {
-      result.sort((a, b) => b.price - a.price);
-    } else if (sortBy === 'rating') {
-      result.sort((a, b) => b.rating - a.rating);
-    } else if (sortBy === 'newest') {
-      // For mock, sort by id descending
-      result.sort((a, b) => b.id.localeCompare(a.id));
-    }
-
     return result;
-  }, [selectedCategories, minPrice, maxPrice, selectedRating, inStockOnly, sortBy]);
+  }, [dbProducts, selectedRating, inStockOnly]);
 
   // Paginated Products
   const paginatedProducts = useMemo(() => {
@@ -194,14 +243,14 @@ function ShopContent() {
     }, 600);
   };
 
-  // Count items for categories dynamically
+  // Count items for categories dynamically using backend category counts
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockProducts.forEach(product => {
-      counts[product.category] = (counts[product.category] || 0) + 1;
+    categories.forEach(cat => {
+      counts[cat.name] = cat.itemCount || 0;
     });
     return counts;
-  }, []);
+  }, [categories]);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-16 transition-colors duration-normal">
@@ -274,7 +323,7 @@ function ShopContent() {
                 {t('shop.category', 'Categories')}
               </h4>
               <div className="flex flex-col gap-2.5">
-                {mockCategories.map(cat => {
+                {categories.map(cat => {
                   const displayName = currentLang === 'ta' && cat.nameTamil ? cat.nameTamil : cat.name;
                   const isChecked = selectedCategories.includes(cat.name);
                   return (
@@ -704,7 +753,7 @@ function ShopContent() {
                     {t('shop.category', 'Categories')}
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {mockCategories.map(cat => {
+                    {categories.map(cat => {
                       const displayName = currentLang === 'ta' && cat.nameTamil ? cat.nameTamil : cat.name;
                       const isChecked = selectedCategories.includes(cat.name);
                       return (

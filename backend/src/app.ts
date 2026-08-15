@@ -6,8 +6,13 @@ import rateLimit from "express-rate-limit";
 import { errorMiddleware } from "./middleware/error.middleware.js";
 import prisma from "./config/db.js";
 import logger from "./logger/index.js";
+import authRouter from "./routes/auth.routes.js";
+import cmsRouter from "./routes/cms.routes.js";
 
 const app = express();
+
+// Trust proxy header from local Next.js proxy
+app.set("trust proxy", 1);
 
 // Apply security headers
 app.use(helmet());
@@ -57,6 +62,12 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 app.use("/api/", apiLimiter);
+
+// Authentication API routes
+app.use("/api/v1/auth", authRouter);
+
+// Product & Category CMS API routes
+app.use("/api/v1/cms", cmsRouter);
 
 // Health check endpoint
 app.get("/api/v1/health", async (req, res, next) => {

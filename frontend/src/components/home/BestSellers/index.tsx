@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/ui/ProductCard';
 import { SkeletonLoader } from '@/components/ui/SkeletonLoader';
 import { mockProducts } from '@/constants/mockData';
+import apiClient from '@/lib/apiClient';
+import { mapProductToFrontend } from '@/utils/apiMapper';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
@@ -22,14 +24,25 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
   const { addItem } = useCart();
   const { toggleItem, hasItem } = useWishlist();
 
+  const [products, setProducts] = useState<ProductType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Simulate API fetching to show skeleton loaders
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200);
-    return () => clearTimeout(timer);
+    apiClient.get('/api/v1/cms/products?limit=8')
+      .then((res) => {
+        if (res?.data?.products && Array.isArray(res.data.products)) {
+          setProducts(res.data.products.map(mapProductToFrontend));
+        } else {
+          setProducts(mockProducts.slice(0, 8));
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to load best sellers:", err);
+        setProducts(mockProducts.slice(0, 8));
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
   }, []);
 
   const handleAddToCart = (product: ProductType) => {
@@ -57,8 +70,8 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
     }
   };
 
-  // Best Sellers: Sort or select products (show first 8 products)
-  const bestSellers = mockProducts.slice(0, 8);
+  // Best Sellers
+  const bestSellers = products;
 
   return (
     <section id="best-sellers" className="w-full py-16 bg-neutral-50 dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800/10 font-sans">
