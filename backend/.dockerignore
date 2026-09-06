@@ -1,0 +1,8 @@
+node_modules
+.next
+dist
+.git
+pnpm-lock.yaml
+frontend
+*.log
+**/node_modules

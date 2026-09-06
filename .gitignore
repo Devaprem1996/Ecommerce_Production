@@ -18,6 +18,9 @@ out/
 .env.production.local
 *.env
 
+# Contains hardcoded DB credentials
+scripts/test-db-direct.cjs
+
 # Debug logs
 npm-debug.log*
 yarn-debug.log*

@@ -37,7 +37,7 @@ jobs:
     name: 2. Deploy to Hostinger VPS
     needs: test-and-build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' && secrets.VPS_IP != '' && secrets.VPS_SSH_PRIVATE_KEY != ''
     steps:
       - name: Execute Remote SSH Deploy Script
         uses: appleboy/ssh-action@v1.0.3
