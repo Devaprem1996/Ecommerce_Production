@@ -10,7 +10,7 @@
   "scripts": {
     "dev": "next dev --webpack",
     "build": "next build --webpack",
-    "vercel-build": "cd .. && pnpm --filter ecommerce-backend install --include=dev && pnpm --filter ecommerce-backend run build && cd frontend && pnpm run build",
+    "vercel-build": "cd .. && pnpm --filter ecommerce-backend install --prod=false && pnpm --filter ecommerce-backend run build && cd frontend && pnpm run build",
     "start": "next start",
     "lint": "eslint"
   },
