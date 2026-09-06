@@ -1,0 +1,21 @@
+﻿Pincode (அஞ்சல் குறியீடு) *[REQUIRED]*,City (நகரம்),State (மாநிலம்),Delivery Available? (விநியோகம் உள்ளதா?) [YES / NO],Estimated Days (மதிப்பிடப்பட்ட நாட்கள்),Shipping Charge in INR (டெலிவரி கட்டணம் ₹),Free Delivery Threshold in INR (இலவச டெலிவரி வரம்பு ₹)
+600113,Chennai (Taramani),Tamil Nadu,YES,2,50,499
+600020,Chennai (Adyar),Tamil Nadu,YES,2,50,499
+600001,Chennai (George Town),Tamil Nadu,YES,3,50,499
+641001,Coimbatore,Tamil Nadu,YES,4,60,599
+625001,Madurai,Tamil Nadu,YES,4,60,599
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,
+,,,YES,,,

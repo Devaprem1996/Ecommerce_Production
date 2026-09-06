@@ -43,7 +43,7 @@ export class CmsController {
 
   static async createCategory(req: Request, res: Response, next: NextFunction) {
     try {
-      const category = await CmsService.createCategory(req.body);
+      const category = await CmsService.createCategory(req.body, req.user?.userId);
 
       return res.status(201).json({
         success: true,
@@ -59,7 +59,7 @@ export class CmsController {
   static async updateCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const category = await CmsService.updateCategory(id, req.body);
+      const category = await CmsService.updateCategory(id, req.body, req.user?.userId);
 
       return res.status(200).json({
         success: true,
@@ -75,7 +75,7 @@ export class CmsController {
   static async deleteCategory(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CmsService.deleteCategory(id);
+      await CmsService.deleteCategory(id, req.user?.userId);
 
       return res.status(200).json({
         success: true,
@@ -144,7 +144,7 @@ export class CmsController {
 
   static async createProduct(req: Request, res: Response, next: NextFunction) {
     try {
-      const product = await CmsService.createProduct(req.body);
+      const product = await CmsService.createProduct(req.body, req.user?.userId);
 
       return res.status(201).json({
         success: true,
@@ -160,7 +160,7 @@ export class CmsController {
   static async updateProduct(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const product = await CmsService.updateProduct(id, req.body);
+      const product = await CmsService.updateProduct(id, req.body, req.user?.userId);
 
       return res.status(200).json({
         success: true,
@@ -176,7 +176,7 @@ export class CmsController {
   static async deleteProduct(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CmsService.deleteProduct(id);
+      await CmsService.deleteProduct(id, req.user?.userId);
 
       return res.status(200).json({
         success: true,
@@ -195,7 +195,7 @@ export class CmsController {
   static async createVariant(req: Request, res: Response, next: NextFunction) {
     try {
       const { productId } = req.params;
-      const variant = await CmsService.createVariant(productId, req.body);
+      const variant = await CmsService.createVariant(productId, req.body, req.user?.userId);
 
       return res.status(201).json({
         success: true,
@@ -211,7 +211,7 @@ export class CmsController {
   static async updateVariant(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const variant = await CmsService.updateVariant(id, req.body);
+      const variant = await CmsService.updateVariant(id, req.body, req.user?.userId);
 
       return res.status(200).json({
         success: true,
@@ -227,7 +227,7 @@ export class CmsController {
   static async deleteVariant(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      await CmsService.deleteVariant(id);
+      await CmsService.deleteVariant(id, req.user?.userId);
 
       return res.status(200).json({
         success: true,

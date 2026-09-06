@@ -387,7 +387,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
             <div className="relative aspect-square w-full rounded-feature border border-neutral-100 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-850 overflow-hidden flex items-center justify-center group">
               <Zoom>
                 <img
-                  src={product.images[activeImageIndex] || '/placeholder.png'}
+                  src={product.images[activeImageIndex] || '/images/placeholder.svg'}
                   alt={displayName}
                   className="object-cover w-full h-full cursor-zoom-in transition-transform duration-normal hover:scale-102"
                 />

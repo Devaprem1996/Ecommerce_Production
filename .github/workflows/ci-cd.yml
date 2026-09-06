@@ -1,0 +1,71 @@
+name: Production CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  test-and-build:
+    name: 1. Test & Build Artifacts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify Backend Compilation
+        run: pnpm --filter ./backend build
+
+      - name: Verify Frontend Compilation
+        run: pnpm --filter ./frontend build
+
+  deploy-to-vps:
+    name: 2. Deploy to Hostinger VPS
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Execute Remote SSH Deploy Script
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: root
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            cd /var/www/yathu
+            
+            echo "[CI/CD] 1. Fetching latest code..."
+            git pull origin main
+            
+            echo "[CI/CD] 2. Installing dependencies..."
+            pnpm install --frozen-lockfile
+            
+            echo "[CI/CD] 3. Running database migrations..."
+            cd backend
+            npx prisma migrate deploy
+            cd ..
+            
+            echo "[CI/CD] 4. Building backend & frontend..."
+            pnpm build
+            
+            echo "[CI/CD] 5. Zero-downtime PM2 reload..."
+            pm2 reload deployment/ecosystem.config.cjs --env production
+            
+            echo "[CI/CD] 6. Health Check Verification..."
+            curl -f http://localhost:5000/api/v1/health || exit 1
+            echo "[CI/CD] Deployment completed successfully!"

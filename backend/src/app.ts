@@ -8,6 +8,8 @@ import prisma from "./config/db.js";
 import logger from "./logger/index.js";
 import authRouter from "./routes/auth.routes.js";
 import cmsRouter from "./routes/cms.routes.js";
+import paymentRouter from "./routes/payment.routes.js";
+import shippingRouter from "./routes/shipping.routes.js";
 
 const app = express();
 
@@ -68,6 +70,12 @@ app.use("/api/v1/auth", authRouter);
 
 // Product & Category CMS API routes
 app.use("/api/v1/cms", cmsRouter);
+
+// Payment Gateway API routes
+app.use("/api/v1/payments", paymentRouter);
+
+// Shipping & Pincode API routes
+app.use("/api/v1/shipping", shippingRouter);
 
 // Health check endpoint
 app.get("/api/v1/health", async (req, res, next) => {

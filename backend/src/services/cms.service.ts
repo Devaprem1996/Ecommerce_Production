@@ -22,6 +22,15 @@ export class CmsService {
   static async listCategories(includeInactive = false) {
     return await prisma.category.findMany({
       where: includeInactive ? {} : { isActive: true },
+      include: {
+        _count: {
+          select: {
+            products: {
+              where: { deletedAt: null, isActive: true }
+            }
+          }
+        }
+      },
       orderBy: { sortOrder: "asc" },
     });
   }
@@ -53,14 +62,17 @@ export class CmsService {
   /**
    * Create a new category (admin function)
    */
-  static async createCategory(data: {
-    nameEn: string;
-    nameTa: string;
-    descriptionEn?: string;
-    descriptionTa?: string;
-    imageUrl?: string;
-    sortOrder?: number;
-  }) {
+  static async createCategory(
+    data: {
+      nameEn: string;
+      nameTa: string;
+      descriptionEn?: string;
+      descriptionTa?: string;
+      imageUrl?: string;
+      sortOrder?: number;
+    },
+    userId?: string
+  ) {
     const slug = toSlug(data.nameEn);
 
     const existing = await prisma.category.findUnique({
@@ -82,6 +94,16 @@ export class CmsService {
       },
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "CREATE_CATEGORY",
+        entity: "Category",
+        entityId: category.id,
+        newValue: JSON.parse(JSON.stringify(category)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Category created: ${category.nameEn} (ID: ${category.id})`);
     return category;
   }
@@ -99,7 +121,8 @@ export class CmsService {
       imageUrl?: string;
       sortOrder?: number;
       isActive?: boolean;
-    }
+    },
+    userId?: string
   ) {
     const category = await prisma.category.findUnique({
       where: { id },
@@ -118,6 +141,17 @@ export class CmsService {
       data: updateData,
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "UPDATE_CATEGORY",
+        entity: "Category",
+        entityId: updated.id,
+        oldValue: JSON.parse(JSON.stringify(category)),
+        newValue: JSON.parse(JSON.stringify(updated)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Category updated: ${updated.nameEn} (ID: ${updated.id})`);
     return updated;
   }
@@ -125,7 +159,7 @@ export class CmsService {
   /**
    * Delete category (admin function)
    */
-  static async deleteCategory(id: string) {
+  static async deleteCategory(id: string, userId?: string) {
     const category = await prisma.category.findUnique({
       where: { id },
       include: { _count: { select: { products: true } } },
@@ -143,6 +177,16 @@ export class CmsService {
     await prisma.category.delete({
       where: { id },
     });
+
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "DELETE_CATEGORY",
+        entity: "Category",
+        entityId: id,
+        oldValue: JSON.parse(JSON.stringify(category)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
 
     logger.info(`Category deleted: ${category.nameEn} (ID: ${category.id})`);
     return true;
@@ -286,24 +330,27 @@ export class CmsService {
   /**
    * Create product and initial variants/inventories in a single transaction (admin function)
    */
-  static async createProduct(data: {
-    categoryId: string;
-    nameEn: string;
-    nameTa: string;
-    brand: string;
-    descriptionEn: string;
-    descriptionTa: string;
-    thumbnailUrl?: string;
-    variants: Array<{
+  static async createProduct(
+    data: {
+      categoryId: string;
       nameEn: string;
       nameTa: string;
-      sku: string;
-      price: number;
-      discountPrice?: number;
-      weight?: number;
-      availableQuantity: number;
-    }>;
-  }) {
+      brand: string;
+      descriptionEn: string;
+      descriptionTa: string;
+      thumbnailUrl?: string;
+      variants: Array<{
+        nameEn: string;
+        nameTa: string;
+        sku: string;
+        price: number;
+        discountPrice?: number;
+        weight?: number;
+        availableQuantity: number;
+      }>;
+    },
+    userId?: string
+  ) {
     const slug = toSlug(data.nameEn);
 
     // Verify slug uniqueness
@@ -363,6 +410,16 @@ export class CmsService {
       return product;
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "CREATE_PRODUCT",
+        entity: "Product",
+        entityId: newProduct.id,
+        newValue: JSON.parse(JSON.stringify(newProduct)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Product created: ${newProduct.nameEn} (ID: ${newProduct.id})`);
     return this.getProductBySlug(newProduct.slug);
   }
@@ -381,7 +438,8 @@ export class CmsService {
       descriptionTa?: string;
       thumbnailUrl?: string;
       isActive?: boolean;
-    }
+    },
+    userId?: string
   ) {
     const product = await prisma.product.findFirst({
       where: { id, deletedAt: null },
@@ -401,6 +459,17 @@ export class CmsService {
       data: updateData,
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "UPDATE_PRODUCT",
+        entity: "Product",
+        entityId: updated.id,
+        oldValue: JSON.parse(JSON.stringify(product)),
+        newValue: JSON.parse(JSON.stringify(updated)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Product updated: ${updated.nameEn} (ID: ${updated.id})`);
     return updated;
   }
@@ -408,7 +477,7 @@ export class CmsService {
   /**
    * Soft delete product (admin function)
    */
-  static async deleteProduct(id: string) {
+  static async deleteProduct(id: string, userId?: string) {
     const product = await prisma.product.findFirst({
       where: { id, deletedAt: null },
     });
@@ -421,6 +490,16 @@ export class CmsService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "DELETE_PRODUCT",
+        entity: "Product",
+        entityId: id,
+        oldValue: JSON.parse(JSON.stringify(product)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
 
     logger.info(`Product soft deleted: ${product.nameEn} (ID: ${product.id})`);
     return true;
@@ -443,7 +522,8 @@ export class CmsService {
       discountPrice?: number;
       weight?: number;
       availableQuantity: number;
-    }
+    },
+    userId?: string
   ) {
     const product = await prisma.product.findFirst({
       where: { id: productId, deletedAt: null },
@@ -483,6 +563,16 @@ export class CmsService {
       return variant;
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "CREATE_VARIANT",
+        entity: "ProductVariant",
+        entityId: newVariant.id,
+        newValue: JSON.parse(JSON.stringify(newVariant)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Product variant created: SKU ${newVariant.sku} (ID: ${newVariant.id})`);
     return newVariant;
   }
@@ -500,7 +590,8 @@ export class CmsService {
       discountPrice?: number;
       weight?: number;
       isActive?: boolean;
-    }
+    },
+    userId?: string
   ) {
     const variant = await prisma.productVariant.findFirst({
       where: { id, deletedAt: null },
@@ -523,6 +614,17 @@ export class CmsService {
       data,
     });
 
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "UPDATE_VARIANT",
+        entity: "ProductVariant",
+        entityId: updated.id,
+        oldValue: JSON.parse(JSON.stringify(variant)),
+        newValue: JSON.parse(JSON.stringify(updated)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
+
     logger.info(`Product variant updated: SKU ${updated.sku} (ID: ${updated.id})`);
     return updated;
   }
@@ -530,7 +632,7 @@ export class CmsService {
   /**
    * Soft delete variant (admin function)
    */
-  static async deleteVariant(id: string) {
+  static async deleteVariant(id: string, userId?: string) {
     const variant = await prisma.productVariant.findFirst({
       where: { id, deletedAt: null },
     });
@@ -542,6 +644,16 @@ export class CmsService {
       where: { id },
       data: { deletedAt: new Date() },
     });
+
+    await prisma.auditLog.create({
+      data: {
+        userId,
+        action: "DELETE_VARIANT",
+        entity: "ProductVariant",
+        entityId: id,
+        oldValue: JSON.parse(JSON.stringify(variant)),
+      },
+    }).catch(err => logger.error("AuditLog creation failed:", err));
 
     logger.info(`Product variant soft deleted: SKU ${variant.sku} (ID: ${variant.id})`);
     return true;

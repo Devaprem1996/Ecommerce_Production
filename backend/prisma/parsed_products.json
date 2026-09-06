@@ -1,0 +1,447 @@
+{
+  "Oils": [
+    {
+      "name_en": "Wood Pressed Groundnut Oil",
+      "name_ta": "மரச்செக்கு கடலை எண்ணெய்",
+      "variants": ["1L", "500ML"]
+    },
+    {
+      "name_en": "Wood Pressed Sesame Oil",
+      "name_ta": "மரச்செக்கு நல்லெண்ணெய்",
+      "variants": ["1L", "500ML"]
+    },
+    {
+      "name_en": "Wood Pressed Coconut Oil",
+      "name_ta": "மரச்செக்கு தேங்காய் எண்ணெய்",
+      "variants": ["1L", "500ML"]
+    },
+    {
+      "name_en": "Castor Oil",
+      "name_ta": "ஆமணக்கு எண்ணெய்",
+      "variants": ["1L", "500ML"]
+    }
+  ],
+  "Noodles": [
+    {
+      "name_en": "Kodo Millet Noodles",
+      "name_ta": "வரகு நூடுல்ஸ்",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Little Millet Noodles",
+      "name_ta": "சாமை நூடுல்ஸ்",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Barnyard Millet Noodles",
+      "name_ta": "குதிரைவாலி நூடுல்ஸ்",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Foxtail Millet Noodles",
+      "name_ta": "தினை நூடுல்ஸ்",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Finger Millet Noodles",
+      "name_ta": "ராகி நூடுல்ஸ்",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Karupu Kavuni Rice Noodles",
+      "name_ta": "கருப்பு கவுனி நூடுல்ஸ்",
+      "variants": ["PCS"]
+    }
+  ],
+  "Vermicelli": [
+    {
+      "name_en": "Kodo Millet Vermicelli",
+      "name_ta": "வரகு சேமியா",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Little Millet Vermicelli",
+      "name_ta": "சாமை சேமியா",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Barnyard Millet Vermicelli",
+      "name_ta": "குதிரைவாலி சேமியா",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Foxtail Millet Vermicelli",
+      "name_ta": "திணை சேமியா",
+      "variants": ["PCS"]
+    },
+    {
+      "name_en": "Pearl Millet Vermicelli",
+      "name_ta": "கம்பு சேமியா",
+      "variants": ["PCS"]
+    }
+  ],
+  "Sweetner": [
+    {
+      "name_en": "Sugarcane Jaggery Powder",
+      "name_ta": "நாட்டு சர்க்கரை",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Sugarcane Jaggery Round",
+      "name_ta": "உருண்டை வெல்லம்",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Palm Jaggery Round",
+      "name_ta": "பனங்கருப்பட்டி",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Palm Jaggery Crystal",
+      "name_ta": "பனங்கற்கண்டு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Natural Wild Honey",
+      "name_ta": "சுத்தமான தேன்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Himalayan Powder Salt",
+      "name_ta": "இந்துப்பு தூள்",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Himalayan Crystal Salt",
+      "name_ta": "இந்துப்பு கல்",
+      "variants": ["1KG", "500GM"]
+    }
+  ],
+  "Millets": [
+    {
+      "name_en": "Kodo Millet Semi Polished",
+      "name_ta": "வரகு",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Little Millet Semi Polished",
+      "name_ta": "சாமை",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Barnyard Millet Semi Polished",
+      "name_ta": "குதிரைவாலி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Foxtail Millet Semi Polished",
+      "name_ta": "திணை",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Browntop Millet Semi Polished",
+      "name_ta": "குல சாமை",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Native Pearl Millet",
+      "name_ta": "நாட்டு கம்பு",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Native Finger Millet",
+      "name_ta": "நாட்டு ராகி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "White Sorghum",
+      "name_ta": "வெள்ளை சோளம்",
+      "variants": ["1KG", "500GM"]
+    }
+  ],
+  "Traditional Rices": [
+    {
+      "name_en": "Thooyamalli Semi Polished Boiled",
+      "name_ta": "தூயமல்லி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Thooyamalli Fully Polished Boiled",
+      "name_ta": "தூயமல்லி (முழு பாலிஷ்)",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Athur Kichili Samba Semi Polished Boiled",
+      "name_ta": "ஆத்தூர் கிச்சிலி சம்பா",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Thanga Samba Semi Polished Boiled",
+      "name_ta": "தங்க சம்பா",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Seeraga Samba Fully Polished Boiled",
+      "name_ta": "சீரக சம்பா",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Karupu Kavuni Rice Boiled",
+      "name_ta": "கருப்பு கவுனி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Mappillai Samba Rice Boiled",
+      "name_ta": "மாப்பிள்ளை சம்பா",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Kerala Matta Rice Boiled",
+      "name_ta": "கேரள மட்டை அரிசி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Kattuyanam Rice Boiled",
+      "name_ta": "காட்டுயானம்",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Rathasali Rice Boiled",
+      "name_ta": "இரத்தசாலி",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Poongar Rice Boiled",
+      "name_ta": "பூங்கார்",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Ponmani Idly Rice Boiled",
+      "name_ta": "பொன்மணி இட்லி அரிசி",
+      "variants": ["1KG", "500GM"]
+    }
+  ],
+  "Flours": [
+    {
+      "name_en": "Wheat Flour",
+      "name_ta": "கோதுமை மாவு",
+      "variants": ["1KG", "500GM"]
+    },
+    {
+      "name_en": "Finger Millet Flour",
+      "name_ta": "ராகி மாவு",
+      "variants": ["1KG", "500GM"]
+    }
+  ],
+  "Flakes": [
+    {
+      "name_en": "Mappillai Samba Flakes",
+      "name_ta": "மாப்பிள்ளை சம்பா அவல்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Wheat Flakes",
+      "name_ta": "கோதுமை அவல்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Finger Millet Flakes",
+      "name_ta": "ராகி அவல்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Pearl Millet Flakes",
+      "name_ta": "கம்பு அவல்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "White Sorghum Flakes",
+      "name_ta": "சோளம் அவல்",
+      "variants": ["1KG", "500GM", "250GM"]
+    }
+  ],
+  "Pulses": [
+    {
+      "name_en": "Native Sirumani Groundnut",
+      "name_ta": "சிறுமணி நாட்டு நிலக்கடலை",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Moth Gram",
+      "name_ta": "நரிப்பயறு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Green Gram",
+      "name_ta": "பச்சை பயறு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "White Horse Gram",
+      "name_ta": "வெள்ளை கொள்ளு பயறு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Black Horse Gram",
+      "name_ta": "கருப்பு கொள்ளு பயறு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "White Urad Dal",
+      "name_ta": "வெள்ளை உளுந்து பருப்பு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Black Urad Dal",
+      "name_ta": "கருப்பு உளுந்து பருப்பு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Toor Dal",
+      "name_ta": "துவரம் பருப்பு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Mud-Packed Toor Dal",
+      "name_ta": "மண்கட்டிய துவரம் பருப்பு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Moong Dal",
+      "name_ta": "பாசிப்பருப்பு",
+      "variants": ["1KG", "500GM", "250GM"]
+    }
+  ],
+  "Snacks": [
+    {
+      "name_en": "Baloon Vine Biscuits",
+      "name_ta": "முடக்கத்தான் பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Aavarampoo Biscuits",
+      "name_ta": "ஆவாரம்பூ பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Hibiscus Biscuits",
+      "name_ta": "செம்பருத்தி பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Thuthuvalai Biscuits",
+      "name_ta": "தூதுவளை பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Pirandai Biscuits",
+      "name_ta": "பிரண்டை பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Pearl Millet Biscuits",
+      "name_ta": "கம்பு பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Sorghum Millet Biscuits",
+      "name_ta": "சோளம் பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Finger Millet Biscuits",
+      "name_ta": "ராகி பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Multi Grain Biscuits",
+      "name_ta": "நவதானிய பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Black Kavuni Rice Biscuits",
+      "name_ta": "கருப்பு கவுனி பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Koda Millet Biscuits",
+      "name_ta": "வரகு பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Foxtail Millet Biscuits",
+      "name_ta": "தினை பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Little Millet Biscuits",
+      "name_ta": "சாமை பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Barnyard Millet Biscuits",
+      "name_ta": "குதிரைவாலி பிஸ்கட்",
+      "variants": ["BOX"]
+    },
+    {
+      "name_en": "Groundnut Balls",
+      "name_ta": "நிலக்கடலை உருண்டை",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Sesame Balls",
+      "name_ta": "எள்ளு உருண்டை",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Groundnut Chikki",
+      "name_ta": "கடலை மிட்டாய்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Black Sesame Chikki",
+      "name_ta": "எள்ளு மிட்டாய்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Groundnut Coco Mittai",
+      "name_ta": "கோகோ மிட்டாய்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Millet Sweet Chikki",
+      "name_ta": "சிறுதானிய மிட்டாய்",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Fried Rice Balls",
+      "name_ta": "பொரி உருண்டை",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Ginger Candy",
+      "name_ta": "இஞ்சி மரப்பா",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Coconut Burfi",
+      "name_ta": "தேங்காய் பர்பி",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Sesame Seedai",
+      "name_ta": "எள்ளு சீடை",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Achu Murukku",
+      "name_ta": "அச்சு முறுக்கு",
+      "variants": ["1KG", "500GM", "250GM"]
+    },
+    {
+      "name_en": "Fried Native Sirumani Groundnut",
+      "name_ta": "வறுத்த சிறுமணி நாட்டு நிலக்கடலை",
+      "variants": ["1KG", "500GM", "250GM"]
+    }
+  ]
+}

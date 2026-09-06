@@ -1,0 +1,15 @@
+﻿ID,Category,Requirement,Responsible_Person,Priority,Status,Action_Required
+REQ-01,Catalog Data,"Finalize 85 product catalog items (EN & TA names, pricing & variants)",Dev,Critical,Completed,Seeded into backend/prisma/seed.ts dataset.
+REQ-02,Photography,Collect product photos & remove background clutter (White background),Dev,High,In Progress,Photograph items; remove backgrounds with PhotoRoom / Remove.bg.
+REQ-03,Image Storage,Create Cloudinary account & setup product image upload preset,Dev,High,Live Ready,Cloudinary credentials & upload middleware configured.
+REQ-04,Hosting Plan,Purchase Hostinger VPS plan (Ubuntu 22.04 LTS - India Location),Client,Critical,Pending,Client to buy Hostinger KVM VPS plan.
+REQ-05,Database Setup,Create PostgreSQL database on Hostinger VPS & link DATABASE_URL,Dev,Critical,Live Ready,PostgreSQL setup script & Prisma config prepared.
+REQ-06,Domain Purchase,Purchase domain name (.in or .com) via Hostinger / Namecheap,Client,Critical,Pending,Client to register domain name.
+REQ-07,DNS & SSL,Point Domain DNS A-Records to Hostinger IP & issue free SSL cert,Dev,High,Ready,Configure Nginx reverse proxy & Certbot SSL.
+REQ-08,Live Deploy,Run database migrations & seed 85 products to production database,Dev,Critical,Ready,Execute npx prisma db seed on live VPS.
+REQ-09,Payment Gateway,Integrate Razorpay / Cashfree UPI & Card online payments,Dev,Medium,Phase 2 (Hold),On Hold for Phase 2 as instructed.
+REQ-10,Shipping Gateway,Integrate Shiprocket courier dispatch API & tracking,Dev,Medium,Phase 2 (Hold),On Hold for Phase 2 as instructed.
+REQ-11,Local Pincodes,Set up South India pincodes & flat delivery rates,Dev,High,Completed,"Seeded Chennai, Madurai, Kovai, Trichy, Blr pincodes."
+REQ-12,Admin Security,Setup admin credentials (admin@yathu.com) & JWT authentication,Dev,Critical,Live Ready,CMS routes secured with JWT role authorization.
+REQ-13,Admin SOP,Prepare guide for adding/editing products & updating prices,Dev,High,Completed,Documented in MASTER_SETUP_AND_PRODUCT_OPERATIONS_GUIDE.md.
+REQ-14,DB Backups,Setup automated daily PostgreSQL database backups,Dev,High,Ready,pg_dump automated cron script created.
