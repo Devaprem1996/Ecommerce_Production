@@ -4,14 +4,14 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlist } from '@/hooks/useWishlist';
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  MapPin, 
-  Heart, 
-  User, 
-  Bell, 
-  LogOut, 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  MapPin,
+  Heart,
+  User,
+  Bell,
+  LogOut,
   ChevronRight,
   Menu,
   X
@@ -34,7 +34,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const pathname = usePathname();
   const { user, isLoggedIn, logout } = useAuthStore();
   const wishlistItems = useWishlist((state) => state.items);
-  
+
   const [checking, setChecking] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -152,7 +152,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       const response = await fetch('/api/auth/logout', {
         method: 'POST'
       });
-      
+
       if (response.ok) {
         logout(); // Clear Zustand state
         toast.success("You've been logged out successfully");
@@ -173,7 +173,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
   // Breadcrumbs Computation
   const getBreadcrumbs = () => {
-    const paths = pathname.split('/').filter(Boolean);
+    const paths = (pathname ?? '').split('/').filter(Boolean);
     return [
       { label: 'Home', path: '/' },
       { label: 'Account', path: '/account' },
@@ -205,13 +205,13 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 py-6 sm:py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         {/* Dynamic Breadcrumbs */}
         <nav className="flex items-center space-x-1.5 text-xs font-semibold text-neutral-500 dark:text-neutral-450 mb-6 sm:mb-8 select-none">
           {breadcrumbs.map((bc, idx) => (
             <React.Fragment key={bc.path}>
               {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-neutral-400" />}
-              <span 
+              <span
                 onClick={() => idx < breadcrumbs.length - 1 && router.push(bc.path)}
                 className={`hover:text-primary-600 transition-colors cursor-pointer ${
                   idx === breadcrumbs.length - 1 ? 'text-primary-500 font-bold' : ''
@@ -256,8 +256,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                       key={item.path}
                       onClick={() => router.push(item.path)}
                       className={`w-full flex items-center justify-between px-4 py-3 rounded-card text-xs font-bold transition-all ${
-                        isActive 
-                          ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400' 
+                        isActive
+                          ? 'bg-primary-50 text-primary-600 dark:bg-primary-950/20 dark:text-primary-400'
                           : 'text-neutral-600 hover:text-neutral-900 hover:bg-neutral-100 dark:text-neutral-400 dark:hover:text-white dark:hover:bg-neutral-800/50'
                       }`}
                     >
@@ -299,8 +299,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     key={item.path}
                     onClick={() => router.push(item.path)}
                     className={`flex items-center space-x-2 px-4 py-2.5 rounded-card text-xs font-bold transition-all ${
-                      isActive 
-                        ? 'bg-primary-500 text-white' 
+                      isActive
+                        ? 'bg-primary-500 text-white'
                         : 'text-neutral-500 dark:text-neutral-400 hover:bg-neutral-100 dark:hover:bg-neutral-900'
                     }`}
                   >
@@ -353,7 +353,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
                 Are you sure you want to logout of your Yathu Iyarkaiyagam Account? You will need to re-verify your identity to sign back in.
               </p>
-              
+
               <div className="flex gap-3 mt-6">
                 <button
                   onClick={() => setShowLogoutModal(false)}

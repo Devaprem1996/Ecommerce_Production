@@ -24,11 +24,11 @@ type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 function ResetPasswordFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [token, setToken] = useState<string | null>(null);
   const [validating, setValidating] = useState(true);
   const [isValidToken, setIsValidToken] = useState(false);
-  
+
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -40,7 +40,7 @@ function ResetPasswordFormContent() {
     const csrf = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
     setCsrfToken(csrf);
 
-    const queryToken = searchParams.get('token');
+    const queryToken = (searchParams ?? new URLSearchParams()).get('token');
     setToken(queryToken);
 
     // Validate token format (64-character hex string)
@@ -118,14 +118,14 @@ function ResetPasswordFormContent() {
     try {
       const response = await fetch('/api/auth/admin/reset-password', {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': csrfToken
         },
-        body: JSON.stringify({ 
-          token, 
+        body: JSON.stringify({
+          token,
           password: data.password,
-          csrfToken 
+          csrfToken
         })
       });
 

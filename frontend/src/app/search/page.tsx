@@ -5,16 +5,16 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Search as SearchIcon, 
-  Filter, 
-  Grid2X2, 
-  Grid3X3, 
-  List, 
-  X, 
-  Star, 
-  RotateCcw, 
-  ShoppingBag, 
+import {
+  Search as SearchIcon,
+  Filter,
+  Grid2X2,
+  Grid3X3,
+  List,
+  X,
+  Star,
+  RotateCcw,
+  ShoppingBag,
   SlidersHorizontal,
   ChevronDown,
   Loader2,
@@ -57,7 +57,7 @@ function SearchContent() {
   const { toggleItem, hasItem } = useWishlist();
 
   // Search input state
-  const queryParam = searchParams.get("q") || "";
+  const queryParam = (searchParams ?? new URLSearchParams()).get("q") || "";
   const [searchVal, setSearchVal] = useState(queryParam);
 
   // Sync state when query parameter changes
@@ -112,14 +112,14 @@ function SearchContent() {
     const displayName = currentLang === "ta" && product.nameTamil ? product.nameTamil : product.name;
     if (!wasWishlisted) {
       toast.success(
-        currentLang === "ta" 
-          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!` 
+        currentLang === "ta"
+          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!`
           : `${displayName} added to wishlist!`
       );
     } else {
       toast.info(
-        currentLang === "ta" 
-          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது` 
+        currentLang === "ta"
+          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது`
           : `${displayName} removed from wishlist`
       );
     }
@@ -165,7 +165,7 @@ function SearchContent() {
       const matchCat = product.category.toLowerCase().includes(cleanQuery);
       const matchDesc = product.description.toLowerCase().includes(cleanQuery);
       const matchDescTamil = product.descriptionTamil ? product.descriptionTamil.toLowerCase().includes(cleanQuery) : false;
-      
+
       return matchName || matchNameTamil || matchCat || matchDesc || matchDescTamil;
     });
 
@@ -230,11 +230,11 @@ function SearchContent() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-16 transition-colors duration-normal">
-      
+
       {/* Search Header Container */}
       <div className="w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          
+
           <nav className="flex items-center gap-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider mb-4">
             <Link href="/" className="hover:text-primary-500 transition-colors">
               {t("shop.breadcrumb_home", "Home")}
@@ -255,7 +255,7 @@ function SearchContent() {
                 t("nav.search", "Search Products")
               )}
             </h1>
-            
+
             {queryParam && !isPageLoading && (
               <p className="text-xs sm:text-sm font-semibold text-neutral-500 mt-1">
                 {t("search_page.showing_results", "Showing {{count}} results", { count: filteredProducts.length })}
@@ -286,7 +286,7 @@ function SearchContent() {
                 <HelpCircle className="w-4 h-4 text-yellow-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <span className="font-bold">{t("search_page.did_you_mean", "Did you mean: ")}</span>
-                  <Link 
+                  <Link
                     href={`/search?q=${encodeURIComponent(suggestedQuery)}`}
                     className="font-bold underline text-primary-600 dark:text-primary-400 hover:text-primary-500 ml-1"
                   >
@@ -319,11 +319,11 @@ function SearchContent() {
               <div className="w-20 h-20 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-450 mb-6">
                 <SearchIcon className="w-9 h-9 text-neutral-400" />
               </div>
-              
+
               <h3 className="text-xl font-bold text-neutral-900 dark:text-white mb-2">
                 {t("search_page.no_results", "No results for ")} "{queryParam}"
               </h3>
-              
+
               <div className="text-left bg-neutral-50 dark:bg-neutral-950 p-5 rounded-card max-w-md w-full border border-neutral-150 dark:border-neutral-800/60 mt-4 space-y-2">
                 <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest mb-3">
                   {t("search_page.check_spelling", "Try these suggestions:")}
@@ -377,7 +377,7 @@ function SearchContent() {
         ) : (
           /* STATE 1 — HAS RESULTS */
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            
+
             {/* Sidebar Filters */}
             <aside className="hidden lg:block lg:col-span-1 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sticky top-24 self-start max-h-[85vh] overflow-y-auto shadow-sm">
               <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-6">
@@ -500,10 +500,10 @@ function SearchContent() {
 
             {/* Products Main Grid */}
             <main className="col-span-1 lg:col-span-3 flex flex-col">
-              
+
               {/* Toolbar Controls */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature px-4 py-3 mb-6 shadow-sm">
-                
+
                 {/* Mobile Filter Toggle */}
                 <div className="flex items-center gap-2 sm:hidden w-full">
                   <Button
@@ -650,7 +650,7 @@ function SearchContent() {
                               {currentLang === "ta" && product.descriptionTamil ? product.descriptionTamil : product.description}
                             </p>
                           </div>
-                          
+
                           <div className="flex flex-wrap items-end justify-between gap-4 mt-6 pt-4 border-t border-neutral-100 dark:border-neutral-800/60">
                             <div>
                               <span className="text-[10px] text-neutral-650 line-through">
@@ -661,7 +661,7 @@ function SearchContent() {
                                 <span className="text-[10px] text-neutral-600 font-normal ml-0.5">/ {product.unit}</span>
                               </div>
                             </div>
-                            
+
                             <div className="flex items-center gap-2">
                               <Button
                                 variant="secondary"
@@ -844,7 +844,7 @@ function SearchContent() {
           </>
         )}
       </AnimatePresence>
-      
+
     </div>
   );
 }

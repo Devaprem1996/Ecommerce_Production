@@ -21,14 +21,14 @@ function LoginForm() {
   const [mobile, setMobile] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
+
   // Timer and Attempts states
   const [timer, setTimer] = useState(30);
   const [resendAttempts, setResendAttempts] = useState(0);
   const [isSuccess, setIsSuccess] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const redirectUrl = searchParams.get('redirect') || '/account';
+  const redirectUrl = (searchParams ?? new URLSearchParams()).get('redirect') || '/account';
 
   // Redirect if already logged in
   useEffect(() => {
@@ -110,7 +110,7 @@ function LoginForm() {
         // Save user state in Zustand authStore
         login(data.user, data.accessToken);
         toast.success(t('reviews_page.success_cta') || 'Successfully logged in!');
-        
+
         // Wait for green success flash to finish before redirecting
         setTimeout(() => {
           router.replace(redirectUrl);
@@ -168,7 +168,7 @@ function LoginForm() {
 
   return (
     <main className="min-h-screen flex flex-col justify-center items-center py-12 px-4 sm:px-6 lg:px-8 bg-neutral-50 dark:bg-neutral-950 font-sans relative overflow-hidden">
-      
+
       {/* Background Gradients */}
       <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] bg-primary-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-[-20%] right-[-10%] w-[600px] h-[600px] bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />

@@ -4,19 +4,19 @@ import React, { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  LayoutDashboard, 
-  ShoppingBag, 
-  FolderTree, 
-  ClipboardList, 
-  FileText, 
-  BarChart3, 
-  LogOut, 
-  Menu, 
-  X, 
-  ChevronLeft, 
-  ChevronRight, 
-  Bell, 
+import {
+  LayoutDashboard,
+  ShoppingBag,
+  FolderTree,
+  ClipboardList,
+  FileText,
+  BarChart3,
+  LogOut,
+  Menu,
+  X,
+  ChevronLeft,
+  ChevronRight,
+  Bell,
   User,
   ShieldAlert,
   Loader2,
@@ -35,11 +35,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
-  
+
   const [checkingAuth, setCheckingAuth] = useState(true);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
-  
+
   // Notification States
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifications, setNotifications] = useState([
@@ -48,9 +48,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     { id: 3, text: 'System update completed successfully', time: '1d ago', read: true }
   ]);
 
-  const isGuestPath = 
-    pathname === '/admin/login' || 
-    pathname === '/admin/forgot-password' || 
+  const isGuestPath =
+    pathname === '/admin/login' ||
+    pathname === '/admin/forgot-password' ||
     pathname === '/admin/reset-password';
 
   // Auth Guard
@@ -151,9 +151,9 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
   return (
     <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 transition-colors duration-normal">
-      
+
       {/* SIDEBAR - DESKTOP */}
-      <aside 
+      <aside
         className={`hidden md:flex flex-col bg-[#1B4332] text-white transition-all duration-normal relative z-30 ${
           isCollapsed ? 'w-20' : 'w-64'
         }`}
@@ -167,7 +167,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
           </Link>
 
           {!isCollapsed && (
-            <button 
+            <button
               onClick={() => setIsCollapsed(true)}
               className="p-1 rounded-card hover:bg-primary-800/40 text-primary-250 cursor-pointer"
             >
@@ -179,7 +179,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Sidebar Nav Links */}
         <nav className="flex-1 py-6 px-3 space-y-1.5">
           {menuItems.map(item => {
-            const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
+            const isActive = pathname === item.path || (item.path !== '/admin' && (pathname ?? '').startsWith(item.path));
             const Icon = item.icon;
 
             return (
@@ -187,7 +187,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                 key={item.label}
                 href={item.path}
                 className={`flex items-center gap-3.5 px-3 py-3 rounded-card text-xs font-bold uppercase tracking-wider transition-colors cursor-pointer ${
-                  isActive 
+                  isActive
                     ? 'bg-primary-500 text-white shadow-sm'
                     : 'text-primary-200 hover:bg-primary-800/30 hover:text-white'
                 }`}
@@ -246,7 +246,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             >
               <div className="h-16 flex items-center justify-between px-5 border-b border-primary-800/40">
                 <span className="font-heading font-black text-xl">Yathu Iyarkaiyagam Admin</span>
-                <button 
+                <button
                   onClick={() => setIsMobileOpen(false)}
                   className="p-1 rounded-card hover:bg-primary-800/40 text-primary-250 cursor-pointer"
                 >
@@ -256,7 +256,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
               <nav className="flex-1 py-6 px-3 space-y-1.5">
                 {menuItems.map(item => {
-                  const isActive = pathname === item.path || (item.path !== '/admin' && pathname.startsWith(item.path));
+                  const isActive = pathname === item.path || (item.path !== '/admin' && (pathname ?? '').startsWith(item.path));
                   const Icon = item.icon;
 
                   return (
@@ -264,7 +264,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                       key={item.label}
                       href={item.path}
                       className={`flex items-center gap-3.5 px-3 py-3 rounded-card text-xs font-bold uppercase tracking-wider cursor-pointer ${
-                        isActive 
+                        isActive
                           ? 'bg-primary-500 text-white shadow-sm'
                           : 'text-primary-200 hover:bg-primary-800/30'
                       }`}
@@ -292,7 +292,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex flex-col min-w-0">
-        
+
         {/* HEADER BAR */}
         <header className="h-16 bg-white dark:bg-neutral-900 border-b border-neutral-150 dark:border-neutral-850 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-20">
           <div className="flex items-center gap-3">
@@ -306,12 +306,12 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
             {/* Breadcrumb status */}
             <h2 className="hidden sm:block text-xs font-extrabold uppercase tracking-widest text-neutral-400">
-              Admin Workspace / <span className="text-neutral-900 dark:text-white capitalize">{pathname.split('/').pop() || 'Overview'}</span>
+                Admin Workspace / <span className="text-neutral-900 dark:text-white capitalize">{(pathname ?? '').split('/').pop() || 'Overview'}</span>
             </h2>
           </div>
 
           <div className="flex items-center gap-4 relative">
-            
+
             {/* Notification Badge Trigger */}
             <button
               onClick={() => setShowNotifications(!showNotifications)}
@@ -348,11 +348,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
                     <div className="space-y-2 max-h-60 overflow-y-auto">
                       {notifications.map(n => (
-                        <div 
-                          key={n.id} 
+                        <div
+                          key={n.id}
                           className={`p-2 rounded-card border transition-colors ${
-                            n.read 
-                              ? 'bg-neutral-50 dark:bg-neutral-950 border-neutral-100 dark:border-neutral-850 text-neutral-500' 
+                            n.read
+                              ? 'bg-neutral-50 dark:bg-neutral-950 border-neutral-100 dark:border-neutral-850 text-neutral-500'
                               : 'bg-primary-500/5 border-primary-500/10 text-neutral-900 dark:text-white'
                           }`}
                         >

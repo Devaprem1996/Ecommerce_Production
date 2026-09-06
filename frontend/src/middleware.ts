@@ -24,20 +24,20 @@ export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Maintenance Mode Routing Checks
-  const isMaintenanceMode = 
-    process.env.MAINTENANCE_MODE === 'true' || 
+  const isMaintenanceMode =
+    process.env.MAINTENANCE_MODE === 'true' ||
     process.env.NEXT_PUBLIC_MAINTENANCE_MODE === 'true';
 
   if (isMaintenanceMode) {
     const isMaintenancePath = pathname === '/maintenance';
-    const isAdminPath = pathname.startsWith('/admin');
-    const isStaticAsset = 
-      pathname.startsWith('/_next') || 
-      pathname.startsWith('/assets') || 
-      pathname.startsWith('/images') || 
-      pathname === '/favicon.ico' || 
+    const isAdminPath = (pathname ?? '').startsWith('/admin');
+    const isStaticAsset =
+      (pathname ?? '').startsWith('/_next') ||
+      (pathname ?? '').startsWith('/assets') ||
+      (pathname ?? '').startsWith('/images') ||
+      pathname === '/favicon.ico' ||
       pathname === '/offline.html';
-    const isApiPath = pathname.startsWith('/api/');
+    const isApiPath = (pathname ?? '').startsWith('/api/');
 
     if (!isMaintenancePath && !isAdminPath && !isStaticAsset && !isApiPath) {
       return NextResponse.redirect(new URL('/maintenance', request.url));
@@ -48,11 +48,11 @@ export function middleware(request: NextRequest) {
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
-  
+
   // Read access_token from cookies
   const accessTokenCookie = request.cookies.get('access_token');
   const token = accessTokenCookie?.value;
-  
+
   let user: any = null;
   let isTokenValid = false;
 
@@ -65,13 +65,13 @@ export function middleware(request: NextRequest) {
   }
 
   // 1. Customer Protected Routes (/account/*)
-  if (pathname.startsWith('/account')) {
+  if ((pathname ?? '').startsWith('/account')) {
     if (!isTokenValid) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-    
+
     if (user && user.role !== 'customer') {
       // If admin tries to access customer account pages, redirect to admin dashboard
       if (user.role === 'admin') {
@@ -81,12 +81,12 @@ export function middleware(request: NextRequest) {
   }
 
   // 2. Admin Protected Routes (/admin/* except /admin/login, /admin/forgot-password, /admin/reset-password)
-  const isAdminGuestPath = 
-    pathname === '/admin/login' || 
-    pathname === '/admin/forgot-password' || 
+  const isAdminGuestPath =
+    pathname === '/admin/login' ||
+    pathname === '/admin/forgot-password' ||
     pathname === '/admin/reset-password';
 
-  if (pathname.startsWith('/admin') && !isAdminGuestPath) {
+  if ((pathname ?? '').startsWith('/admin') && !isAdminGuestPath) {
     if (!isTokenValid || !user || user.role !== 'admin') {
       // If not logged in or role is not admin
       if (user && user.role === 'customer') {

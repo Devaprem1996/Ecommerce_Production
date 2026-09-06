@@ -5,16 +5,16 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Filter, 
-  Grid2X2, 
-  Grid3X3, 
-  List, 
-  ChevronRight, 
-  X, 
-  Star, 
-  RotateCcw, 
-  ShoppingBag, 
+import {
+  Filter,
+  Grid2X2,
+  Grid3X3,
+  List,
+  ChevronRight,
+  X,
+  Star,
+  RotateCcw,
+  ShoppingBag,
   SlidersHorizontal,
   ChevronDown,
   Loader2,
@@ -51,8 +51,8 @@ function ShopContent() {
   const { toggleItem, hasItem } = useWishlist();
 
   // URL State initialization
-  const initialCategoryQuery = searchParams.get('category');
-  
+  const initialCategoryQuery = (searchParams ?? new URLSearchParams()).get('category');
+
   // Filtering & Sorting States
   const [categories, setCategories] = useState<CategoryType[]>(mockCategories);
   const [dbProducts, setDbProducts] = useState<ProductType[]>([]);
@@ -92,7 +92,7 @@ function ShopContent() {
 
   // Sync category state when URL changes
   useEffect(() => {
-    const categoryParam = searchParams.get('category');
+    const categoryParam = (searchParams ?? new URLSearchParams()).get('category');
     if (categoryParam) {
       const mappedCategory = categorySlugMap[categoryParam] || categoryParam;
       setSelectedCategories([mappedCategory]);
@@ -122,7 +122,7 @@ function ShopContent() {
     queryParams.maxPrice = maxPrice.toString();
 
     // Search query
-    const searchVal = searchParams.get('search') || searchParams.get('q') || '';
+    const searchVal = (searchParams ?? new URLSearchParams()).get('search') || (searchParams ?? new URLSearchParams()).get('q') || '';
     if (searchVal) {
       queryParams.search = searchVal;
     }
@@ -173,14 +173,14 @@ function ShopContent() {
     const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
     if (!wasWishlisted) {
       toast.success(
-        currentLang === 'ta' 
-          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!` 
+        currentLang === 'ta'
+          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!`
           : `${displayName} added to wishlist!`
       );
     } else {
       toast.info(
-        currentLang === 'ta' 
-          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது` 
+        currentLang === 'ta'
+          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது`
           : `${displayName} removed from wishlist`
       );
     }
@@ -188,7 +188,7 @@ function ShopContent() {
 
   // Filter Categories Selection
   const toggleCategory = (categoryName: string) => {
-    setSelectedCategories(prev => 
+    setSelectedCategories(prev =>
       prev.includes(categoryName)
         ? prev.filter(c => c !== categoryName)
         : [...prev, categoryName]
@@ -299,7 +299,7 @@ function ShopContent() {
       {/* Main Body */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+
           {/* Desktop Filter Sidebar - Removed/Hidden */}
           {/* <aside className="hidden lg:block lg:col-span-1 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sticky top-24 self-start max-h-[85vh] overflow-y-auto shadow-sm">
             <div className="flex items-center justify-between pb-4 border-b border-neutral-100 dark:border-neutral-800 mb-6">
@@ -445,7 +445,7 @@ function ShopContent() {
 
           {/* Product Listing Main Section */}
           <main className="col-span-1 lg:col-span-4 flex flex-col">
-            
+
             {/* Top Toolbar Controls */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature px-4 py-3 mb-6 shadow-sm">
               {/* Sort By Dropdown */}
