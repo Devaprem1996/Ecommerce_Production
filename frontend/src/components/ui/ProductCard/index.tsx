@@ -2,6 +2,8 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ProductCardProps } from './ProductCard.types';
@@ -9,6 +11,7 @@ import { Badge } from '../Badge';
 import { StarRating } from '../StarRating';
 import { Button } from '../Button';
 import { formatPrice } from '@/utils/formatPrice';
+import { slugify } from '@/utils/slugify';
 import { Heart, ShoppingBag, Eye } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -24,9 +27,12 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
+  const router = useRouter();
 
   // Bilingual support for name
   const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
+
+  const productSlug = slugify(product.name);
 
   // Determine badge to show
   const isSoldOut = product.stock === 0;
@@ -46,7 +52,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   const handleQuickView = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (onQuickView) onQuickView(product);
+    if (onQuickView) {
+      onQuickView(product);
+    } else {
+      router.push(`/shop/${productSlug}`);
+    }
   };
 
   return (
@@ -111,7 +121,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
             leftIcon={<Eye className="w-4 h-4" />}
             className="shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-normal"
           >
-            {t('hero.cta.explore', 'Quick View')}
+            {t('hero.cta.explore', 'Explore')}
           </Button>
         </div>
       </div>
@@ -124,9 +134,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </span>
 
         {/* Product Name */}
-        <h4 className="text-base font-semibold text-neutral-900 dark:text-white line-clamp-1 mb-1 group-hover:text-primary-500 transition-colors">
-          {displayName}
-        </h4>
+        <Link
+          href={`/shop/${productSlug}`}
+          onClick={(e) => e.stopPropagation()}
+          className="line-clamp-1 mb-1 group-hover:text-primary-500 transition-colors"
+        >
+          <h4 className="text-base font-semibold text-neutral-900 dark:text-white group-hover:text-primary-500 transition-colors">
+            {displayName}
+          </h4>
+        </Link>
 
         {/* Ratings display */}
         <div className="flex items-center gap-2 mb-3">

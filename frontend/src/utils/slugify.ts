@@ -1,4 +1,3 @@
-import { mockProducts } from '@/constants/mockData';
 import { ProductType } from '@/types';
 
 /**
@@ -18,8 +17,8 @@ export const slugify = (text: string): string => {
 };
 
 /**
- * Finds a product in the mock database by its slugified name.
+ * Finds a product in a list by its slugified name.
  */
-export const getProductBySlug = (slug: string): ProductType | undefined => {
-  return mockProducts.find((p) => slugify(p.name) === slug);
-};
+export function findProductBySlug(slug: string, products: ProductType[]): ProductType | undefined {
+  return products.find((p) => slugify(p.name) === slug);
+}

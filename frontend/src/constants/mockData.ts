@@ -174,36 +174,6 @@ export const mockProducts: ProductType[] = [
   },
 ];
 
-export const mockTestimonials = [
-  {
-    id: 'test-1',
-    name: 'Priya Krishnan',
-    location: 'Chennai',
-    quote: 'The organic vegetables are so fresh, it reminds me of my grandmother’s farm. The taste is completely different from market vegetables!',
-    quoteTamil: 'இயற்கை காய்கறிகள் மிகவும் புதியவை, இது எனது பாட்டியின் பண்ணையை நினைவூட்டுகிறது. சந்தை காயறிகளை விட இதன் சுவை முற்றிலும் மாறுபட்டது!',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=facearea&facepad=2&w=150&h=150&q=80',
-  },
-  {
-    id: 'test-2',
-    name: 'Rahul Sharma',
-    location: 'Coimbatore',
-    quote: 'Lab testing reports on every product give me absolute peace of mind. The raw mountain honey is stellar and incredibly pure.',
-    quoteTamil: 'ஒவ்வொரு பொருளின் மீதான ஆய்வக சோதனை அறிக்கைகளும் எனக்கு முழுமையான மன அமைதியைத் தருகிறது. மலைத் தேன் மிக அற்புதமானது!',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=facearea&facepad=2&w=150&h=150&q=80',
-  },
-  {
-    id: 'test-3',
-    name: 'Anjali Mukund',
-    location: 'Madurai',
-    quote: 'Incredible delivery speed and fully biodegradable eco-friendly packaging. Highly recommend to anyone seeking authentic organic foods.',
-    quoteTamil: 'நம்பமுடியாத விநியோக வேகம் மற்றும் முழுமையாக மட்கக்கூடிய பேக்கேஜிங். உண்மையான இயற்கை உணவுகளைத் தேடுவோருக்கு இதைப் பரிந்துரைக்கிறேன்.',
-    rating: 5,
-    avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=facearea&facepad=2&w=150&h=150&q=80',
-  },
-];
-
 export const mockBlogs = [
   {
     id: 'blog-1',

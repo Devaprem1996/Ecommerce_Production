@@ -71,13 +71,6 @@ export function middleware(request: NextRequest) {
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
     }
-
-    if (user && user.role !== 'customer') {
-      // If admin tries to access customer account pages, redirect to admin dashboard
-      if (user.role === 'admin') {
-        return NextResponse.redirect(new URL('/admin/dashboard', request.url));
-      }
-    }
   }
 
   // 2. Admin Protected Routes (/admin/* except /admin/login, /admin/forgot-password, /admin/reset-password)

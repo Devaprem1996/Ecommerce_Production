@@ -58,8 +58,8 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
     ],
     customer: [
       { label: t('footer.track_order', 'Track Order'), path: '/track-order' },
-      { label: t('footer.returns', 'Returns & Refunds'), path: '/returns' },
-      { label: t('footer.shipping', 'Shipping Info'), path: '/shipping' },
+      { label: t('footer.returns', 'Returns & Refunds'), path: '/return-policy' },
+      { label: t('footer.shipping', 'Shipping Info'), path: '/shipping-policy' },
       { label: t('footer.privacy', 'Privacy Policy'), path: '/privacy' },
     ],
   };
@@ -207,33 +207,30 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
                     {t('footer.social_info', 'Stay updated with our farm stories, new arrivals, and harvest times.')}
                   </p>
                   <div className="flex items-center gap-4 text-primary-200">
-                    <a
-                      href="https://facebook.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-secondary-400 transition-colors"
-                      aria-label="Facebook Page"
+                    <span
+                      className="opacity-50 cursor-not-allowed select-none"
+                      title="Coming soon"
+                      aria-disabled="true"
+                      aria-label="Facebook (coming soon)"
                     >
                       <Facebook className="w-5 h-5" />
-                    </a>
-                    <a
-                      href="https://instagram.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-secondary-400 transition-colors"
-                      aria-label="Instagram Profile"
+                    </span>
+                    <span
+                      className="opacity-50 cursor-not-allowed select-none"
+                      title="Coming soon"
+                      aria-disabled="true"
+                      aria-label="Instagram (coming soon)"
                     >
                       <Instagram className="w-5 h-5" />
-                    </a>
-                    <a
-                      href="https://twitter.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-secondary-400 transition-colors"
-                      aria-label="Twitter Feed"
+                    </span>
+                    <span
+                      className="opacity-50 cursor-not-allowed select-none"
+                      title="Coming soon"
+                      aria-disabled="true"
+                      aria-label="Twitter (coming soon)"
                     >
                       <Twitter className="w-5 h-5" />
-                    </a>
+                    </span>
                   </div>
                 </motion.div>
               )}

@@ -53,10 +53,10 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   ];
 
   const subItems = [
-    { label: t('category.vegetables', 'Fresh Vegetables'), path: '/shop?category=vegetables' },
-    { label: t('category.fruits', 'Organic Fruits'), path: '/shop?category=fruits' },
-    { label: t('category.groceries', 'Spices & Groceries'), path: '/shop?category=groceries' },
-    { label: t('category.dairy', 'Farm Dairy Products'), path: '/shop?category=dairy' },
+    { label: t('category.vegetables', 'Fresh Vegetables'), path: '/shop?category=fruits-vegetables' },
+    { label: t('category.fruits', 'Organic Fruits'), path: '/shop?category=fruits-vegetables' },
+    { label: t('category.groceries', 'Spices & Groceries'), path: '/shop?category=honey-spices' },
+    { label: t('category.dairy', 'Farm Dairy Products'), path: '/shop?category=dairy-eggs' },
   ];
 
   return (
@@ -241,30 +241,27 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
 
               {/* Social icons */}
               <div className="flex items-center justify-center gap-5 mt-2">
-                <a
-                  href="https://facebook.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-600 hover:text-primary-500 transition-colors"
+                <span
+                  title="Coming soon"
+                  aria-disabled="true"
+                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
                 >
                   <Facebook className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://instagram.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-600 hover:text-primary-500 transition-colors"
+                </span>
+                <span
+                  title="Coming soon"
+                  aria-disabled="true"
+                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
                 >
                   <Instagram className="w-5 h-5" />
-                </a>
-                <a
-                  href="https://twitter.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-neutral-600 hover:text-primary-500 transition-colors"
+                </span>
+                <span
+                  title="Coming soon"
+                  aria-disabled="true"
+                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
                 >
                   <Twitter className="w-5 h-5" />
-                </a>
+                </span>
               </div>
             </div>
           </motion.div>

@@ -4,6 +4,7 @@ import React from 'react';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartStore } from '@/store/cartStore';
 import { formatPrice } from '@/utils/formatPrice';
+import { slugify } from '@/utils/slugify';
 import { 
   Heart, 
   ShoppingBag, 
@@ -95,7 +96,7 @@ export default function WishlistPage() {
                 </button>
 
                 {/* Product Image */}
-                <Link href={`/shop/${product.id}`} className="block relative w-full aspect-square bg-neutral-100 dark:bg-neutral-850 rounded-card overflow-hidden mb-3">
+                <Link href={`/shop/${slugify(product.name)}`} className="block relative w-full aspect-square bg-neutral-100 dark:bg-neutral-850 rounded-card overflow-hidden mb-3">
                   <img
                     src={product.images[0] || '/placeholder.png'}
                     alt={product.name}

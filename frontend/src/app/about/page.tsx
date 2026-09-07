@@ -39,7 +39,6 @@ export default function AboutPage() {
       nameTamil: 'கணேஷ் பிரபு',
       role: 'Co-Founder & Organic Farmer',
       roleTamil: 'இணை நிறுவனர் & இயற்கை விவசாயி',
-      avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=300',
       bio: 'Pioneering direct-farm sourcing in Tamil Nadu to secure chemical-free nutrition.',
       bioTamil: 'இரசாயனமற்ற ஊட்டச்சத்தைப் பெற தமிழ்நாட்டில் நேரடி பண்ணை கொள்முதல் முறையை முன்னெடுப்பவர்.'
     },
@@ -48,7 +47,6 @@ export default function AboutPage() {
       nameTamil: 'டாக்டர் அபிராமி செல்வம்',
       role: 'Head of Nutrition & Quality Assurance',
       roleTamil: 'ஊட்டச்சத்து & தரக் கட்டுப்பாட்டுத் தலைவர்',
-      avatar: 'https://images.unsplash.com/photo-1594744803329-e58b31de215f?auto=format&fit=crop&q=80&w=300',
       bio: 'Enforcing strict lab testing protocols to guarantee zero-residue food batches.',
       bioTamil: 'உணவுத் தொகுப்புகளில் நச்சு எச்சங்கள் இல்லை என்பதை உறுதி செய்ய ஆய்வக சோதனை நெறிமுறைகளை வழிநடத்துபவர்.'
     },
@@ -57,7 +55,6 @@ export default function AboutPage() {
       nameTamil: 'இராமநாதன் கே.',
       role: 'Chief of Farm Relations & Sourcing',
       roleTamil: 'பண்ணை உறவுகள் & கொள்முதல் தலைவர்',
-      avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&q=80&w=300',
       bio: 'Working on-ground with 50+ local organic farmers for crop rotations and fair trade.',
       bioTamil: 'பயிர் சுழற்சி மற்றும் நியாயமான வர்த்தகத்திற்காக 50-க்கும் மேற்பட்ட உள்ளூர் விவசாயிகளுடன் களப்பணி ஆற்றுபவர்.'
     }
@@ -310,12 +307,10 @@ export default function AboutPage() {
                 data-aos="fade-up"
                 data-aos-delay={idx * 100}
               >
-                <div className="h-64 relative overflow-hidden bg-neutral-105">
-                  <img
-                    src={member.avatar}
-                    alt={member.name}
-                    className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-slow"
-                  />
+                <div className="h-64 relative overflow-hidden bg-primary-500/10 flex items-center justify-center">
+                  <span className="text-7xl font-black font-heading text-primary-500/40 select-none">
+                    {(currentLang === 'ta' ? member.nameTamil : member.name).charAt(0)}
+                  </span>
                 </div>
                 <div className="p-6 space-y-2">
                   <h3 className="font-bold text-base text-neutral-905 dark:text-white">

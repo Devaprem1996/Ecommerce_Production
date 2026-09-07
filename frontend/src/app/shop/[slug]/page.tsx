@@ -35,7 +35,9 @@ import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
 import { ProductType } from '@/types';
-import { slugify, getProductBySlug } from '@/utils/slugify';
+import { slugify } from '@/utils/slugify';
+import apiClient from '@/lib/apiClient';
+import { mapProductToFrontend } from '@/utils/apiMapper';
 
 interface ReviewItem {
   id: string;
@@ -97,21 +99,42 @@ export default function ProductDetail({ params }: PageProps) {
     });
   }, [params]);
 
+  // Fetch products from API (fallback to mock data) so real DB products resolve
+  const [dbProducts, setDbProducts] = useState<ProductType[]>([]);
+  const [isProductsLoaded, setIsProductsLoaded] = useState(false);
+  useEffect(() => {
+    apiClient.get('/api/v1/cms/products', { params: { limit: '100' } })
+      .then((res) => {
+        if (res?.data?.products && Array.isArray(res.data.products)) {
+          setDbProducts(res.data.products.map(mapProductToFrontend));
+        } else {
+          setDbProducts(mockProducts);
+        }
+      })
+      .catch(() => {
+        setDbProducts(mockProducts);
+      })
+      .finally(() => {
+        setIsProductsLoaded(true);
+      });
+  }, []);
+
   // Retrieve Product
   const product = useMemo(() => {
     if (!slug) return null;
-    return getProductBySlug(slug);
-  }, [slug]);
+    const source = dbProducts.length > 0 ? dbProducts : mockProducts;
+    return source.find((p) => slugify(p.name) === slug);
+  }, [slug, dbProducts]);
 
   // Redirect to 404 if product not found after slug is resolved
   useEffect(() => {
-    if (slug && !product) {
+    if (slug && isProductsLoaded && !product) {
       notFound();
     }
-  }, [slug, product]);
+  }, [slug, isProductsLoaded, product]);
 
   // Loading state until slug is resolved and product is checked
-  if (!slug || !product) {
+  if (!slug || !isProductsLoaded || !product) {
     return (
       <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 flex items-center justify-center">
         <Loader2 className="w-10 h-10 animate-spin text-primary-500" />

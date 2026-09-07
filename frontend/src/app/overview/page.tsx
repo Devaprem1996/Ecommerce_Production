@@ -20,6 +20,7 @@ import {
   Star
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import { customerTestimonials } from "@/constants/testimonials";
 
 function CountUp({ end, duration = 1500, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
   const [count, setCount] = useState(0);
@@ -57,27 +58,13 @@ export default function OverviewPage() {
   const currentLang = i18n.language;
   const router = useRouter();
 
-  // Testimonial quotes
-  const testimonials = [
-    {
-      quote: currentLang === "ta" ? "“யது ஆரோக்கியகம் தயாரிப்புகளின் தரம் மிகவும் அற்புதம். உண்மையான சுவை!”" : "“The quality of Yathu Arokiyagam products is outstanding. Authentic, healthy taste!”",
-      author: currentLang === "ta" ? "கார்த்திக் ஆர்." : "Karthik R.",
-      role: currentLang === "ta" ? "சரிபார்க்கப்பட்ட வாங்குபவர்" : "Verified Buyer",
-      stars: 5
-    },
-    {
-      quote: currentLang === "ta" ? "“இரசாயனமற்ற மற்றும் முற்றிலும் தூய்மையான தயாரிப்புகள். என் குடும்ப ஆரோக்கியத்திற்கு ஏற்றது.”" : "“Chemical-free and absolutely pure. Perfect for my family's wellness journey.”",
-      author: currentLang === "ta" ? "மீனாட்சி எஸ்." : "Meenakshi S.",
-      role: currentLang === "ta" ? "சரிபார்க்கப்பட்ட வாங்குபவர்" : "Verified Buyer",
-      stars: 5
-    },
-    {
-      quote: currentLang === "ta" ? "“விரைவான டெலிவரி மற்றும் தரமான பேக்கேஜிங். QR குறியீடு மூலம் லேப் ரிப்போர்ட்டைப் பார்க்க முடிகிறது.”" : "“Fast delivery and high-quality packaging. Love transparency with the QR lab reports!”",
-      author: currentLang === "ta" ? "அருண் குமார்" : "Arun Kumar",
-      role: currentLang === "ta" ? "சரிபார்க்கப்பட்ட வாங்குபவர்" : "Verified Buyer",
-      stars: 5
-    }
-  ];
+  // Testimonial quotes (shared data source — see @/constants/testimonials)
+  const testimonials = customerTestimonials.map((item) => ({
+    quote: currentLang === "ta" ? `“${item.quoteTamil}”` : `“${item.quote}”`,
+    author: item.name,
+    role: currentLang === "ta" ? "சரிபார்க்கப்பட்ட வாங்குபவர்" : "Verified Buyer",
+    stars: item.rating
+  }));
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-0 transition-colors duration-normal">
@@ -255,7 +242,7 @@ export default function OverviewPage() {
                   Traditional heritage rice varieties and high-fiber organic millets.
                 </p>
               </div>
-              <Link href="/shop?category=grains" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
+              <Link href="/shop?category=grains-flours" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
                 Browse Category <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
@@ -274,7 +261,7 @@ export default function OverviewPage() {
                   Unadulterated native spices packed with essential oils and aroma.
                 </p>
               </div>
-              <Link href="/shop?category=spices" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
+              <Link href="/shop?category=honey-spices" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
                 Browse Category <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
@@ -293,7 +280,7 @@ export default function OverviewPage() {
                   Slow-extracted seed oils without chemical refining or heat.
                 </p>
               </div>
-              <Link href="/shop?category=oils" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
+              <Link href="/shop?category=honey-spices" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
                 Browse Category <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>
@@ -312,7 +299,7 @@ export default function OverviewPage() {
                   Raw wild forest honey, organic jaggery, and unrefined palm sugar.
                 </p>
               </div>
-              <Link href="/shop?category=sweeteners" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
+              <Link href="/shop?category=honey-spices" className="inline-flex items-center gap-1 text-xs font-bold text-primary-500 hover:underline mt-6">
                 Browse Category <ArrowRight className="w-3.5 h-3.5" />
               </Link>
             </motion.div>

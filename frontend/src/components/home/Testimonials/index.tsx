@@ -5,8 +5,8 @@ import useEmblaCarousel from 'embla-carousel-react';
 import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
 import { StarRating } from '@/components/ui/StarRating';
-import { mockTestimonials } from '@/constants/mockData';
-import { CheckCircle2, Quote } from 'lucide-react';
+import { customerTestimonials } from '@/constants/testimonials';
+import { CheckCircle2, Quote, Users } from 'lucide-react';
 import { clsx } from 'clsx';
 
 export const Testimonials: React.FC = () => {
@@ -57,7 +57,7 @@ export const Testimonials: React.FC = () => {
         {/* Carousel Slider */}
         <div className="relative overflow-hidden" ref={emblaRef} data-aos="zoom-in">
           <div className="flex">
-            {mockTestimonials.map((item) => {
+            {customerTestimonials.map((item) => {
               const displayQuote = currentLang === 'ta' && item.quoteTamil ? item.quoteTamil : item.quote;
               return (
                 <div key={item.id} className="flex-none w-full px-4 flex flex-col items-center text-center select-none">
@@ -74,15 +74,21 @@ export const Testimonials: React.FC = () => {
 
                   {/* Reviewer Details */}
                   <div className="flex items-center gap-3">
-                    <div className="relative w-12 h-12 rounded-full overflow-hidden border border-neutral-200">
-                      <Image
-                        src={item.avatar}
-                        alt={item.name}
-                        fill
-                        sizes="48px"
-                        className="object-cover"
-                      />
-                    </div>
+                    {item.avatar ? (
+                      <div className="relative w-12 h-12 rounded-full overflow-hidden border border-neutral-200">
+                        <Image
+                          src={item.avatar}
+                          alt={item.name}
+                          fill
+                          sizes="48px"
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-12 h-12 rounded-full bg-primary-500/15 border border-primary-500/25 flex items-center justify-center text-primary-600 dark:text-primary-400 font-black text-base select-none">
+                        {item.initial || item.name.charAt(0)}
+                      </div>
+                    )}
                     <div className="flex flex-col items-start text-left">
                       <span className="font-bold text-sm text-neutral-900 dark:text-white leading-tight">
                         {item.name}
@@ -102,6 +108,14 @@ export const Testimonials: React.FC = () => {
             })}
           </div>
         </div>
+
+        {/* Dev-only note: sample testimonials must be replaced with real reviews */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="flex items-center justify-center gap-1.5 mt-6 text-[11px] font-semibold text-amber-600 dark:text-amber-500">
+            <Users className="w-3.5 h-3.5" />
+            Sample testimonials — replace the entries in frontend/src/constants/testimonials.ts with real customer reviews.
+          </div>
+        )}
 
         {/* Carousel Dots */}
         <div className="flex items-center justify-center gap-2 mt-8">
