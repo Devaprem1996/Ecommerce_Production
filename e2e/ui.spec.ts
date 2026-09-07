@@ -4,7 +4,7 @@ test.describe('Storefront & Admin UI Feature Tests', () => {
 
   test('1. Home Page UI', async ({ page }) => {
     await page.goto('/');
-    await expect(page).toHaveTitle(/Yathu Iyarkaiyagam|Pure & Lab Tested/i);
+    await expect(page).toHaveTitle(/Yathu Arokiyagam|Healthy Lifestyle/i);
     const nav = page.locator('nav, header').first();
     await expect(nav).toBeVisible();
     const main = page.locator('main, body').first();

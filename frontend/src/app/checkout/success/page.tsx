@@ -126,7 +126,7 @@ function CheckoutSuccessContent() {
   const totalItemsCount = displayOrder.items.reduce((acc: number, item: any) => acc + item.quantity, 0);
 
   // Pre-formatted Whatsapp message
-  const whatsappText = `Hello! I just placed an order at Yathu Iyarkaiyagam!\nOrder Number: *${displayOrder.id}*\nTotal Amount: *₹${displayOrder.total}*\nFresh farm organic goodness is on the way! 🌱`;
+  const whatsappText = `Hello! I just placed an order at Yathu Arokiyagam!\nOrder Number: *${displayOrder.id}*\nTotal Amount: *₹${displayOrder.total}*\nHealthy traditional goodness is on the way! 🌱`;
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(whatsappText)}`;
 
   return (

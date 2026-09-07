@@ -41,7 +41,7 @@ exports.createProductSchema = zod_1.z.object({
         categoryId: zod_1.z.string().uuid("Invalid category ID"),
         nameEn: zod_1.z.string().trim().min(1, "English product name is required").max(150),
         nameTa: zod_1.z.string().trim().min(1, "Tamil product name is required").max(150),
-        brand: zod_1.z.string().trim().min(1, "Brand is required").max(100).default("Yathu Iyarkaiyagam"),
+        brand: zod_1.z.string().trim().min(1, "Brand is required").max(100).default("Yathu Arokiyagam"),
         descriptionEn: zod_1.z.string().trim().min(1, "English description is required"),
         descriptionTa: zod_1.z.string().trim().min(1, "Tamil description is required"),
         thumbnailUrl: zod_1.z.string().trim().url("Invalid thumbnail URL").optional().or(zod_1.z.literal("")),

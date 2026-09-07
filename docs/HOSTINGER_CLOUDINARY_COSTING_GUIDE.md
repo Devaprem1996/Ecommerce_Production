@@ -1,5 +1,5 @@
 # Hostinger & Cloudinary Costing & Infrastructure Analysis Guide
-**Brand**: Yathu Iyarkaiyagam (யாது இயற்கையகம்)  
+**Brand**: Yathu Arokiyagam (யது ஆரோக்கியகம்)  
 **Target Audience**: Client, Project Lead, & Finance Team  
 **Document Version**: 1.0.0  
 **Date**: September 2026  
@@ -10,7 +10,7 @@
 
 ## 1. Executive Summary & Production Costing Overview
 
-This document presents the complete production costing and resource analysis for hosting the **Yathu Iyarkaiyagam E-Commerce Platform** on **Hostinger VPS** and managing product images via **Cloudinary**.
+This document presents the complete production costing and resource analysis for hosting the **Yathu Arokiyagam E-Commerce Platform** on **Hostinger VPS** and managing product images via **Cloudinary**.
 
 ### Total Cost Projections (Year 1)
 

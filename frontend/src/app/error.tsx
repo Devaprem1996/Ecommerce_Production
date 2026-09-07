@@ -27,7 +27,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
         <div className="max-w-7xl mx-auto px-4 flex justify-center sm:justify-start">
           <Link href="/" className="flex items-center gap-1.5">
             <span className="text-xl font-bold font-heading tracking-wide text-primary-700 dark:text-primary-400">
-              Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
+              Yathu Arokiyagam<span className="text-secondary-400">.</span>
             </span>
           </Link>
         </div>
@@ -92,14 +92,14 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
             </p>
             <p className="flex items-center gap-2">
               <Phone className="w-4 h-4 text-neutral-400" />
-              <span>Call: +91-98765-43210</span>
+              <span>Call: +91-88701-59766</span>
             </p>
             <p className="flex items-center gap-2">
               {/* WhatsApp icon helper */}
               <svg className="w-4 h-4 fill-neutral-400" viewBox="0 0 24 24">
                 <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.73-1.464L0 24zm6.066-4.747c1.658.985 3.284 1.487 4.965 1.488 5.485 0 9.948-4.461 9.95-9.95.002-2.66-1.033-5.161-2.909-7.039C16.248 1.874 13.748 1.83 11.08 1.83c-5.49 0-9.953 4.462-9.955 9.952-.001 1.84.503 3.635 1.47 5.257L1.584 21.09l4.539-1.837z" />
               </svg>
-              <span>WhatsApp: +91-98765-43210</span>
+              <span>WhatsApp: +91-88701-59766</span>
             </p>
           </div>
 
@@ -108,7 +108,7 @@ export default function ErrorBoundaryPage({ error, reset }: ErrorProps) {
 
       {/* Minimal Footer */}
       <footer className="w-full py-4 text-center text-[10px] text-neutral-400 border-t border-neutral-100 dark:border-neutral-850 select-none bg-white dark:bg-neutral-900">
-        &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam. All rights reserved.
+        &copy; {new Date().getFullYear()} Yathu Arokiyagam. All rights reserved.
       </footer>
 
     </div>

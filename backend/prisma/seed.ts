@@ -256,7 +256,7 @@ async function main() {
         slug: meta.slug,
         descriptionEn: meta.descEn,
         descriptionTa: meta.descTa,
-        imageUrl: `https://res.cloudinary.com/yathu-iyarkaiyagam/image/upload/v1/yathu/categories/${meta.slug}.jpg`,
+        imageUrl: `https://res.cloudinary.com/yathu-arokiyagam/image/upload/v1/yathu/categories/${meta.slug}.jpg`,
       },
     });
     totalCategories++;
@@ -269,10 +269,10 @@ async function main() {
           nameEn: prodItem.name_en,
           nameTa: prodItem.name_ta || prodItem.name_en,
           slug: prodSlug,
-          brand: "Yathu Iyarkaiyagam",
-          descriptionEn: `Pure authentic organic ${prodItem.name_en} sourced naturally from farmers without preservatives.`,
+          brand: "Yathu Arokiyagam",
+          descriptionEn: `Pure authentic naturally grown ${prodItem.name_en} sourced honestly from farmers without preservatives.`,
           descriptionTa: `சுத்தமான இயற்கை முறையில் தயாரிக்கப்பட்ட ${prodItem.name_ta || prodItem.name_en}.`,
-          thumbnailUrl: `https://res.cloudinary.com/yathu-iyarkaiyagam/image/upload/v1/yathu/products/${prodSlug}.jpg`,
+          thumbnailUrl: `https://res.cloudinary.com/yathu-arokiyagam/image/upload/v1/yathu/products/${prodSlug}.jpg`,
         },
       });
       totalProducts++;
@@ -280,7 +280,7 @@ async function main() {
       for (let i = 0; i < prodItem.variants.length; i++) {
         const vCode = prodItem.variants[i];
         const vDetails = getVariantPriceAndWeight(categoryKey, vCode);
-        const sku = `YI-${meta.slug.substring(0, 3).toUpperCase()}-P${totalProducts}-${vCode}-${i + 1}`;
+        const sku = `YA-${meta.slug.substring(0, 3).toUpperCase()}-P${totalProducts}-${vCode}-${i + 1}`;
 
         const variant = await prisma.productVariant.create({
           data: {
@@ -313,6 +313,8 @@ async function main() {
       { pincode: "600001", city: "Chennai", state: "Tamil Nadu", available: true, estimatedDays: 2, shippingCharge: 40.0, freeDeliveryThreshold: 499.0 },
       { pincode: "600002", city: "Chennai", state: "Tamil Nadu", available: true, estimatedDays: 2, shippingCharge: 40.0, freeDeliveryThreshold: 499.0 },
       { pincode: "625001", city: "Madurai", state: "Tamil Nadu", available: true, estimatedDays: 3, shippingCharge: 50.0, freeDeliveryThreshold: 599.0 },
+      { pincode: "625515", city: "Chinnmanur", state: "Tamil Nadu", available: true, estimatedDays: 2, shippingCharge: 40.0, freeDeliveryThreshold: 499.0 },
+      { pincode: "625531", city: "Theni", state: "Tamil Nadu", available: true, estimatedDays: 2, shippingCharge: 40.0, freeDeliveryThreshold: 499.0 },
       { pincode: "641001", city: "Coimbatore", state: "Tamil Nadu", available: true, estimatedDays: 2, shippingCharge: 45.0, freeDeliveryThreshold: 499.0 },
       { pincode: "620001", city: "Tiruchirappalli", state: "Tamil Nadu", available: true, estimatedDays: 3, shippingCharge: 45.0, freeDeliveryThreshold: 499.0 },
       { pincode: "560001", city: "Bengaluru", state: "Karnataka", available: true, estimatedDays: 4, shippingCharge: 70.0, freeDeliveryThreshold: 799.0 },

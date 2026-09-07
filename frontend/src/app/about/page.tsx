@@ -94,7 +94,7 @@ export default function AboutPage() {
             className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest"
           >
             <Leaf className="w-3.5 h-3.5 text-primary-300" />
-            <span>Yathu Iyarkaiyagam Story</span>
+            <span>Yathu Arokiyagam Story</span>
           </motion.div>
           
           <motion.h1
@@ -112,7 +112,7 @@ export default function AboutPage() {
             transition={{ delay: 0.2 }}
             className="text-sm sm:text-base text-neutral-100 max-w-xl mx-auto font-medium leading-relaxed"
           >
-            {t('about.subtitle', 'Direct-farm sourced organic goodness since 2020')}
+            {t('about.subtitle', 'A dedicated store for those who choose a healthy lifestyle')}
           </motion.p>
         </div>
       </div>
@@ -124,13 +124,13 @@ export default function AboutPage() {
             {t('about.our_story', 'Our Story')}
           </div>
           <h2 className="text-2.5xl sm:text-3.5xl font-black font-heading text-neutral-900 dark:text-white leading-tight">
-            How Yathu Iyarkaiyagam Was Born
+            {t('about.story_title', 'The Soil That Shaped Us: The Story of Yathu Arokiyagam')}
           </h2>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed font-semibold">
-            {t('about.our_story_desc', 'Founded with a vision to connect local farmers directly with consumers, Yathu Iyarkaiyagam ensures 100% lab-tested, certified organic food products that are wholesome, pure, and nutritious.')}
+            {t('about.our_story_desc', 'It all began with a simple, quiet patch of earth and a clear vision: to practice Natural Farming. Today, Yathu Arokiyagam is a dedicated sanctuary for everyone choosing a conscious, healthy lifestyle.')}
           </p>
           <div className="border-l-4 border-primary-500 pl-4 py-1 italic text-xs font-bold text-neutral-500 dark:text-neutral-450 leading-relaxed">
-            "We believe that everyone deserves food free from pesticides and chemical growth hormones, sourced transparently, directly from organic caretakers."
+            "We choose transparency over marketing buzzwords — zero adulteration, zero preservatives, and zero industrial shortcuts."
           </div>
         </div>
 
@@ -139,27 +139,27 @@ export default function AboutPage() {
             {t('about.mission', 'Our Mission')}
           </div>
           <h2 className="text-2.5xl font-black font-heading text-neutral-900 dark:text-white leading-tight">
-            Nutritional Accessibility & Farm Empowerment
+            {t('about.mission_title', 'Our Mission')}
           </h2>
           <p className="text-sm text-neutral-600 dark:text-neutral-400 leading-relaxed font-semibold">
-            {t('about.mission_desc', 'To make chemical-free, nutrient-dense organic food accessible to every household while empowering rural farmers through fair-trade practices.')}
+            {t('about.mission_desc', 'Our mission is to bridge the gap between ancient agricultural wisdom and modern lifestyle needs by offering honest, unadulterated, and preservative-free food, while sustaining a transparent ecosystem that honors the health of both the consumer and the soil')}
           </p>
           <div className="grid grid-cols-2 gap-4 pt-2">
             <div className="flex gap-2">
               <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">100% Residue-Free</span>
+              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Zero Adulteration</span>
             </div>
             <div className="flex gap-2">
               <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Fair Trade Payouts</span>
+              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Zero Preservatives</span>
             </div>
             <div className="flex gap-2">
               <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Lab Tested Batches</span>
+              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Honest Farming</span>
             </div>
             <div className="flex gap-2">
               <CheckCircle className="w-5 h-5 text-primary-500 flex-shrink-0" />
-              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Sustainable Farming</span>
+              <span className="text-xs font-bold text-neutral-800 dark:text-neutral-350">Healthy Soil</span>
             </div>
           </div>
         </div>
@@ -179,55 +179,55 @@ export default function AboutPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             
-            {/* Value 1: Purity */}
+            {/* Value 1: Heritage */}
             <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-6 shadow-sm space-y-4 hover:translate-y-[-8px] hover:shadow-md transition-all duration-normal" data-aos="fade-up">
               <div className="w-12 h-12 rounded-feature bg-primary-500/10 text-primary-500 flex items-center justify-center">
                 <ShieldCheck className="w-6 h-6" />
               </div>
               <h3 className="font-black text-base text-neutral-900 dark:text-white leading-tight">
-                {t('about.value_purity', '100% Pure & Lab Tested')}
+                {t('about.value_heritage', 'Healing Through Heritage')}
               </h3>
               <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-                {t('about.value_purity_desc', 'Every single batch is tested in certified laboratories to guarantee zero chemical residues.')}
+                {t('about.value_heritage_desc', 'By bringing back native millets, heirloom rices, and unrefined sweeteners, we treat your kitchen as the primary pharmacy.')}
               </p>
             </div>
 
-            {/* Value 2: Direct sourcing */}
+            {/* Value 2: Wisdom */}
             <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-6 shadow-sm space-y-4 hover:translate-y-[-8px] hover:shadow-md transition-all duration-normal" data-aos="fade-up" data-aos-delay="100">
               <div className="w-12 h-12 rounded-feature bg-primary-500/10 text-primary-500 flex items-center justify-center">
                 <Map className="w-6 h-6" />
               </div>
               <h3 className="font-black text-base text-neutral-900 dark:text-white leading-tight">
-                {t('about.value_direct', 'Direct Farm Sourced')}
+                {t('about.value_wisdom', 'The Wisdom of Our Grandparents')}
               </h3>
               <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-                {t('about.value_direct_desc', 'No middlemen. We buy directly from organic farmers, ensuring fair payouts.')}
+                {t('about.value_wisdom_desc', 'We carefully curate traditional ingredients that protected our ancestors for generations, making it effortless for your family to return to a natural baseline of health.')}
               </p>
             </div>
 
-            {/* Value 3: Sustainable */}
+            {/* Value 3: DNA */}
             <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-6 shadow-sm space-y-4 hover:translate-y-[-8px] hover:shadow-md transition-all duration-normal" data-aos="fade-up" data-aos-delay="200">
               <div className="w-12 h-12 rounded-feature bg-primary-500/10 text-primary-500 flex items-center justify-center">
                 <Leaf className="w-6 h-6" />
               </div>
               <h3 className="font-black text-base text-neutral-900 dark:text-white leading-tight">
-                {t('about.value_eco', 'Eco-Friendly Sourcing')}
+                {t('about.value_dna', 'Rooted in Our DNA')}
               </h3>
               <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-                {t('about.value_eco_desc', 'Supporting sustainable agriculture that restores soil health and saves water resources.')}
+                {t('about.value_dna_desc', 'We offer native superfoods that sync perfectly with your system to build lasting immunity and natural strength.')}
               </p>
             </div>
 
-            {/* Value 4: Transparency */}
+            {/* Value 4: Vitality */}
             <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-6 shadow-sm space-y-4 hover:translate-y-[-8px] hover:shadow-md transition-all duration-normal" data-aos="fade-up" data-aos-delay="300">
               <div className="w-12 h-12 rounded-feature bg-primary-500/10 text-primary-500 flex items-center justify-center">
                 <Users className="w-6 h-6" />
               </div>
               <h3 className="font-black text-base text-neutral-900 dark:text-white leading-tight">
-                {t('about.value_transparency', 'Total Transparency')}
+                {t('about.value_vitality', 'Time-Tested Vitality')}
               </h3>
               <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-                {t('about.value_transparency_desc', 'Scan QR codes on our packs to see the lab testing reports and origin farm details.')}
+                {t('about.value_vitality_desc', 'We revive indigenous grains, wood-pressed oils, and ancestral health secrets to help your family live a life of vibrant, natural energy.')}
               </p>
             </div>
 
@@ -253,7 +253,7 @@ export default function AboutPage() {
             <div className="absolute -left-[35px] sm:-left-[43px] top-1 w-6 h-6 rounded-full bg-primary-500 border-4 border-white dark:border-neutral-950 flex items-center justify-center shadow" />
             <h3 className="font-bold text-lg text-primary-500">2020</h3>
             <p className="text-xs font-bold text-neutral-805 dark:text-neutral-200 mt-1 leading-relaxed">
-              {t('about.timeline_2020', 'Started in 2020 with 5 local farms')}
+              {t('about.timeline_2020', 'The Foundation (Our Roots): Successfully transitioned our private land into a 100% Natural Farming ecosystem.')}
             </p>
           </div>
 
@@ -262,7 +262,7 @@ export default function AboutPage() {
             <div className="absolute -left-[35px] sm:-left-[43px] top-1 w-6 h-6 rounded-full bg-primary-500 border-4 border-white dark:border-neutral-950 flex items-center justify-center shadow" />
             <h3 className="font-bold text-lg text-primary-500">2022</h3>
             <p className="text-xs font-bold text-neutral-805 dark:text-neutral-200 mt-1 leading-relaxed">
-              {t('about.timeline_2022', 'Expanded to 50+ organic growers and launched packaging facility')}
+              {t('about.timeline_2022', 'Community & Procurement: United with a close-knit circle of trusted, traditional local farmers.')}
             </p>
           </div>
 
@@ -271,7 +271,7 @@ export default function AboutPage() {
             <div className="absolute -left-[35px] sm:-left-[43px] top-1 w-6 h-6 rounded-full bg-primary-500 border-4 border-white dark:border-neutral-950 flex items-center justify-center shadow" />
             <h3 className="font-bold text-lg text-primary-500">2024</h3>
             <p className="text-xs font-bold text-neutral-805 dark:text-neutral-200 mt-1 leading-relaxed">
-              {t('about.timeline_2024', 'Introduced lab testing QR tracking for every batch')}
+              {t('about.timeline_2024', 'The Retail Launch: Launched the dedicated Yathu Arokiyagam flagship store.')}
             </p>
           </div>
 
@@ -298,7 +298,7 @@ export default function AboutPage() {
               {t('about.team_title', 'Meet Our Team')}
             </h2>
             <p className="text-xs text-neutral-550 dark:text-neutral-450 leading-relaxed font-semibold">
-              {t('about.team_desc', 'The passionate individuals behind Yathu Iyarkaiyagam making direct-farm sourcing possible.')}
+              {t('about.team_desc', 'The dedicated people behind Yathu Arokiyagam working to bring healthy, traditional food to your family.')}
             </p>
           </div>
 
@@ -377,7 +377,7 @@ export default function AboutPage() {
               {t('about.cta_title', 'Ready to experience pure nutrition?')}
             </h2>
             <p className="text-xs sm:text-sm text-neutral-100 leading-relaxed font-semibold">
-              Join our collective of families making the transition to lab-tested, direct-farm organic millets, pulses, honey, and ghee.
+              Join our collective of families making the transition to honest, unadulterated traditional rices, millets, wood-pressed oils, and natural sweeteners.
             </p>
             <div className="pt-2">
               <Link href="/shop">

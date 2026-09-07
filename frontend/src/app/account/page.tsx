@@ -79,7 +79,7 @@ export default function AccountDashboard() {
       <div className="bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-neutral-900 dark:to-neutral-850 p-6 sm:p-8 rounded-feature border border-primary-100/30 dark:border-neutral-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-xl sm:text-2xl font-black font-heading text-neutral-900 dark:text-white">
-            Hello, {user?.name || 'Yathu Iyarkaiyagam Customer'}! 👋
+            Hello, {user?.name || 'Yathu Arokiyagam Customer'}! 👋
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
             Welcome to your premium personal portal. Manage your orders, addresses, and account preferences.

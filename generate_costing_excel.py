@@ -54,7 +54,7 @@ def generate_costing_excel():
     ws1.title = "Costing Summary"
     ws1.views.sheetView[0].showGridLines = True
 
-    ws1.cell(row=1, column=1, value="Yathu Iyarkaiyagam - Infrastructure Costing Matrix").font = title_font
+    ws1.cell(row=1, column=1, value="Yathu Arokiyagam - Infrastructure Costing Matrix").font = title_font
     ws1.cell(row=2, column=1, value="Cost comparison and projections for Hostinger VPS & Cloudinary Image Storage").font = subtitle_font
 
     headers1 = [
@@ -81,7 +81,7 @@ def generate_costing_excel():
         {"type": "section", "title": "1. Server Hosting (Hostinger VPS Options)"},
         {"item": "Hostinger VPS Option 1 (KVM 1)", "provider": "Hostinger", "details": "1 vCPU, 4GB RAM, 50GB NVMe SSD, 4TB Bandwidth", "monthly": 499, "annual": 5988, "term": "12 Months", "notes": "Ideal budget plan for launch & initial traffic (<10k visits/mo)"},
         {"item": "Hostinger VPS Option 2 (KVM 2 - Recommended)", "provider": "Hostinger", "details": "2 vCPU, 8GB RAM, 100GB NVMe SSD, 8TB Bandwidth", "monthly": 699, "annual": 8388, "term": "12 Months", "notes": "Recommended for high speed, peak traffic & database queries"},
-        {"item": "Domain Name (.in)", "provider": "Hostinger / Namecheap", "details": "e.g. yathuiyarkaiyagam.in", "monthly": 0, "annual": 0, "term": "1st Year Free", "notes": "Free domain included with Hostinger VPS 1-yr plan (Renewal ~₹599/yr)"},
+        {"item": "Domain Name (.in)", "provider": "Hostinger / Namecheap", "details": "e.g. yathuarokiyagam.in", "monthly": 0, "annual": 0, "term": "1st Year Free", "notes": "Free domain included with Hostinger VPS 1-yr plan (Renewal ~₹599/yr)"},
 
         # Cloudinary Section
         {"type": "section", "title": "2. Image Storage & Delivery (Cloudinary)"},
@@ -160,7 +160,7 @@ def generate_costing_excel():
     ws2.views.sheetView[0].showGridLines = True
 
     ws2.cell(row=1, column=1, value="Cloudinary Free Tier Capacity Analysis").font = title_font
-    ws2.cell(row=2, column=1, value="Estimated resource consumption for Yathu Iyarkaiyagam (85 Products Catalog)").font = subtitle_font
+    ws2.cell(row=2, column=1, value="Estimated resource consumption for Yathu Arokiyagam (85 Products Catalog)").font = subtitle_font
 
     headers2 = ["Metric / Parameter", "Catalog Estimate", "Cloudinary Free Tier Limit", "Free Tier Usage %", "Status & Conclusion"]
     ws2.append([])
@@ -270,7 +270,7 @@ def generate_costing_excel():
     # Generate CSV export of Costing Summary
     with open(csv_filename, "w", newline="", encoding="utf-8-sig") as f:
         writer = csv.writer(f)
-        writer.writerow(["Yathu Iyarkaiyagam - Infrastructure Costing Matrix"])
+        writer.writerow(["Yathu Arokiyagam - Infrastructure Costing Matrix"])
         writer.writerow(headers1)
         for entry in cost_data:
             if "type" in entry and entry["type"] == "section":

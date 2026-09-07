@@ -29,14 +29,14 @@ class EmailService {
      * Helper: Send Order Confirmation Email
      */
     static async sendOrderConfirmation(to, orderNumber, grandTotal) {
-        const subject = `Order Confirmation #${orderNumber} - Yathu Iyarkaiyagam`;
+        const subject = `Order Confirmation #${orderNumber} - Yathu Arokiyagam`;
         const html = `
       <div style="font-family: Arial, sans-serif; padding: 20px;">
         <h2>Thank you for your order!</h2>
         <p>Your order <strong>#${orderNumber}</strong> has been received and is being processed.</p>
         <p><strong>Total Amount:</strong> ₹${grandTotal}</p>
         <br/>
-        <p>Yathu Iyarkaiyagam Team</p>
+        <p>Yathu Arokiyagam Team</p>
       </div>
     `;
         return this.sendEmail({ to, subject, html });

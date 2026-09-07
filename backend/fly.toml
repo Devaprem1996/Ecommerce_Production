@@ -1,4 +1,4 @@
-app = "yathuiyarkaiyagam-backend-prod"
+app = "yathuarokiyagam-backend-prod"
 primary_region = "sin"
 
 [build]

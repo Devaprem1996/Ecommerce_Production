@@ -1,7 +1,7 @@
 # Master Setup & Operations Standard Operating Procedure (SOP)
-## Yathu Iyarkaiyagam E-Commerce Platform
+## Yathu Arokiyagam E-Commerce Platform
 
-This document is the master operational manual and technical deployment guide for the **Yathu Iyarkaiyagam E-Commerce Application**. It covers end-to-end administration, from displaying products to customers on the frontend storefront to updating products in the admin login, setting up Hostinger database & hosting, managing Cloudinary image assets, and configuring domains and security.
+This document is the master operational manual and technical deployment guide for the **Yathu Arokiyagam E-Commerce Application**. It covers end-to-end administration, from displaying products to customers on the frontend storefront to updating products in the admin login, setting up Hostinger database & hosting, managing Cloudinary image assets, and configuring domains and security.
 
 ---
 
@@ -15,7 +15,7 @@ This document is the master operational manual and technical deployment guide fo
    - Customers filter products by Category, Search query, Language (EN/TA), and Sorting (Price Low-to-High, High-to-Low, Popularity).
    - API Endpoint: `GET /api/v1/cms/products?category=traditional-oils&search=coconut`
 3. **Product Detail Page (PDP)**:
-   - Displays high-resolution Cloudinary image, brand tag (`Yathu Iyarkaiyagam`), Tamil description, variant selector buttons (e.g., `1L Bottle`, `500ml Bottle`), price, discount price, and real-time inventory badge (`In Stock` / `Out of Stock`).
+   - Displays high-resolution Cloudinary image, brand tag (`Yathu Arokiyagam`), Tamil description, variant selector buttons (e.g., `1L Bottle`, `500ml Bottle`), price, discount price, and real-time inventory badge (`In Stock` / `Out of Stock`).
 4. **Pincode Delivery Availability Checker**:
    - Customers enter their 6-digit Pincode (e.g., `600001` Chennai).
    - System checks `pincodes` table and displays estimated delivery days and delivery charge.
@@ -25,9 +25,9 @@ This document is the master operational manual and technical deployment guide fo
 ## 2. Section B: Admin Login & Product Management Guide
 
 ### Accessing the Admin Portal
-1. **URL**: `https://yathuiyarkaiyagam.in/admin/login` (or `http://localhost:3000/admin/login` in development).
+1. **URL**: `https://yathuarokiyagam.in/admin/login` (or `http://localhost:3000/admin/login` in development).
 2. **Default Super Admin Credentials**:
-   - **Email**: `admin@yathu.com`
+   - **Email**: `admin@yathuarokiyagam.com`
    - **Password**: `admin123` *(Must be changed upon initial deployment)*
 3. **Role-Based Access Control**:
    - Only accounts with `Role = ADMIN` can execute CRUD operations on categories, products, variants, and stock.
@@ -41,7 +41,7 @@ This document is the master operational manual and technical deployment guide fo
    - Select **Category** from dropdown.
    - Enter **Name (English)**: e.g., `Organic Palm Candy`
    - Enter **Name (Tamil)**: e.g., `பனங்கற்கண்டு`
-   - **Brand**: Defaulted to `Yathu Iyarkaiyagam`.
+   - **Brand**: Defaulted to `Yathu Arokiyagam`.
    - Enter **Description (English & Tamil)**.
 4. **Product Image**:
    - Click **Upload Thumbnail**. Select image file from device.
@@ -49,7 +49,7 @@ This document is the master operational manual and technical deployment guide fo
 5. **Add Variants**:
    - Click **+ Add Variant**.
    - Select Weight / Size (e.g., `500GM`, `1KG`).
-   - Enter **SKU** (e.g., `YI-SWE-PALM-500GM`).
+   - Enter **SKU** (e.g., `YA-SWE-PALM-500GM`).
    - Enter **Selling Price (₹)** and **Discount Price (₹)**.
    - Enter **Initial Available Stock Quantity** (e.g., `50`).
 6. Click **Save Product**. Product becomes instantly visible on storefront.
@@ -101,7 +101,7 @@ This document is the master operational manual and technical deployment guide fo
    NODE_ENV=production
    DATABASE_URL="postgresql://yathu_admin:ProductionPass2026!@localhost:5432/yathu_ecommerce_db?schema=public"
    JWT_SECRET="super_secret_jwt_key_yathu_2026"
-   CLOUDINARY_CLOUD_NAME="yathu-iyarkaiyagam"
+   CLOUDINARY_CLOUD_NAME="yathu-arokiyagam"
    CLOUDINARY_API_KEY="839281729381"
    CLOUDINARY_API_SECRET="your_cloudinary_secret"
    ```
@@ -152,7 +152,7 @@ To protect against data corruption or hardware issues:
    *(Executes automated compressed backup every night at 2:00 AM).*
 
 ### Security Protocols
-- **SSL / TLS Encryption**: Let's Encrypt SSL installed via certbot (`sudo certbot --nginx -d yathuiyarkaiyagam.in`).
+- **SSL / TLS Encryption**: Let's Encrypt SSL installed via certbot (`sudo certbot --nginx -d yathuarokiyagam.in`).
 - **HTTP Security Headers**: `helmet` middleware enforced on Express backend.
 - **Rate Limiting**: Express rate limiting enabled (`100 requests per 15 minutes` per IP address) to prevent DDoS attacks.
 - **Database Firewall**: PostgreSQL bound exclusively to `localhost` (port 5432 blocked from public internet).
@@ -171,7 +171,7 @@ To protect against data corruption or hardware issues:
    ```nginx
    server {
        listen 80;
-       server_name yathuiyarkaiyagam.in www.yathuiyarkaiyagam.in;
+       server_name yathuarokiyagam.in www.yathuarokiyagam.in;
 
        location / {
            proxy_pass http://localhost:3000;
@@ -198,7 +198,7 @@ To protect against data corruption or hardware issues:
    ```
 6. Issue SSL Certificate:
    ```bash
-   sudo certbot --nginx -d yathuiyarkaiyagam.in -d www.yathuiyarkaiyagam.in
+   sudo certbot --nginx -d yathuarokiyagam.in -d www.yathuarokiyagam.in
    ```
 
 ---

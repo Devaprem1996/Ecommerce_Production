@@ -114,7 +114,7 @@ export default function ContactPage() {
             {t('contact.title', 'Contact Us')}
           </h1>
           <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-            {t('contact.subtitle', 'Get in touch with our organic team')}
+            {t('contact.subtitle', 'Get in touch with our team for healthy, traditional food')}
           </p>
         </div>
       </div>
@@ -204,7 +204,7 @@ export default function ContactPage() {
                         <option value="">Choose Subject</option>
                         <option value="General Inquiry">General Inquiry</option>
                         <option value="Order Status">Order & Sourcing Status</option>
-                        <option value="Farm Sourcing">Direct-Farm Sourcing</option>
+                        <option value="Farm Sourcing">Farm Sourcing</option>
                         <option value="Partnerships">Bulk Orders & Partnerships</option>
                       </select>
                       {errors.subject && (
@@ -302,7 +302,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Phone Calls</h4>
                     <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 mt-1">
-                      +91 98765 43210 / +91 44 2837 4655
+                      +91 88701 59766
                     </p>
                   </div>
                 </div>
@@ -313,7 +313,7 @@ export default function ContactPage() {
                   <div>
                     <h4 className="text-xs font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Email Addresses</h4>
                     <p className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 mt-1">
-                      support@yathuiyarkaiyagam.com / sourcing@yathuiyarkaiyagam.com
+                      yathuarokiyagam@gmail.com
                     </p>
                   </div>
                 </div>
@@ -337,7 +337,7 @@ export default function ContactPage() {
                 <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest">Connect:</span>
                 <div className="flex gap-2">
                   <a
-                    href="https://wa.me/919876543210"
+                    href="https://wa.me/918870159766"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="w-8 h-8 rounded-full bg-emerald-500/10 hover:bg-emerald-500 hover:text-white text-emerald-500 flex items-center justify-center transition-colors shadow-sm cursor-pointer"
@@ -377,7 +377,7 @@ export default function ContactPage() {
               <div className="p-4 border-b border-neutral-100 dark:border-neutral-800 flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-primary-500" />
                 <span className="text-[10px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
-                  Our Processing & Sourcing Center
+                  Our Store & Sourcing Center
                 </span>
               </div>
               <div className="h-48 bg-neutral-100 dark:bg-neutral-950 relative flex items-center justify-center">
@@ -396,7 +396,7 @@ export default function ContactPage() {
                   <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center animate-ping absolute" />
                   <MapPin className="w-8 h-8 text-primary-500 relative fill-white dark:fill-neutral-900 drop-shadow-md" />
                   <span className="bg-primary-500 text-white font-bold text-[8px] uppercase tracking-wider py-0.5 px-2 rounded-full mt-1.5 shadow-sm">
-                    Taramani, Chennai
+                    Chinnmanur, Theni
                   </span>
                 </div>
               </div>

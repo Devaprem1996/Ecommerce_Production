@@ -14,7 +14,7 @@ jobs:
     name: Deploy backend
     runs-on: ubuntu-latest
     concurrency:
-      group: fly-deploy-yathuiyarkaiyagam-backend-prod
+      group: fly-deploy-yathuarokiyagam-backend-prod
       cancel-in-progress: false
     steps:
       - name: Checkout
@@ -24,7 +24,7 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to Fly.io
-        run: flyctl deploy --app yathuiyarkaiyagam-backend-prod --remote-only
+        run: flyctl deploy --app yathuarokiyagam-backend-prod --remote-only
         working-directory: backend
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
@@ -32,7 +32,7 @@ jobs:
       - name: Health check
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1/health >/dev/null; then
+            if curl -fsS https://yathuarokiyagam-backend-prod.fly.dev/api/v1/health >/dev/null; then
               echo "Backend healthy."
               exit 0
             fi

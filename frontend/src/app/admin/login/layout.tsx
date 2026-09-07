@@ -6,7 +6,7 @@ export default function AdminLoginLayout({ children }: { children: React.ReactNo
       {/* Top logo */}
       <div className="pt-8 flex justify-center">
         <span className="text-2xl font-bold font-heading tracking-wide text-primary-400">
-          Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
+          Yathu Arokiyagam<span className="text-secondary-400">.</span>
         </span>
       </div>
 
@@ -21,7 +21,7 @@ export default function AdminLoginLayout({ children }: { children: React.ReactNo
           <span>🔒 SECURED CONNECTION</span>
         </div>
         <div className="text-[10px] text-neutral-600 font-semibold">
-          &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam &mdash; Admin Portal
+          &copy; {new Date().getFullYear()} Yathu Arokiyagam &mdash; Admin Portal
         </div>
       </div>
     </div>

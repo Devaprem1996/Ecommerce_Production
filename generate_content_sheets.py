@@ -1,8 +1,23 @@
 import csv
+import json
+import os
+
+LOCALE_DIR = os.path.join(os.path.dirname(__file__), "frontend", "locales")
+
+
+def load_locales():
+    with open(os.path.join(LOCALE_DIR, "en.json"), encoding="utf-8") as f:
+        en = json.load(f)
+    with open(os.path.join(LOCALE_DIR, "ta.json"), encoding="utf-8") as f:
+        ta = json.load(f)
+    return en, ta
+
 
 def generate_content_and_pincode_sheets():
+    en, ta = load_locales()
+
     # 1. Generate Store Content Sheet
-    content_file = "Yathu_Iyarkaiyagam_Store_Content.csv"
+    content_file = "Yathu_Arokiyagam_Store_Content.csv"
     content_headers = [
         "Section / Page (பிரிவு)",
         "Field Name / Key (புலம்)",
@@ -13,53 +28,43 @@ def generate_content_and_pincode_sheets():
 
     content_rows = [
         # Store settings
-        ["General Settings", "Official Store Name", "Name of the e-commerce store", "Yathu Iyarkaiyagam", "யாது இயற்கையகம்"],
-        ["General Settings", "Brand Slogan", "Slogan displayed on banners", "Direct-farm sourced organic goodness since 2020", "2020 முதல் நேரடி பண்ணை ஆர்கானிக் தரம்"],
-        ["General Settings", "Support Phone Number", "Customer care mobile/landline", "+91-XXXXXXXXXX", "+91-XXXXXXXXXX"],
-        ["General Settings", "WhatsApp Support Number", "WhatsApp number for orders/notifications", "+91-XXXXXXXXXX", "+91-XXXXXXXXXX"],
-        ["General Settings", "Support Email Address", "Official email address for support", "support@yathuiyarkaiyagam.com", "support@yathuiyarkaiyagam.com"],
-        ["General Settings", "Physical Address", "Full business/factory address", "Factory & Packaging: OMR Road, Taramani, Chennai, TN - 600113", "தொழிற்சாலை & பேக்கேஜிங்: OMR சாலை, தரமணி, சென்னை, TN - 600113"],
-        ["General Settings", "Working Hours", "Customer service hours", "Monday - Saturday: 9:00 AM - 6:00 PM", "திங்கள் - சனி: காலை 9:00 - மாலை 6:00"],
+        ["General Settings", "Official Store Name", "Name of the e-commerce store", "Yathu Arokiyagam", "யது ஆரோக்கியகம்"],
+        ["General Settings", "Brand Slogan", "Slogan displayed on banners", en["about"]["subtitle"], ta["about"]["subtitle"]],
+        ["General Settings", "Support Phone Number", "Customer care mobile/landline", "+91-88701 59766", "+91-88701 59766"],
+        ["General Settings", "WhatsApp Support Number", "WhatsApp number for orders/notifications", "+91-88701 59766", "+91-88701 59766"],
+        ["General Settings", "Support Email Address", "Official email address for support", "yathuarokiyagam@gmail.com", "yathuarokiyagam@gmail.com"],
+        ["General Settings", "Physical Address", "Full business/factory address", "#402, Seepalakottai Road, Chinnmanur, Theni District, TamilNadu - 625515", "அஞ்சல் எண் 402, சீப்பாலக்கோட்டை சாலை, சின்னமனூர், தேனி மாவட்டம், தமிழ்நாடு - 625515"],
+        ["General Settings", "Working Hours", "Customer service hours", en["contact"]["biz_hours_val"], "திங்கள் - சனி: காலை 9:00 - மாலை 6:00"],
         ["Social Media Links", "Instagram URL", "Link to Instagram page", "", ""],
         ["Social Media Links", "Facebook URL", "Link to Facebook page", "", ""],
         ["Social Media Links", "YouTube URL", "Link to YouTube channel", "", ""],
-        
+
         # About Us page
-        ["About Us Page", "Our Story (Title)", "Title of story section", "Our Story", "எங்கள் கதை"],
-        ["About Us Page", "Our Story (Paragraph)", "Brief history & description of the store", "Founded with a vision to connect local farmers directly with consumers, Yathu Iyarkaiyagam ensures 100% lab-tested, certified organic food products that are wholesome, pure, and nutritious.", "உள்ளூர் விவசாயிகளை நுகர்வோருடன் நேரடியாக இணைக்கும் நோக்குடன் தொடங்கப்பட்ட யாது இயற்கையகம், 100% ஆய்வக பரிசோதனை செய்யப்பட்ட, ஆர்கானிக் மற்றும் சத்தான உணவு தயாரிப்புகளை உறுதி செய்கிறது."],
-        ["About Us Page", "Our Mission (Title)", "Title of mission section", "Our Mission", "எங்கள் நோக்கம்"],
-        ["About Us Page", "Our Mission (Paragraph)", "Core purpose of the business", "To make chemical-free, nutrient-dense organic food accessible to every household while empowering rural farmers through fair-trade practices.", "கிராமப்புற விவசாயிகளுக்கு நியாயமான வருவாயை உறுதி செய்யும் அதே வேளையில், இரசாயனமற்ற ஆரோக்கியமான ஆர்கானிக் உணவை ஒவ்வொரு வீட்டிற்கும் கிடைக்கச் செய்வது எங்களது நோக்கம்."],
-        
+        ["About Us Page", "Our Story (Title)", "Title of story section", en["about"]["story_title"], ta["about"]["story_title"]],
+        ["About Us Page", "Our Story (Paragraph)", "Brief history & description of the store", en["about"]["our_story_desc"], ta["about"]["our_story_desc"]],
+        ["About Us Page", "Our Mission (Title)", "Title of mission section", en["about"]["mission_title"], ta["about"]["mission_title"]],
+        ["About Us Page", "Our Mission (Paragraph)", "Core purpose of the business", en["about"]["mission_desc"], ta["about"]["mission_desc"]],
+
         # Core Values
-        ["About Us Page - Values", "Value 1: Title", "Title of first core value", "100% Pure & Lab Tested", "100% சுத்தமான & ஆய்வக சோதனை"],
-        ["About Us Page - Values", "Value 1: Description", "Details of value 1", "Every single batch is tested in certified laboratories to guarantee zero chemical residues.", "இரசாயன எச்சங்கள் பூஜ்ஜியம் என்பதை உறுதிப்படுத்த ஒவ்வொரு தயாரிப்பும் சான்றளிக்கப்பட்ட ஆய்வகங்களில் சோதிக்கப்படுகிறது."],
-        ["About Us Page - Values", "Value 2: Title", "Title of second core value", "Direct Farm Sourced", "நேரடி பண்ணை கொள்முதல்"],
-        ["About Us Page - Values", "Value 2: Description", "Details of value 2", "No middlemen. We buy directly from organic farmers, ensuring fair payouts.", "இடைத்தரகர்கள் இல்லை. நாங்கள் ஆர்கானிக் விவசாயிகளிடம் இருந்து நேரடியாக கொள்முதல் செய்து நியாயமான விலையை வழங்குகிறோம்."],
-        ["About Us Page - Values", "Value 3: Title", "Title of third core value", "Eco-Friendly Sourcing", "சுற்றுச்சூழலுக்கு உகந்தது"],
-        ["About Us Page - Values", "Value 3: Description", "Details of value 3", "Supporting sustainable agriculture that restores soil health and saves water resources.", "மண் வளத்தை மீட்டெடுக்கும் மற்றும் நீர் ஆதாரங்களை சேமிக்கும் நிலையான விவசாய முறைகளை நாங்கள் ஆதரிக்கிறோம்."],
-        ["About Us Page - Values", "Value 4: Title", "Title of fourth core value", "Total Transparency", "முழுமையான வெளிப்படைத்தன்மை"],
-        ["About Us Page - Values", "Value 4: Description", "Details of value 4", "Scan QR codes on our packs to see the lab testing reports and origin farm details.", "ஆய்வக சோதனை அறிக்கைகள் மற்றும் மூலப் பண்ணை விவரங்களைக் காண எங்கள் பேக்குகளில் உள்ள QR குறியீடுகளை ஸ்கேன் செய்யலாம்."],
-        
+        ["About Us Page - Values", "Value 1: Title", "Title of first core value", en["about"]["value_heritage"], ta["about"]["value_heritage"]],
+        ["About Us Page - Values", "Value 1: Description", "Details of value 1", en["about"]["value_heritage_desc"], ta["about"]["value_heritage_desc"]],
+        ["About Us Page - Values", "Value 2: Title", "Title of second core value", en["about"]["value_wisdom"], ta["about"]["value_wisdom"]],
+        ["About Us Page - Values", "Value 2: Description", "Details of value 2", en["about"]["value_wisdom_desc"], ta["about"]["value_wisdom_desc"]],
+        ["About Us Page - Values", "Value 3: Title", "Title of third core value", en["about"]["value_dna"], ta["about"]["value_dna"]],
+        ["About Us Page - Values", "Value 3: Description", "Details of value 3", en["about"]["value_dna_desc"], ta["about"]["value_dna_desc"]],
+        ["About Us Page - Values", "Value 4: Title", "Title of fourth core value", en["about"]["value_vitality"], ta["about"]["value_vitality"]],
+        ["About Us Page - Values", "Value 4: Description", "Details of value 4", en["about"]["value_vitality_desc"], ta["about"]["value_vitality_desc"]],
+
         # Timeline
-        ["About Us Page - Timeline", "Timeline 2020", "Milestone achieved in 2020", "Started in 2020 with 5 local farms", "2020ல் 5 உள்ளூர் பண்ணைகளுடன் தொடங்கப்பட்டது"],
-        ["About Us Page - Timeline", "Timeline 2022", "Milestone achieved in 2022", "Expanded to 50+ organic growers and launched packaging facility", "50+ ஆர்கானிக் விவசாயிகள் மற்றும் சொந்த பேக்கேஜிங் வசதி"],
-        ["About Us Page - Timeline", "Timeline 2024", "Milestone achieved in 2024", "Introduced lab testing QR tracking for every batch", "ஒவ்வொரு பேட்சிற்கும் ஆய்வக சோதனை QR டிராக்கிங்"],
-        ["About Us Page - Timeline", "Timeline 2026", "Milestone achieved in 2026", "Serving 50,000+ organic customers with home delivery", "50,000+ ஆர்கானிக் வாடிக்கையாளர்களுக்கு வீட்டு விநியோகம்"],
-        
+        ["About Us Page - Timeline", "Timeline 2020", "Milestone achieved in 2020", en["about"]["timeline_2020"], ta["about"]["timeline_2020"]],
+        ["About Us Page - Timeline", "Timeline 2022", "Milestone achieved in 2022", en["about"]["timeline_2022"], ta["about"]["timeline_2022"]],
+        ["About Us Page - Timeline", "Timeline 2024", "Milestone achieved in 2024", en["about"]["timeline_2024"], ta["about"]["timeline_2024"]],
+        ["About Us Page - Timeline", "Timeline 2026", "Milestone achieved in 2026", en["about"]["timeline_2026"], ta["about"]["timeline_2026"]],
+
         # Policies
-        ["Policies", "Terms & Conditions", "General website terms & usage agreements", "Please read these terms carefully before placing an order...", "ஆர்டர் செய்வதற்கு முன் இந்த விதிமுறைகளை கவனமாக படிக்கவும்..."],
-        ["Policies", "Privacy Policy", "How user data is collected and protected", "", ""],
-        ["Policies", "Shipping Timeframe Details", "Standard delivery transit times info", "Deliveries are made within 2-3 business days in Chennai and 3-5 days in other parts of TN.", "சென்னையில் 2-3 வேலை நாட்களிலும், தமிழ்நாட்டின் பிற பகுதிகளில் 3-5 வேலை நாட்களிலும் டெலிவரி செய்யப்படும்."],
-        ["Policies", "Return Eligibility Days", "How many days client allows for return (Default 7)", "7 days return eligibility", "7 நாட்கள் வரை மாற்றித்தரும் வசதி"],
-        ["Policies", "Return Policy Rules", "Acceptable reasons & refund details", "Refund will be processed to original payment method within 3-5 business days or instant store credit.", "3-5 வேலை நாட்களில் அசல் கட்டண முறைக்கோ அல்லது உடனடியாக ஸ்டோர் கிரெடிட்டிலோ பணம் திருப்பி செலுத்தப்படும்."],
-        
-        # FAQs
-        ["FAQ Page", "FAQ 1: Question", "Common question about orders", "How do I check my order status?", "எனது ஆர்டர் நிலையை நான் எவ்வாறு சரிபார்க்கலாம்?"],
-        ["FAQ Page", "FAQ 1: Answer", "Answer for FAQ 1", "You can check status using the Track Order page with your order number and mobile number.", "ஆர்டர் எண் மற்றும் மொபைல் எண்ணைப் பயன்படுத்தி ஆர்டரைத் தொடரவும் (Track Order) பக்கத்தில் சரிபார்க்கலாம்."],
-        ["FAQ Page", "FAQ 2: Question", "Common question about delivery", "What are the delivery charges?", "டெலிவரி கட்டணம் எவ்வளவு?"],
-        ["FAQ Page", "FAQ 2: Answer", "Answer for FAQ 2", "We offer free delivery for orders above ₹499. For orders below, a flat charge of ₹50 is applicable.", "₹499க்கு மேற்பட்ட ஆர்டர்களுக்கு இலவச டெலிவரி. அதற்கு குறைவான ஆர்டர்களுக்கு ₹50 டெலிவரி கட்டணம் பொருந்தும்."],
-        ["FAQ Page", "FAQ 3: Question", "Common question about products", "Are all products certified organic?", "அனைத்து தயாரிப்புகளும் ஆர்கானிக் சான்றிதழ் பெற்றவையா?"],
-        ["FAQ Page", "FAQ 3: Answer", "Answer for FAQ 3", "Yes, 100% of our products are sourced directly from certified organic farms and tested in labs.", "ஆம், எங்களது தயாரிப்புகள் 100% சான்றளிக்கப்பட்ட ஆர்கானிக் பண்ணைகளிலிருந்து பெறப்பட்டு ஆய்வகத்தில் சோதிக்கப்படுகின்றன."]
+        ["Policies", "Shipping Timeframe Details", "Standard delivery transit times info", en["policies"]["shipping_timeframe"], ta["policies"]["shipping_timeframe"]],
+        ["Policies", "Return Eligibility Days", "How many days client allows for return (Default 7)", en["policies"]["return_days"], ta["policies"]["return_days"]],
+        ["Policies", "Return Policy Rules", "Acceptable reasons & refund details", en["policies"]["return_refund_rule"], ta["policies"]["return_refund_rule"]],
     ]
 
     with open(content_file, "w", encoding="utf-8-sig", newline="") as f:
@@ -69,7 +74,7 @@ def generate_content_and_pincode_sheets():
     print(f"Generated '{content_file}' successfully.")
 
     # 2. Generate Pincodes Setup Sheet
-    pincode_file = "Yathu_Iyarkaiyagam_Pincodes_Setup.csv"
+    pincode_file = "Yathu_Arokiyagam_Pincodes_Setup.csv"
     pincode_headers = [
         "Pincode (அஞ்சல் குறியீடு) *[REQUIRED]*",
         "City (நகரம்)",
@@ -81,21 +86,26 @@ def generate_content_and_pincode_sheets():
     ]
 
     pincode_rows = [
-        ["600113", "Chennai (Taramani)", "Tamil Nadu", "YES", "2", "50", "499"],
-        ["600020", "Chennai (Adyar)", "Tamil Nadu", "YES", "2", "50", "499"],
-        ["600001", "Chennai (George Town)", "Tamil Nadu", "YES", "3", "50", "499"],
-        ["641001", "Coimbatore", "Tamil Nadu", "YES", "4", "60", "599"],
-        ["625001", "Madurai", "Tamil Nadu", "YES", "4", "60", "599"]
+        ["600001", "Chennai", "Tamil Nadu", "YES", "2", "40", "499"],
+        ["600002", "Chennai", "Tamil Nadu", "YES", "2", "40", "499"],
+        ["625001", "Madurai", "Tamil Nadu", "YES", "3", "50", "599"],
+        ["625515", "Chinnmanur", "Tamil Nadu", "YES", "2", "40", "499"],
+        ["625531", "Theni", "Tamil Nadu", "YES", "2", "40", "499"],
+        ["641001", "Coimbatore", "Tamil Nadu", "YES", "2", "45", "499"],
+        ["620001", "Tiruchirappalli", "Tamil Nadu", "YES", "3", "45", "499"],
+        ["560001", "Bengaluru", "Karnataka", "YES", "4", "70", "799"],
+        ["682001", "Kochi", "Kerala", "YES", "4", "70", "799"],
     ]
 
     with open(pincode_file, "w", encoding="utf-8-sig", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(pincode_headers)
         writer.writerows(pincode_rows)
-        # Add 15 empty rows for client convenience
+        # Add empty rows for client convenience
         for _ in range(15):
             writer.writerow(["", "", "", "YES", "", "", ""])
     print(f"Generated '{pincode_file}' successfully.")
+
 
 if __name__ == "__main__":
     generate_content_and_pincode_sheets()

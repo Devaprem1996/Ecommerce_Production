@@ -90,10 +90,10 @@ export default function ReturnPolicyPage() {
                 {t("return_policy.sec_window_title", "1. Return Window")}
               </h2>
               <p>
-                {t("return_policy.window_desc_1", "At Yathu Iyarkaiyagam, we strive to deliver the freshest products from our farms to your table. If you are not completely satisfied with your purchase, you may initiate a return or exchange request within")} <span className="font-bold text-primary-600 dark:text-primary-400">7 {t("return_policy.days", "days")}</span> {t("return_policy.window_desc_2", "of the delivery date.")}
+                {t("return_policy.window_desc_1", "At Yathu Arokiyagam, we strive to deliver the freshest products from our farms to your table. If you are not completely satisfied with your purchase, you may initiate a return or exchange request within")} <span className="font-bold text-primary-600 dark:text-primary-400">7 {t("return_policy.days", "days")}</span> {t("return_policy.window_desc_2", "of the delivery date.")}
               </p>
               <p>
-                Requests initiated after 7 days will not be accepted. We kindly ask you to verify the condition and freshness of your organic grocery items upon arrival.
+                Requests initiated after 7 days will not be accepted. We kindly ask you to verify the condition and freshness of your grocery items upon arrival.
               </p>
             </section>
 
@@ -108,7 +108,7 @@ export default function ReturnPolicyPage() {
               <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs">
                 <li><span className="font-bold">{t("return_policy.eligible_point_1_title", "Damaged Products:")}</span> {t("return_policy.eligible_point_1_desc", "Items damaged during transit.")}</li>
                 <li><span className="font-bold">{t("return_policy.eligible_point_2_title", "Incorrect Item:")}</span> {t("return_policy.eligible_point_2_desc", "An item delivered does not match your invoice.")}</li>
-                <li><span className="font-bold">{t("return_policy.eligible_point_3_title", "Quality Compromise:")}</span> {t("return_policy.eligible_point_3_desc", "Freshness or organic grade issues that do not meet standard expectations.")}</li>
+                <li><span className="font-bold">{t("return_policy.eligible_point_3_title", "Quality Compromise:")}</span> {t("return_policy.eligible_point_3_desc", "Freshness or quality issues that do not meet standard expectations.")}</li>
                 <li><span className="font-bold">{t("return_policy.eligible_point_4_title", "Shortage:")}</span> {t("return_policy.eligible_point_4_desc", "Items billed but missing from the package.")}</li>
               </ul>
             </section>
@@ -119,13 +119,13 @@ export default function ReturnPolicyPage() {
                 {t("return_policy.sec_ineligible_title", "3. What Cannot Be Returned")}
               </h2>
               <p>
-                Due to food safety regulations and the perishable nature of fresh farm produce, we cannot accept returns for:
+                Due to food safety regulations and the perishable nature of fresh produce, we cannot accept returns for:
               </p>
               <ul className="list-disc list-inside space-y-1.5 pl-2 text-xs">
                 <li>Fresh produce (fruits and vegetables) that have been washed, peeled, or cut after delivery.</li>
                 <li>Opened packets of grains, pulses, flours, oils, or spices, unless there is a physical contamination or quality issue.</li>
                 <li>Products with broken seals, altered packaging, or missing tags that were delivered intact.</li>
-                <li>Customized items or organic gift packages.</li>
+                <li>Customized items or gift packages.</li>
               </ul>
             </section>
 
@@ -142,7 +142,7 @@ export default function ReturnPolicyPage() {
                   <span className="font-bold">Original Payment Method:</span> {t("return_policy.refund_original_desc", "Refund will be credited to your credit card, debit card, or UPI bank account within 3 to 5 business days.")}
                 </li>
                 <li>
-                  <span className="font-bold">Store Credit:</span> {t("return_policy.refund_credit_desc", "Refund is issued instantly as Yathu Iyarkaiyagam Wallet credit that can be applied to any future order.")}
+                  <span className="font-bold">Store Credit:</span> {t("return_policy.refund_credit_desc", "Refund is issued instantly as Yathu Arokiyagam Wallet credit that can be applied to any future order.")}
                 </li>
               </ul>
             </section>
@@ -185,8 +185,8 @@ export default function ReturnPolicyPage() {
                 If you have any questions or require support regarding returns, please connect with us:
               </p>
               <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-100 dark:border-neutral-850 space-y-1 text-xs">
-                <p>Email Support: <span className="font-bold text-primary-500">support@yathuiyarkaiyagam.com</span></p>
-                <p>Customer Care: <span className="font-bold text-neutral-900 dark:text-white">+91-98765-43210</span> (9:00 AM to 6:00 PM, Mon-Sat)</p>
+                <p>Email Support: <span className="font-bold text-primary-500">yathuarokiyagam@gmail.com</span></p>
+                <p>Customer Care: <span className="font-bold text-neutral-900 dark:text-white">+91-88701-59766</span> (9:00 AM to 6:00 PM, Mon-Sat)</p>
                 <p>Chat Support: WhatsApp us using the live float icon on our homepage.</p>
               </div>
             </section>

@@ -125,7 +125,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         {/* Top logo */}
         <div className="pt-8 flex justify-center">
           <span className="text-2xl font-bold font-heading tracking-wide text-primary-400">
-            Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
+            Yathu Arokiyagam<span className="text-secondary-400">.</span>
           </span>
         </div>
 
@@ -140,7 +140,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             <span>🔒 SECURED CONNECTION</span>
           </div>
           <div className="text-[10px] text-neutral-600 font-semibold">
-            &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam &mdash; Admin Portal
+            &copy; {new Date().getFullYear()} Yathu Arokiyagam &mdash; Admin Portal
           </div>
         </div>
       </div>
@@ -162,7 +162,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         <div className="h-16 flex items-center justify-between px-5 border-b border-primary-800/40">
           <Link href="/admin" className="flex items-center gap-2 focus:outline-none">
             <span className={`font-heading font-black tracking-wide ${isCollapsed ? 'text-lg text-center w-full' : 'text-xl'}`}>
-              {isCollapsed ? 'Y.I.' : 'Yathu Iyarkaiyagam Admin'}
+              {isCollapsed ? 'Y.A.' : 'Yathu Arokiyagam Admin'}
             </span>
           </Link>
 
@@ -245,7 +245,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               className="fixed left-0 top-0 bottom-0 w-64 bg-[#1B4332] text-white flex flex-col z-10 shadow-2xl"
             >
               <div className="h-16 flex items-center justify-between px-5 border-b border-primary-800/40">
-                <span className="font-heading font-black text-xl">Yathu Iyarkaiyagam Admin</span>
+                <span className="font-heading font-black text-xl">Yathu Arokiyagam Admin</span>
                 <button
                   onClick={() => setIsMobileOpen(false)}
                   className="p-1 rounded-card hover:bg-primary-800/40 text-primary-250 cursor-pointer"

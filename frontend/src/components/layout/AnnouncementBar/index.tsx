@@ -71,11 +71,11 @@ export const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ className }) =
             {/* Right Side: Phone & Language */}
             <div className="hidden sm:flex items-center gap-6">
               <a
-                href="tel:+919876543210"
+                href="tel:+918870159766"
                 className="flex items-center gap-1.5 hover:text-primary-300 transition-colors"
               >
                 <Phone className="w-3.5 h-3.5" />
-                <span>+91-98765-43210</span>
+                <span>+91-88701-59766</span>
               </a>
 
               <button

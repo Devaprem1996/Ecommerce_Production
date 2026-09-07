@@ -1,6 +1,6 @@
 # Master Production Launch Checklist & Setup Guide
 
-**Project**: Yathu Iyarkaiyagam E-Commerce Platform  
+**Project**: Yathu Arokiyagam E-Commerce Platform  
 **Target Architecture**: Hostinger VPS (Ubuntu 22.04 LTS) + PostgreSQL + Next.js Frontend + Express Backend + Cloudinary + Razorpay + Shiprocket  
 **Status**: Pre-Launch Readiness Audit  
 
@@ -29,7 +29,7 @@ This document presents the complete pre-launch operational checklist, code audit
 * **Checks & Fixes Needed**:
   * [ ] **System Dependencies**: Install Node.js 20 LTS, pnpm, PM2, PostgreSQL 14+, Nginx, and Certbot.
   * [ ] **Database Setup**: Create dedicated database `yathu_ecommerce_db` and restricted DB user `yathu_admin`.
-  * [ ] **Nginx Reverse Proxy**: Route `https://yathuiyarkaiyagam.in` to Next.js frontend (Port 3000) and `/api` to Express backend (Port 5000).
+  * [ ] **Nginx Reverse Proxy**: Route `https://yathuarokiyagam.in` to Next.js frontend (Port 3000) and `/api` to Express backend (Port 5000).
   * [ ] **Firewall (`ufw`) Security**: Allow ports `22` (SSH), `80` (HTTP), and `443` (HTTPS). Block public external access to ports `5000` (Express) and `5432` (PostgreSQL).
 
 ---
@@ -93,7 +93,7 @@ Beyond your 7 points, the following 6 areas are mandatory for a production relea
 |---|---|---|
 | **8. Transactional Messaging** | SMTP / Email Provider (Resend / SendGrid) | Sending order confirmation receipts, password reset links, and OTP login codes to customers. |
 | **9. Database Backups** | Automated `pg_dump` daily cron job | Prevents catastrophic data loss. Backup files should be pushed to offsite storage (S3 / B2). |
-| **10. SSL Certificate & Domain** | Let's Encrypt SSL via Certbot | Enables HTTPS protection (`https://yathuiyarkaiyagam.in`) with automated cert renewal. |
+| **10. SSL Certificate & Domain** | Let's Encrypt SSL via Certbot | Enables HTTPS protection (`https://yathuarokiyagam.in`) with automated cert renewal. |
 | **11. Server Log Rotation** | `pm2-logrotate` module | Prevents PM2 log files from consuming 100% of Hostinger VPS disk space. |
 | **12. SEO & Social Metadata** | Next.js Metadata, `sitemap.xml`, `robots.txt` | Ensures Google indexing, Tamil/English meta titles, OpenGraph sharing images for WhatsApp & Facebook. |
 | **13. Load & Health Monitoring** | UptimeRobot / Sentry / Health Check | Monitors `/api/v1/health` endpoint and sends instant alerts if the database or server drops. |
@@ -107,7 +107,7 @@ Beyond your 7 points, the following 6 areas are mandatory for a production relea
 # Server Configuration
 PORT=5000
 NODE_ENV=production
-FRONTEND_URL="https://yathuiyarkaiyagam.in"
+FRONTEND_URL="https://yathuarokiyagam.in"
 
 # Database Connection (PostgreSQL)
 DATABASE_URL="postgresql://yathu_admin:YOUR_STRONG_DB_PASSWORD@localhost:5432/yathu_ecommerce_db?schema=public"
@@ -135,14 +135,14 @@ SMTP_HOST="smtp.resend.com"
 SMTP_PORT=587
 SMTP_USER="resend"
 SMTP_PASS="re_xxxxxxxxxxxx"
-EMAIL_FROM="Yathu Iyarkaiyagam <orders@yathuiyarkaiyagam.in>"
+EMAIL_FROM="Yathu Arokiyagam <orders@yathuarokiyagam.in>"
 ```
 
 ### Frontend Production `.env.production` (`/var/www/yathu/frontend/.env.production`)
 ```env
-NEXT_PUBLIC_API_URL="https://yathuiyarkaiyagam.in/api/v1"
+NEXT_PUBLIC_API_URL="https://yathuarokiyagam.in/api/v1"
 NEXT_PUBLIC_RAZORPAY_KEY_ID="rzp_live_xxxxxxxxxxxx"
-NEXT_PUBLIC_SITE_URL="https://yathuiyarkaiyagam.in"
+NEXT_PUBLIC_SITE_URL="https://yathuarokiyagam.in"
 ```
 
 ---

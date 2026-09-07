@@ -29,10 +29,10 @@ interface FaqItem {
 const mockFaqs: FaqItem[] = [
   {
     category: 'orders',
-    q: 'How can I cancel or modify my organic order?',
-    qTamil: 'எனது ஆர்கானிக் ஆர்டரை நான் எவ்வாறு ரத்து செய்வது அல்லது மாற்றுவது?',
-    a: 'You can cancel or modify your order within 2 hours of placing it. Please go to your profile, click on active orders, or contact our support directly.',
-    aTamil: 'ஆர்டர் செய்த 2 மணி நேரத்திற்குள் அதை ரத்து செய்யலாம் அல்லது மாற்றலாம். தயவுசெய்து உங்கள் சுயவிவரத்திற்குச் சென்று செயலில் உள்ள ஆர்டர்களைக் கிளிக் செய்யவும் அல்லது எங்களைத் தொடர்பு கொள்ளவும்.'
+    q: 'How do I check my order status?',
+    qTamil: 'எனது ஆர்டர் நிலையை நான் எவ்வாறு சரிபார்க்கலாம்?',
+    a: 'You can check status using the Track Order page with your order number and mobile number.',
+    aTamil: 'ஆர்டர் எண் மற்றும் மொபைல் எண்ணைப் பயன்படுத்தி ஆர்டரைத் தொடரவும் (Track Order) பக்கத்தில் சரிபார்க்கலாம்.'
   },
   {
     category: 'orders',
@@ -43,10 +43,10 @@ const mockFaqs: FaqItem[] = [
   },
   {
     category: 'delivery',
-    q: 'Where do you deliver and what are the shipping fees?',
-    qTamil: 'நீங்கள் எங்கு டெலிவரி செய்கிறீர்கள் மற்றும் அதற்கான கட்டணங்கள் என்ன?',
-    a: 'We deliver all over Tamil Nadu and neighboring states. Shipping is free for orders above ₹499. For orders below ₹499, a flat delivery fee of ₹50 is charged.',
-    aTamil: 'நாங்கள் தமிழ்நாடு மற்றும் அண்டை மாநிலங்கள் முழுவதும் விநியோகம் செய்கிறோம். ₹499-க்கு மேல் உள்ள ஆர்டர்களுக்கு டெலிவரி இலவசம். அதற்கு கீழ் உள்ள ஆர்டர்களுக்கு ₹50 வசூலிக்கப்படுகிறது.'
+    q: 'What are the delivery charges?',
+    qTamil: 'டெலிவரி கட்டணம் எவ்வளவு?',
+    a: 'We offer free delivery for orders above ₹499. For orders below, a flat charge of ₹50 is applicable.',
+    aTamil: '₹499க்கு மேற்பட்ட ஆர்டர்களுக்கு இலவச டெலிவரி. அதற்கு குறைவான ஆர்டர்களுக்கு ₹50 டெலிவரி கட்டணம் பொருந்தும்.'
   },
   {
     category: 'delivery',
@@ -57,10 +57,10 @@ const mockFaqs: FaqItem[] = [
   },
   {
     category: 'products',
-    q: 'Are your food products 100% certified organic?',
-    qTamil: 'உங்கள் உணவுப் பொருட்கள் 100% சான்றளிக்கப்பட்ட இயற்கையானவையா?',
-    a: 'Yes, all our grains, pulses, honey, and cold-pressed oils are NPOP certified organic and undergo rigorous lab testing to ensure zero chemical residues.',
-    aTamil: 'ஆம், எங்களது அனைத்து தானியங்கள், பருப்புகள், தேன் மற்றும் செக்கு எண்ணெய்கள் NPOP சான்றளிக்கப்பட்டவை மற்றும் இரசாயன எச்சங்கள் இல்லை என்பதை உறுதிப்படுத்த ஆய்வக சோதனைகளுக்கு உட்படுத்தப்படுகின்றன.'
+    q: 'Are all products certified organic?',
+    qTamil: 'அனைத்து தயாரிப்புகளும் ஆர்கானிக் சான்றிதழ் பெற்றவையா?',
+    a: 'Yes, 100% of our products are sourced directly from certified organic farms and tested in labs.',
+    aTamil: 'ஆம், எங்களது தயாரிப்புகள் 100% சான்றளிக்கப்பட்ட ஆர்கானிக் பண்ணைகளிலிருந்து பெறப்பட்டு ஆய்வகத்தில் சோதிக்கப்படுகின்றன.'
   },
   {
     category: 'products',
@@ -273,14 +273,14 @@ export default function FAQPage() {
 
           <div className="flex flex-col sm:flex-row justify-center gap-4">
             <a
-              href="mailto:support@yathuiyarkaiyagam.com"
+              href="mailto:yathuarokiyagam@gmail.com"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card text-xs font-bold text-neutral-700 dark:text-white hover:border-neutral-350 shadow-sm"
             >
               <Mail className="w-4 h-4 text-primary-500" />
               <span>Email Support</span>
             </a>
             <a
-              href="tel:+919876543210"
+              href="tel:+918870159766"
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-card text-xs font-bold text-neutral-700 dark:text-white hover:border-neutral-350 shadow-sm"
             >
               <PhoneCall className="w-4 h-4 text-primary-500" />

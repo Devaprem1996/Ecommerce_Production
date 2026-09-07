@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Default admin mock credentials
-    const validEmail = 'admin@yathuiyarkaiyagam.com';
+    const validEmail = 'admin@yathuarokiyagam.com';
     const validPassword = 'Password123';
 
     if (email.toLowerCase() !== validEmail || password !== validPassword) {

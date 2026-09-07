@@ -92,7 +92,7 @@ export default function AdminNotificationsPage() {
   const [notifyLowStock, setNotifyLowStock] = useState(true);
   const [notifyReturns, setNotifyReturns] = useState(true);
   const [notifyAbandonment, setNotifyAbandonment] = useState(false);
-  const [alertEmails, setAlertEmails] = useState("admin@yathuiyarkaiyagam.com, warehouse@yathuiyarkaiyagam.com");
+  const [alertEmails, setAlertEmails] = useState("admin@yathuarokiyagam.com, warehouse@yathuarokiyagam.com");
 
   // Compose campaign hook
   const { register, handleSubmit, watch, reset, formState: { errors } } = useForm<any>({

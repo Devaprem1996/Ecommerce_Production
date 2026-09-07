@@ -30,8 +30,8 @@ const tamil = Noto_Sans_Tamil({
 });
 
 export const metadata: Metadata = {
-  title: "Yathu Iyarkaiyagam | Pure & Lab Tested E-Commerce",
-  description: "Premium organic products sourced directly from local farms. 100% certified organic and lab tested.",
+  title: "Yathu Arokiyagam | A Dedicated Store for a Healthy Lifestyle",
+  description: "A dedicated store for those who choose a healthy lifestyle. Honest, unadulterated, preservative-free traditional food.",
 };
 
 export default function RootLayout({

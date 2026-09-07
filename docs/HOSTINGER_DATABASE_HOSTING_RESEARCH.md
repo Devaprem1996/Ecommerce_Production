@@ -1,6 +1,6 @@
 # Comprehensive Research & Technical Integration Guide: Hostinger, Cloudinary & Operations
 
-This document provides in-depth technical research and actionable instructions for deploying the **Yathu Iyarkaiyagam E-Commerce Platform** to **Hostinger**, integrating **Cloudinary** for image delivery, collecting product assets, managing database connections, and registering domains suitable for the Indian market.
+This document provides in-depth technical research and actionable instructions for deploying the **Yathu Arokiyagam E-Commerce Platform** to **Hostinger**, integrating **Cloudinary** for image delivery, collecting product assets, managing database connections, and registering domains suitable for the Indian market.
 
 ---
 
@@ -8,11 +8,11 @@ This document provides in-depth technical research and actionable instructions f
 
 ### Domain TLD Recommendation for E-Commerce in India
 For an organic food, traditional oil, and herbal brand targeting customers in South India and nationwide:
-- **Primary Choice**: `.in` (e.g., `yathuiyarkaiyagam.in` or `yathuorganic.in`)
+- **Primary Choice**: `.in` (e.g., `yathuarokiyagam.in` or `yathuorganic.in`)
   - **Why**: Signals trust and local authenticity to Indian buyers, has high availability, and costs ~₹399 - ₹599/year.
-- **Secondary Choice**: `.com` (e.g., `yathuiyarkaiyagam.com`)
+- **Secondary Choice**: `.com` (e.g., `yathuarokiyagam.com`)
   - **Why**: Global recognition; ideal if international shipping is planned later (~₹899 - ₹1,099/year).
-- **Alternative Choice**: `.co.in` (e.g., `yathuiyarkaiyagam.co.in`)
+- **Alternative Choice**: `.co.in` (e.g., `yathuarokiyagam.co.in`)
   - **Why**: Cost-effective fallback if `.in` and `.com` are unavailable.
 
 ### Best Registrar Options in India
@@ -67,10 +67,10 @@ Hostinger provides two primary hosting models for running PostgreSQL databases f
 ### Step 1: Create Cloudinary Account
 1. Visit `https://cloudinary.com` and sign up for a free tier account (25 GB free storage, 25K transformations/mo).
 2. Go to **Dashboard** and copy your environment credentials:
-   - **Cloud Name**: `yathu-iyarkaiyagam`
+   - **Cloud Name**: `yathu-arokiyagam`
    - **API Key**: `839281729381`
    - **API Secret**: `your_api_secret_here`
-   - **Environment Variable String**: `CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@yathu-iyarkaiyagam`
+   - **Environment Variable String**: `CLOUDINARY_URL=cloudinary://<api_key>:<api_secret>@yathu-arokiyagam`
 
 ### Step 2: Configure Upload Preset
 1. Go to **Settings** > **Upload** > **Upload Presets**.
@@ -195,7 +195,7 @@ To build a stunning, professional catalog UI without expensive studio setups:
    PORT=5000
    NODE_ENV=production
    JWT_SECRET="production_jwt_secret_key_987654"
-   CLOUDINARY_CLOUD_NAME="yathu-iyarkaiyagam"
+   CLOUDINARY_CLOUD_NAME="yathu-arokiyagam"
    CLOUDINARY_API_KEY="839281729381"
    CLOUDINARY_API_SECRET="your_cloudinary_secret"
    ```
@@ -216,7 +216,7 @@ To build a stunning, professional catalog UI without expensive studio setups:
 Store managers (GM and Client) can add and update products through 3 options:
 
 ### Method A: Admin Web Portal Interface (No Coding Required)
-1. Log into `https://yathuiyarkaiyagam.in/admin/login` using Admin credentials (`admin@yathu.com`).
+1. Log into `https://yathuarokiyagam.in/admin/login` using Admin credentials (`admin@yathuarokiyagam.com`).
 2. Navigate to **Catalog Management** > **Products** > **Add New Product**.
 3. Fill in:
    - Product Name (English & Tamil)
@@ -235,7 +235,7 @@ Store managers (GM and Client) can add and update products through 3 options:
     "nameEn": "Wood Pressed Groundnut Oil",
     "nameTa": "மரச்செக்கு கடலை எண்ணெய்",
     "categoryId": "category-uuid",
-    "brand": "Yathu Iyarkaiyagam",
+    "brand": "Yathu Arokiyagam",
     "descriptionEn": "Pure cold pressed oil",
     "descriptionTa": "சுத்தமான கடலை எண்ணெய்",
     "thumbnailUrl": "https://res.cloudinary.com/...",
@@ -243,7 +243,7 @@ Store managers (GM and Client) can add and update products through 3 options:
       {
         "nameEn": "1 Litre Bottle",
         "nameTa": "1 லிட்டர் பாட்டில்",
-        "sku": "YI-OIL-GROUN-1L",
+        "sku": "YA-OIL-GROUN-1L",
         "price": 380.00,
         "discountPrice": 350.00,
         "weight": 1.0,

@@ -1,5 +1,5 @@
 # Product Image Onboarding & Cloudinary Integration Guide
-**Brand**: Yathu Iyarkaiyagam (யாது இயற்கையகம்)  
+**Brand**: Yathu Arokiyagam (யது ஆரோக்கியகம்)  
 **Target Audience**: Client / Photography Team, Catalog Manager, Developer Team  
 **Document Version**: 1.0.0  
 **Date**: September 2026  
@@ -205,7 +205,7 @@ npx prisma db seed
 
 This populates each product's `thumbnailUrl` field automatically:
 ```typescript
-thumbnailUrl: `https://res.cloudinary.com/yathu-iyarkaiyagam/image/upload/v1/yathu/products/${prodSlug}.jpg`
+thumbnailUrl: `https://res.cloudinary.com/yathu-arokiyagam/image/upload/v1/yathu/products/${prodSlug}.jpg`
 ```
 
 ### Step 5.3: Individual Image Updates (Admin CMS API)

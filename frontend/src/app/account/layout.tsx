@@ -351,7 +351,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                 Sign Out Confirmation
               </h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-2 leading-relaxed">
-                Are you sure you want to logout of your Yathu Iyarkaiyagam Account? You will need to re-verify your identity to sign back in.
+                Are you sure you want to logout of your Yathu Arokiyagam Account? You will need to re-verify your identity to sign back in.
               </p>
 
               <div className="flex gap-3 mt-6">

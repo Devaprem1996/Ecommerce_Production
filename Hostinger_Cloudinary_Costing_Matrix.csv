@@ -1,15 +1,15 @@
-﻿Yathu Iyarkaiyagam - Infrastructure Costing Matrix
-Item / Service,Provider,Tier / Plan Details,Monthly Cost (₹ INR),Annual Cost (₹ INR),Payment Term,Notes & Inclusions
+Yathu Arokiyagam - Infrastructure Costing Matrix
+Item / Service,Provider,Tier / Plan Details,Monthly Cost (? INR),Annual Cost (? INR),Payment Term,Notes & Inclusions
 1. Server Hosting (Hostinger VPS Options),,,,,,
-Hostinger VPS Option 1 (KVM 1),Hostinger,"1 vCPU, 4GB RAM, 50GB NVMe SSD, 4TB Bandwidth",₹499,₹5988,12 Months,Ideal budget plan for launch & initial traffic (<10k visits/mo)
-Hostinger VPS Option 2 (KVM 2 - Recommended),Hostinger,"2 vCPU, 8GB RAM, 100GB NVMe SSD, 8TB Bandwidth",₹699,₹8388,12 Months,"Recommended for high speed, peak traffic & database queries"
-Domain Name (.in),Hostinger / Namecheap,e.g. yathuiyarkaiyagam.in,₹0,₹0,1st Year Free,Free domain included with Hostinger VPS 1-yr plan (Renewal ~₹599/yr)
+Hostinger VPS Option 1 (KVM 1),Hostinger,"1 vCPU, 4GB RAM, 50GB NVMe SSD, 4TB Bandwidth",?499,?5988,12 Months,Ideal budget plan for launch & initial traffic (<10k visits/mo)
+Hostinger VPS Option 2 (KVM 2 - Recommended),Hostinger,"2 vCPU, 8GB RAM, 100GB NVMe SSD, 8TB Bandwidth",?699,?8388,12 Months,"Recommended for high speed, peak traffic & database queries"
+Domain Name (.in),Hostinger / Namecheap,e.g. yathuarokiyagam.in,?0,?0,1st Year Free,Free domain included with Hostinger VPS 1-yr plan (Renewal ~?599/yr)
 2. Image Storage & Delivery (Cloudinary),,,,,,
-Cloudinary Free Tier (Production),Cloudinary,25 Credits / 25GB Storage / 25k Transformations,₹0,₹0,Free Forever,Covers all 85 catalog products (~250 images / 50MB) + 10k visits/mo
-Cloudinary Plus Tier (Optional Scale),Cloudinary,225 Credits / 225GB Storage & Bandwidth,₹7400,₹88800,Monthly ($89/mo),"Only required if website scales past 100,000 active visits/month"
+Cloudinary Free Tier (Production),Cloudinary,25 Credits / 25GB Storage / 25k Transformations,?0,?0,Free Forever,Covers all 85 catalog products (~250 images / 50MB) + 10k visits/mo
+Cloudinary Plus Tier (Optional Scale),Cloudinary,225 Credits / 225GB Storage & Bandwidth,?7400,?88800,Monthly ($89/mo),"Only required if website scales past 100,000 active visits/month"
 "3. Database, Security & Messaging",,,,,,
-PostgreSQL 14 Database,Self-Hosted (VPS),Hosted on Hostinger VPS Ubuntu 22.04 LTS,₹0,₹0,Included,Zero additional database license cost
-SSL Encryption Certificate,Let's Encrypt / Hostinger,Wildcard HTTPS SSL Certificate,₹0,₹0,Free Lifetime,Auto-renewed SSL security for domain & subdomains
-Transactional Email (Orders),Brevo / Hostinger Email,300 free emails/day for order confirmations,₹0,₹0,Free Tier,Covers customer receipts and admin notifications
-TOTAL COST (Option 1 - KVM 1 VPS + Cloudinary Free Tier),—,Full Production Stack,₹499,₹5988,1st Year,"Best budget start: Full e-commerce stack for ~₹5,988/year total"
-TOTAL COST (Option 2 - KVM 2 VPS + Cloudinary Free Tier),—,Full Production Stack,₹699,₹8388,1st Year,"Recommended production setup: High performance for ~₹8,388/year total"
+PostgreSQL 14 Database,Self-Hosted (VPS),Hosted on Hostinger VPS Ubuntu 22.04 LTS,?0,?0,Included,Zero additional database license cost
+SSL Encryption Certificate,Let's Encrypt / Hostinger,Wildcard HTTPS SSL Certificate,?0,?0,Free Lifetime,Auto-renewed SSL security for domain & subdomains
+Transactional Email (Orders),Brevo / Hostinger Email,300 free emails/day for order confirmations,?0,?0,Free Tier,Covers customer receipts and admin notifications
+TOTAL COST (Option 1 - KVM 1 VPS + Cloudinary Free Tier),�,Full Production Stack,?499,?5988,1st Year,"Best budget start: Full e-commerce stack for ~?5,988/year total"
+TOTAL COST (Option 2 - KVM 2 VPS + Cloudinary Free Tier),�,Full Production Stack,?699,?8388,1st Year,"Recommended production setup: High performance for ~?8,388/year total"

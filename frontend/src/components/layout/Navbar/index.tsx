@@ -123,7 +123,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 !shouldRenderTransparent ? 'text-primary-700 dark:text-primary-400' : 'text-white'
               )}
             >
-              Yathu Iyarkaiyagam
+              Yathu Arokiyagam
               <span className="text-secondary-400">.</span>
             </span>
           </Link>

@@ -304,7 +304,7 @@ export default function CheckoutPage() {
 
   // Pre-formatted Whatsapp message
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
-    `Hello! I just placed an order at Yathu Iyarkaiyagam!\nOrder Number: *${orderNumber}*\nTotal Amount: *₹${confirmedTotal}*\nExpected Delivery: *${estimatedDays} days*\nDirect Farm Organic goodness! 🌱`
+    `Hello! I just placed an order at Yathu Arokiyagam!\nOrder Number: *${orderNumber}*\nTotal Amount: *₹${confirmedTotal}*\nExpected Delivery: *${estimatedDays} days*\nHealthy traditional goodness! 🌱`
   )}`;
 
   return (

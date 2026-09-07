@@ -53,8 +53,8 @@ interface FAQ {
   answer: string;
 }
 const initialFAQs: FAQ[] = [
-  { id: 'faq-1', category: 'Delivery', question: 'How long does delivery take inside Chennai?', answer: 'Orders placed before 12 PM are delivered on the next calendar day.' },
-  { id: 'faq-2', category: 'Products', question: 'Is all Yathu Iyarkaiyagam honey chemical free?', answer: 'Yes! We collect wild mountain honey that is certified organic.' }
+  { id: 'faq-1', category: 'Delivery', question: 'How long does delivery take inside Tamil Nadu?', answer: 'Deliveries are made within 2-5 days within Tamil Nadu.' },
+  { id: 'faq-2', category: 'Products', question: 'Where do Yathu Arokiyagam products come from?', answer: 'Our products come from our own natural farm and trusted partner farmers, guaranteeing zero adulteration.' }
 ];
 
 export default function ContentManagementPage() {

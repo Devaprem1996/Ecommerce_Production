@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
             Last Updated: January 2026
           </p>
           <p className="text-xs sm:text-sm font-semibold text-neutral-500 dark:text-neutral-455 max-w-xl mx-auto">
-            Your trust is our priority. Read how Yathu Iyarkaiyagam gathers, uses, stores, and protects your personal credentials.
+            Your trust is our priority. Read how Yathu Arokiyagam gathers, uses, stores, and protects your personal credentials.
           </p>
 
           <button
@@ -160,10 +160,10 @@ export default function PrivacyPolicyPage() {
                 2. How We Use Information
               </h2>
               <p>
-                Yathu Iyarkaiyagam processes your information for the following specific purposes:
+                Yathu Arokiyagam processes your information for the following specific purposes:
               </p>
               <ul className="list-disc list-inside space-y-1 pl-2 text-xs">
-                <li>Processing transactions and delivering organic shipments.</li>
+                <li>Processing transactions and delivering shipments.</li>
                 <li>Sending transactional updates via SMS and email alerts.</li>
                 <li>Providing customized search results and recommended products.</li>
                 <li>Sending newsletter updates and deals (if you have opted-in).</li>
@@ -240,8 +240,8 @@ export default function PrivacyPolicyPage() {
                 For questions on data privacy, cookie settings, or user rights, connect with our protection officer:
               </p>
               <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-150 dark:border-neutral-850 text-xs space-y-1">
-                <p>Data Privacy Officer: <span className="font-bold text-primary-500">privacy@yathuiyarkaiyagam.com</span></p>
-                <p>Hotline: +91-98765-43210</p>
+                <p>Data Privacy Officer: <span className="font-bold text-primary-500">yathuarokiyagam@gmail.com</span></p>
+                <p>Hotline: +91-88701-59766</p>
               </div>
             </section>
 

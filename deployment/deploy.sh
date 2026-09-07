@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -e
 
-echo "=== starting Yathu Iyarkaiyagam Deployment ==="
+echo "=== starting Yathu Arokiyagam Deployment ==="
 
 # 1. Pull latest code from GitHub main branch
 echo "[1/5] Pulling latest repository code..."

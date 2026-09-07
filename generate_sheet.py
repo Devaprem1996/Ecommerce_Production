@@ -64,7 +64,7 @@ def generate_csv_collection_sheet(file_path):
                 
                 # 4. Write data collection sheet
                 # UTF-8 BOM encoding ensures Excel displays Tamil characters correctly on Windows
-                output_file = "Yathu_Iyarkaiyagam_Data_Collection.csv"
+                output_file = "Yathu_Arokiyagam_Data_Collection.csv"
                 headers = [
                     "Category (வகை)",
                     "Product Name [English] (பொருள் பெயர் [ஆங்கிலம்])",

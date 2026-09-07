@@ -14,7 +14,7 @@ The backend runs standalone on Fly.io; the Next.js frontend on Vercel talks to i
 cd backend
 
 # Create the app once (already done in this repo, skip if it exists)
-flyctl apps create yathuiyarkaiyagam-backend-prod
+flyctl apps create yathuarokiyagam-backend-prod
 
 # Set runtime secrets (use value for each; at minimum the ones below)
 flyctl secrets set DATABASE_URL="<direct_url>" \
@@ -22,7 +22,7 @@ flyctl secrets set DATABASE_URL="<direct_url>" \
   JWT_SECRET="<jwt_secret>" \
   REFRESH_TOKEN_SECRET="<refresh_secret>" \
   CLOUDINARY_URL="<cloudinary_url>" \
-  FRONTEND_URL="https://yathuiyarkaiyagam.vercel.app" \
+  FRONTEND_URL="https://yathuarokiyagam.vercel.app" \
   RAZORPAY_KEY_ID="<key>" \
   RAZORPAY_KEY_SECRET="<secret>" \
   RAZORPAY_WEBHOOK_SECRET="<secret>" \
@@ -37,7 +37,7 @@ Notes
 
 - Use Neon's **direct** (`*-pooler`-free) endpoint for `DATABASE_URL` — Fly VMs are long-running, and Prisma 5 works best with an un-pooled URL.
 - `FRONTEND_URL` must be the real Vercel origin (no trailing slash) because the backend uses it as the CORS allowlist.
-- Health check: `https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1/health`.
+- Health check: `https://yathuarokiyagam-backend-prod.fly.dev/api/v1/health`.
 - Prisma on Debian 12: the image pins `PRISMA_QUERY_ENGINE_LIBRARY` to the `debian-openssl-3.0.x` engine (see `Dockerfile`).
 
 ## 4. Automated deploys (GitHub Actions)
@@ -59,7 +59,7 @@ name `FLY_API_TOKEN`, value = the token from the command above.
 
 In the Vercel project (`ecommerce-production-ui`):
 
-1. Project Settings → Environment Variables → add `NEXT_PUBLIC_API_URL=https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1`
+1. Project Settings → Environment Variables → add `NEXT_PUBLIC_API_URL=https://yathuarokiyagam-backend-prod.fly.dev/api/v1`
    for Production (and Preview if desired).
 2. Redeploy the frontend.
 

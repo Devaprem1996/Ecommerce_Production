@@ -79,7 +79,7 @@ export default function MaintenancePage() {
       {/* Top Header Logo */}
       <header className="w-full flex justify-center py-4 select-none">
         <span className="text-2xl font-bold font-heading tracking-wide text-primary-700 dark:text-primary-400">
-          Yathu Iyarkaiyagam<span className="text-secondary-400">.</span>
+          Yathu Arokiyagam<span className="text-secondary-400">.</span>
         </span>
       </header>
 
@@ -155,7 +155,7 @@ export default function MaintenancePage() {
         {/* Support Hotline */}
         <div className="bg-neutral-50 dark:bg-neutral-950 p-4 rounded-card border border-neutral-100 dark:border-neutral-850 text-xs font-semibold text-neutral-650 dark:text-neutral-450 flex items-center justify-center gap-2 max-w-xs mx-auto leading-relaxed">
           <Phone className="w-4 h-4 text-primary-500 shrink-0" />
-          <span>Urgent order queries? Call <span className="font-bold text-neutral-900 dark:text-white">+91 98765 43210</span></span>
+          <span>Urgent order queries? Call <span className="font-bold text-neutral-900 dark:text-white">+91 88701 59766</span></span>
         </div>
 
         {/* Social media connections */}
@@ -180,7 +180,7 @@ export default function MaintenancePage() {
 
       {/* Bottom Footer block */}
       <footer className="w-full text-center text-[10px] text-neutral-400 border-t border-neutral-100 dark:border-neutral-850 pt-4 select-none">
-        &copy; {new Date().getFullYear()} Yathu Iyarkaiyagam. All rights reserved.
+        &copy; {new Date().getFullYear()} Yathu Arokiyagam. All rights reserved.
       </footer>
 
     </div>

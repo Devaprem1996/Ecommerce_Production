@@ -85,14 +85,14 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
           <div className="flex flex-col gap-4">
             <Link href="/" className="flex items-center gap-1 focus:outline-none">
               <span className="text-2xl font-bold font-heading tracking-wide text-white">
-                Yathu Iyarkaiyagam
+                Yathu Arokiyagam
                 <span className="text-secondary-400">.</span>
               </span>
             </Link>
             <p className="text-xs sm:text-sm text-primary-200 leading-relaxed max-w-xs">
               {t(
                 'why_choose_us.organic_desc',
-                'Premium organic products sourced directly from local farms. 100% certified organic and lab tested.'
+                'A dedicated store for those who choose a healthy lifestyle. Honest, unadulterated, preservative-free traditional food.'
               )}
             </p>
             <div className="flex items-center gap-4 text-primary-200 mt-2">
@@ -244,7 +244,7 @@ export const Footer: React.FC<FooterProps> = ({ className }) => {
         {/* Footer Bottom (Payment details and copyright) */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-6">
           <p className="text-xs text-primary-200/70 text-center sm:text-left leading-tight">
-            © {new Date().getFullYear()} Yathu Iyarkaiyagam E-Commerce. All rights reserved. Sourced organically and lab verified.
+            © {new Date().getFullYear()} Yathu Arokiyagam E-Commerce. All rights reserved. Honest, healthy and preservative-free.
           </p>
 
           {/* Payment method icons mock */}

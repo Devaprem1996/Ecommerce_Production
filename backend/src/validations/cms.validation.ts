@@ -42,7 +42,7 @@ export const createProductSchema = z.object({
     categoryId: z.string().uuid("Invalid category ID"),
     nameEn: z.string().trim().min(1, "English product name is required").max(150),
     nameTa: z.string().trim().min(1, "Tamil product name is required").max(150),
-    brand: z.string().trim().min(1, "Brand is required").max(100).default("Yathu Iyarkaiyagam"),
+    brand: z.string().trim().min(1, "Brand is required").max(100).default("Yathu Arokiyagam"),
     descriptionEn: z.string().trim().min(1, "English description is required"),
     descriptionTa: z.string().trim().min(1, "Tamil description is required"),
     thumbnailUrl: z.string().trim().url("Invalid thumbnail URL").optional().or(z.literal("")),

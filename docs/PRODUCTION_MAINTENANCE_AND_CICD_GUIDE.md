@@ -1,6 +1,6 @@
 # Production Maintenance, CI/CD Pipeline & Security Patching Guide
 
-**Project**: Yathu Iyarkaiyagam E-Commerce Platform  
+**Project**: Yathu Arokiyagam E-Commerce Platform  
 **Target Infrastructure**: Hostinger VPS (Ubuntu 22.04 LTS) + GitHub Actions CI/CD  
 
 ---

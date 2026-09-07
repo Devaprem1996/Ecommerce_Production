@@ -78,7 +78,7 @@ All CMS routes are prefix-mounted under `/api/v1/cms`.
           "nameEn": "Castor Oil",
           "nameTa": "ஆமணக்கு எண்ணெய்",
           "slug": "castor-oil",
-          "brand": "Yathu Iyarkaiyagam",
+          "brand": "Yathu Arokiyagam",
           "variants": [
             {
               "id": "variant-uuid",
@@ -118,14 +118,14 @@ All CMS routes are prefix-mounted under `/api/v1/cms`.
     "categoryId": "category-uuid",
     "nameEn": "Pure Honey",
     "nameTa": "தூய தேன்",
-    "brand": "Yathu Iyarkaiyagam",
+    "brand": "Yathu Arokiyagam",
     "descriptionEn": "100% natural organic honey.",
     "descriptionTa": "100% இயற்கை கரிம தேன்.",
     "variants": [
       {
         "nameEn": "500GM",
         "nameTa": "500GM",
-        "sku": "YI-HONEY-500GM",
+        "sku": "YA-HONEY-500GM",
         "price": 250.00,
         "availableQuantity": 50
       }
