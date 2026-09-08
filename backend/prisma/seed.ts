@@ -92,6 +92,49 @@ const CATEGORY_META: Record<string, { slug: string; nameEn: string; nameTa: stri
   },
 };
 
+const CATEGORY_TYPE_IMAGE: Record<string, string> = {
+  "traditional-oils": "https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=600",
+  "millet-noodles": "https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?auto=format&fit=crop&q=80&w=600",
+  "millet-vermicelli": "https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600",
+  "natural-sweeteners": "https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=600",
+  "organic-millets": "https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=600",
+  "traditional-rices": "https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?auto=format&fit=crop&q=80&w=600",
+  "healthy-flours": "https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=600",
+  "millet-rice-flakes": "https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?auto=format&fit=crop&q=80&w=600",
+  "organic-pulses-dals": "https://images.unsplash.com/photo-1515543237350-b3eea1ec8082?auto=format&fit=crop&q=80&w=600",
+  "traditional-snacks-sweets": "https://images.unsplash.com/photo-1599490659213-e2b9527bd087?auto=format&fit=crop&q=80&w=600",
+};
+
+const FALLBACK_IMAGE =
+  "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400";
+
+function resolveSeedProductImage(slug: string, categorySlug: string): string {
+  const s = slug.toLowerCase();
+  const has = (...words: string[]) => words.some((w) => s.includes(w));
+
+  if (has("vermicelli")) return CATEGORY_TYPE_IMAGE["millet-vermicelli"];
+  if (has("noodles")) return CATEGORY_TYPE_IMAGE["millet-noodles"];
+  if (
+    has("biscuits", "chikki", "candy", "burfi", "seedai", "murukku", "mittai") ||
+    s.includes("balls") ||
+    s.includes("fried") ||
+    s.includes("-coco-")
+  ) {
+    return CATEGORY_TYPE_IMAGE["traditional-snacks-sweets"];
+  }
+  if (has("flakes")) return CATEGORY_TYPE_IMAGE["millet-rice-flakes"];
+  if (has("oil")) return CATEGORY_TYPE_IMAGE["traditional-oils"];
+  if (has("honey", "jaggery", "salt")) return CATEGORY_TYPE_IMAGE["natural-sweeteners"];
+  if (has("flour")) return CATEGORY_TYPE_IMAGE["healthy-flours"];
+  if (s.includes("groundnut")) {
+    return CATEGORY_TYPE_IMAGE[categorySlug] || CATEGORY_TYPE_IMAGE["organic-pulses-dals"];
+  }
+  if (has("gram", "dal", "urad", "toor", "moong")) {
+    return CATEGORY_TYPE_IMAGE["organic-pulses-dals"];
+  }
+  return CATEGORY_TYPE_IMAGE[categorySlug] || FALLBACK_IMAGE;
+}
+
 function slugify(text: string): string {
   return text
     .toLowerCase()
@@ -256,7 +299,7 @@ async function main() {
         slug: meta.slug,
         descriptionEn: meta.descEn,
         descriptionTa: meta.descTa,
-        imageUrl: `https://res.cloudinary.com/yathu-arokiyagam/image/upload/v1/yathu/categories/${meta.slug}.jpg`,
+        imageUrl: CATEGORY_TYPE_IMAGE[meta.slug] || FALLBACK_IMAGE,
       },
     });
     totalCategories++;
@@ -272,7 +315,7 @@ async function main() {
           brand: "Yathu Arokiyagam",
           descriptionEn: `Pure authentic naturally grown ${prodItem.name_en} sourced honestly from farmers without preservatives.`,
           descriptionTa: `சுத்தமான இயற்கை முறையில் தயாரிக்கப்பட்ட ${prodItem.name_ta || prodItem.name_en}.`,
-          thumbnailUrl: `https://res.cloudinary.com/yathu-arokiyagam/image/upload/v1/yathu/products/${prodSlug}.jpg`,
+          thumbnailUrl: resolveSeedProductImage(prodSlug, meta.slug),
         },
       });
       totalProducts++;
