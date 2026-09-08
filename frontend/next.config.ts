@@ -13,6 +13,16 @@ const nextConfig: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "upload.wikimedia.org",
+        pathname: "/**",
+      },
+      {
+        protocol: "https",
+        hostname: "thumb.wikimedia.org",
+        pathname: "/**",
+      },
     ],
   },
   async rewrites() {
