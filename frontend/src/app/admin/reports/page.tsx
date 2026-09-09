@@ -129,7 +129,7 @@ export default function ReportsPage() {
       {/* KPI Cards summary row */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white dark:bg-neutral-900 border rounded-feature p-5 shadow-sm space-y-1">
-          <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Average Order Basket</span>
+          <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Average Order Basket</span>
           <span className="text-xl font-black text-neutral-900 dark:text-white block font-heading">₹375.58</span>
           <span className="text-[10px] text-success font-extrabold uppercase tracking-wider flex items-center gap-1">
             <TrendingUp className="w-3.5 h-3.5" /> +5.2% vs last week
@@ -137,7 +137,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="bg-white dark:bg-neutral-900 border rounded-feature p-5 shadow-sm space-y-1">
-          <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Net Profit Margin</span>
+          <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Net Profit Margin</span>
           <span className="text-xl font-black text-neutral-900 dark:text-white block font-heading">40.0% (₹51,400)</span>
           <span className="text-[10px] text-success font-extrabold uppercase tracking-wider flex items-center gap-1">
             <TrendingUp className="w-3.5 h-3.5" /> +2.3% vs last week
@@ -145,7 +145,7 @@ export default function ReportsPage() {
         </div>
 
         <div className="bg-white dark:bg-neutral-900 border rounded-feature p-5 shadow-sm space-y-1">
-          <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Customer Return Rate</span>
+          <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Customer Return Rate</span>
           <span className="text-xl font-black text-neutral-900 dark:text-white block font-heading">1.2%</span>
           <span className="text-[10px] text-red-500 font-extrabold uppercase tracking-wider flex items-center gap-1">
             <TrendingDown className="w-3.5 h-3.5" /> -0.4% improvement

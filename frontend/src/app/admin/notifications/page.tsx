@@ -455,7 +455,7 @@ export default function AdminNotificationsPage() {
                         {item.channels.map(ch => (
                           <span 
                             key={ch} 
-                            className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-neutral-100 dark:bg-neutral-950 border text-neutral-500 uppercase flex items-center gap-1"
+                            className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-neutral-100 dark:bg-neutral-950 border text-neutral-500 uppercase flex items-center gap-1"
                           >
                             {ch === "Email" && <Mail className="w-3 h-3" />}
                             {ch === "SMS" && <Smartphone className="w-3 h-3" />}
@@ -471,7 +471,7 @@ export default function AdminNotificationsPage() {
                     </td>
 
                     <td className="p-3">
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                         item.status === "Completed" ? "bg-success/10 text-success" :
                         item.status === "Scheduled" ? "bg-blue-500/10 text-blue-500" :
                         "bg-amber-500/10 text-amber-500 animate-pulse"

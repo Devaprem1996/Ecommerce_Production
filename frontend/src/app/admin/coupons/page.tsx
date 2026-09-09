@@ -419,7 +419,7 @@ export default function AdminCouponsPage() {
                       </td>
 
                       <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           coupon.active && !isExpired
                             ? "bg-success/10 text-success"
                             : "bg-red-500/10 text-red-500"

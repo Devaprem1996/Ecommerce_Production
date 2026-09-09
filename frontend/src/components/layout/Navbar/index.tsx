@@ -216,7 +216,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   key={`wish-badge-${wishlistCount}`}
-                  className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center"
+                  className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center"
                 >
                   {wishlistCount}
                 </motion.span>
@@ -235,7 +235,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
                   key={`cart-badge-${cartCount}`}
-                  className="absolute top-1.5 right-1.5 bg-primary-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center"
+                  className="absolute top-1.5 right-1.5 bg-primary-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full leading-none min-w-[15px] text-center"
                 >
                   {cartCount}
                 </motion.span>

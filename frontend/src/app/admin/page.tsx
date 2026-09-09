@@ -219,7 +219,7 @@ export default function AdminDashboardOverview() {
               </Link>
             </div>
 
-            <div className="hidden md:block overflow-x-auto">
+            <div className="overflow-x-auto">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-neutral-100 dark:border-neutral-800 text-neutral-450 uppercase font-black tracking-wider">
@@ -236,7 +236,7 @@ export default function AdminDashboardOverview() {
                       <td className="py-3 font-semibold text-neutral-600 dark:text-neutral-400">{order.customer}</td>
                       <td className="py-3 font-bold">₹{order.amount}</td>
                       <td className="py-3">
-                        <span className={`inline-block px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           order.status === 'delivered' ? 'bg-success/15 text-success' :
                           order.status === 'processing' ? 'bg-blue-500/15 text-blue-505' :
                           order.status === 'pending' ? 'bg-amber-500/15 text-amber-500' :
@@ -300,7 +300,7 @@ export default function AdminDashboardOverview() {
                       style={{ width: `${Math.min((prod.sales/160)*100, 100)}%` }} 
                     />
                   </div>
-                  <span className={`text-[9px] font-black uppercase tracking-wider ${
+                  <span className={`text-[10px] font-black uppercase tracking-wider ${
                     prod.stock <= 15 ? 'text-red-500' : 'text-neutral-400'
                   }`}>
                     {prod.stock} left

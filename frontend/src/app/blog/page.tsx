@@ -174,7 +174,7 @@ export default function BlogListingPage() {
                     alt={featuredPost.title}
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-4 left-4 bg-primary-500 text-white font-bold text-[9px] uppercase tracking-wider py-1 px-3.5 rounded-full shadow-sm">
+                  <div className="absolute top-4 left-4 bg-primary-500 text-white font-bold text-[10px] uppercase tracking-wider py-1 px-3.5 rounded-full shadow-sm">
                     {t(`blog.categories.${featuredPost.category}`)}
                   </div>
                 </div>
@@ -203,7 +203,7 @@ export default function BlogListingPage() {
                     <img src={featuredPost.author.avatar} alt={featuredPost.author.name} className="w-9 h-9 rounded-full object-cover border" />
                     <div>
                       <p className="text-xs font-bold text-neutral-900 dark:text-white">{featuredPost.author.name}</p>
-                      <p className="text-[9px] font-bold text-neutral-550 dark:text-neutral-450 uppercase tracking-widest">
+                      <p className="text-[10px] font-bold text-neutral-550 dark:text-neutral-450 uppercase tracking-widest">
                         {currentLang === 'ta' ? featuredPost.author.roleTamil : featuredPost.author.role}
                       </p>
                     </div>
@@ -242,7 +242,7 @@ export default function BlogListingPage() {
                         alt={post.title}
                         className="w-full h-full object-cover hover:scale-105 transition-transform duration-slow"
                       />
-                      <div className="absolute top-4 left-4 bg-primary-500 text-white font-bold text-[9px] uppercase tracking-wider py-1 px-3 rounded-full shadow-sm">
+                      <div className="absolute top-4 left-4 bg-primary-500 text-white font-bold text-[10px] uppercase tracking-wider py-1 px-3 rounded-full shadow-sm">
                         {t(`blog.categories.${post.category}`)}
                       </div>
                     </div>

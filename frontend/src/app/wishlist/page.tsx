@@ -261,7 +261,7 @@ function StandaloneWishlistContent() {
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     {product.isOrganic && (
-                      <span className="absolute bottom-2.5 left-2.5 z-10 px-2 py-0.5 text-[9px] font-bold rounded bg-green-500/10 text-green-600 border border-green-500/20 uppercase tracking-wide select-none">
+                      <span className="absolute bottom-2.5 left-2.5 z-10 px-2 py-0.5 text-[10px] font-bold rounded bg-green-500/10 text-green-600 border border-green-500/20 uppercase tracking-wide select-none">
                         Organic
                       </span>
                     )}

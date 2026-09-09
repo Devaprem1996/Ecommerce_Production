@@ -357,7 +357,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                           }`}
                         >
                           <p className="font-semibold leading-relaxed">{n.text}</p>
-                          <span className="text-[9px] text-neutral-400 font-bold block mt-1">{n.time}</span>
+                          <span className="text-[10px] text-neutral-400 font-bold block mt-1">{n.time}</span>
                         </div>
                       ))}
                     </div>
@@ -373,7 +373,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               </div>
               <div className="hidden lg:block text-left leading-none">
                 <p className="text-xs font-bold text-neutral-905 dark:text-white">Admin User</p>
-                <span className="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Super Administrator</span>
+                <span className="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Super Administrator</span>
               </div>
             </div>
 

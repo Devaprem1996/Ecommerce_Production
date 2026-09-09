@@ -329,7 +329,7 @@ export default function AdminPincodesPage() {
           {activeTab === "single" && (
             <form onSubmit={handleSubmit(handleSingleSubmit)} className="space-y-4">
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Pincode *</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Pincode *</label>
                 <input
                   type="text"
                   maxLength={6}
@@ -342,7 +342,7 @@ export default function AdminPincodesPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">City *</label>
+                  <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">City *</label>
                   <input
                     type="text"
                     {...register("city")}
@@ -353,7 +353,7 @@ export default function AdminPincodesPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">State *</label>
+                  <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">State *</label>
                   <input
                     type="text"
                     {...register("state")}
@@ -363,7 +363,7 @@ export default function AdminPincodesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery Days (e.g. 2-3) *</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery Days (e.g. 2-3) *</label>
                 <input
                   type="text"
                   {...register("deliveryDays")}
@@ -374,7 +374,7 @@ export default function AdminPincodesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery notes</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery notes</label>
                 <input
                   type="text"
                   {...register("notes")}
@@ -402,7 +402,7 @@ export default function AdminPincodesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">CSV copy-paste content</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">CSV copy-paste content</label>
                 <textarea
                   value={csvContent}
                   onChange={(e) => setCsvContent(e.target.value)}
@@ -434,7 +434,7 @@ export default function AdminPincodesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Select State</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Select State</label>
                 <select
                   value={regState}
                   onChange={(e) => setRegState(e.target.value)}
@@ -447,7 +447,7 @@ export default function AdminPincodesPage() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-[9px] font-bold text-neutral-450 uppercase tracking-widest block">Select City Registry</label>
+                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Select City Registry</label>
                 <select
                   value={regCity}
                   onChange={(e) => setRegCity(e.target.value)}
@@ -533,7 +533,7 @@ export default function AdminPincodesPage() {
                       </td>
 
                       <td className="p-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                           item.active ? "bg-success/10 text-success" : "bg-red-500/10 text-red-500"
                         }`}>
                           {item.active ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}

@@ -227,7 +227,7 @@ export default function AddressesPage() {
                     {addr.name}
                   </h4>
                   {addr.isDefault && (
-                    <span className="px-2 py-0.5 text-[9px] font-bold rounded bg-primary-500/10 text-primary-500 border border-primary-500/15 uppercase tracking-wider select-none">
+                    <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-primary-500/10 text-primary-500 border border-primary-500/15 uppercase tracking-wider select-none">
                       Default
                     </span>
                   )}

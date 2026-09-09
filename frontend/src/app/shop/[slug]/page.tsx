@@ -786,7 +786,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                   exit={{ opacity: 0, y: 5 }}
                   className="max-w-xl"
                 >
-                  <div className="border border-neutral-100 dark:border-neutral-800 rounded-feature overflow-hidden shadow-inner">
+                  <div className="border border-neutral-100 dark:border-neutral-800 rounded-feature overflow-x-auto overflow-y-hidden shadow-inner">
                     <table className="w-full text-sm text-left">
                       <thead className="bg-neutral-50 dark:bg-neutral-850 font-bold text-xs uppercase tracking-wider text-neutral-600 dark:text-neutral-400">
                         <tr>

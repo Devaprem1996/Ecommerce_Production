@@ -124,7 +124,7 @@ export default function MaintenancePage() {
               <span className="text-2xl font-black font-heading text-primary-600 dark:text-primary-400 block tabular-nums">
                 {padZero(timeLeft.hours)}
               </span>
-              <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
+              <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
                 Hours
               </span>
             </div>
@@ -134,7 +134,7 @@ export default function MaintenancePage() {
               <span className="text-2xl font-black font-heading text-primary-600 dark:text-primary-400 block tabular-nums">
                 {padZero(timeLeft.minutes)}
               </span>
-              <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
+              <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
                 Mins
               </span>
             </div>
@@ -144,7 +144,7 @@ export default function MaintenancePage() {
               <span className="text-2xl font-black font-heading text-amber-500 block tabular-nums">
                 {padZero(timeLeft.seconds)}
               </span>
-              <span className="text-[9px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
+              <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block mt-0.5">
                 Secs
               </span>
             </div>

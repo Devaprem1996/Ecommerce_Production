@@ -570,7 +570,7 @@ export default function TrackOrderPage() {
                   </div>
 
                   <div className="bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/15 rounded-card px-4 py-2.5 text-right">
-                    <span className="text-[9px] font-bold text-neutral-400 uppercase tracking-wider block">Expected Delivery</span>
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Expected Delivery</span>
                     <span className="text-xs sm:text-sm font-black text-primary-600 dark:text-primary-400">
                       {currentLang === 'ta' ? trackingResult.estDeliveryTamil : trackingResult.estDelivery}
                     </span>

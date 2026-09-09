@@ -223,7 +223,7 @@ function CheckoutSuccessContent() {
 
             <div className="flex justify-between font-semibold text-neutral-700 dark:text-neutral-350">
               <span>Payment Status:</span>
-              <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20 text-[9px] font-bold uppercase tracking-wider">
+              <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-600 border border-green-500/20 text-[10px] font-bold uppercase tracking-wider">
                 Paid ✅
               </span>
             </div>

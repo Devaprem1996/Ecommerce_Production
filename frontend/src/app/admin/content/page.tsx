@@ -265,7 +265,7 @@ export default function ContentManagementPage() {
                 {blogs.map(post => (
                   <tr key={post.id} className="hover:bg-neutral-50/50">
                     <td className="py-3 font-bold text-neutral-850 dark:text-white">{post.title}</td>
-                    <td className="py-3"><span className="px-2 py-0.5 rounded-full text-[9px] bg-primary-500/10 text-primary-500 font-extrabold">{post.category}</span></td>
+                    <td className="py-3"><span className="px-2 py-0.5 rounded-full text-[10px] bg-primary-500/10 text-primary-500 font-extrabold">{post.category}</span></td>
                     <td className="py-3 font-semibold text-neutral-500">{post.author}</td>
                     <td className="py-3 text-right">
                       <div className="flex justify-end gap-2">
@@ -286,7 +286,7 @@ export default function ContentManagementPage() {
             {faqs.map(f => (
               <div key={f.id} className="p-4 border border-neutral-100 dark:border-neutral-800 rounded-card bg-neutral-50 dark:bg-neutral-950 flex justify-between items-start gap-4">
                 <div className="space-y-1">
-                  <span className="text-[9px] font-black uppercase tracking-wider text-primary-500">{f.category}</span>
+                  <span className="text-[10px] font-black uppercase tracking-wider text-primary-500">{f.category}</span>
                   <h4 className="font-bold text-xs text-neutral-900 dark:text-white">{f.question}</h4>
                   <p className="text-[10px] text-neutral-500 leading-relaxed font-semibold">{f.answer}</p>
                 </div>

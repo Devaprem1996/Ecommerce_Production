@@ -239,7 +239,7 @@ export default function OrderDetailPage() {
                   <h4 className={`text-xs font-bold mt-2.5 ${isCurrent ? 'text-primary-500' : 'text-neutral-700 dark:text-neutral-300'}`}>
                     {step.label}
                   </h4>
-                  <p className="text-[9px] font-medium text-neutral-500 dark:text-neutral-450 mt-1 hidden sm:block leading-tight">
+                  <p className="text-[10px] font-medium text-neutral-500 dark:text-neutral-450 mt-1 hidden sm:block leading-tight">
                     {step.desc}
                   </p>
                 </div>

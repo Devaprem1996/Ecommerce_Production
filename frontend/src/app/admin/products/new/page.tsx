@@ -263,7 +263,7 @@ export default function NewProductPage() {
 
               <div className="aspect-square border border-dashed rounded-card flex flex-col items-center justify-center text-neutral-450 p-2.5 text-center bg-neutral-50/50">
                 <Upload className="w-6 h-6 mb-1" />
-                <span className="text-[9px] font-bold uppercase tracking-wider leading-none">Drag & Drop Files</span>
+                <span className="text-[10px] font-bold uppercase tracking-wider leading-none">Drag & Drop Files</span>
               </div>
             </div>
 
@@ -319,7 +319,7 @@ export default function NewProductPage() {
                 className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
               {errors.price && (
-                <span className="text-[9px] font-bold text-red-500 mt-1 block">{errors.price.message}</span>
+                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.price.message}</span>
               )}
             </div>
 
@@ -347,7 +347,7 @@ export default function NewProductPage() {
                 placeholder="500g or 1L"
               />
               {errors.unit && (
-                <span className="text-[9px] font-bold text-red-500 mt-1 block">{errors.unit.message}</span>
+                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.unit.message}</span>
               )}
             </div>
 
@@ -362,7 +362,7 @@ export default function NewProductPage() {
                 className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
               />
               {errors.stock && (
-                <span className="text-[9px] font-bold text-red-500 mt-1 block">{errors.stock.message}</span>
+                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.stock.message}</span>
               )}
             </div>
 

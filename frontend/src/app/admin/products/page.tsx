@@ -180,7 +180,7 @@ export default function AdminProductsPage() {
 
                     {/* Category */}
                     <td className="p-4">
-                      <span className="px-2.5 py-0.5 rounded-full text-[9px] font-bold bg-primary-500/10 text-primary-500 uppercase">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 uppercase">
                         {prod.category}
                       </span>
                     </td>
@@ -188,7 +188,7 @@ export default function AdminProductsPage() {
                     {/* Price */}
                     <td className="p-4">
                       <p className="font-extrabold text-neutral-900 dark:text-white">₹{prod.price}</p>
-                      <span className="text-[9px] text-neutral-400 font-bold block">per {prod.unit}</span>
+                      <span className="text-[10px] text-neutral-400 font-bold block">per {prod.unit}</span>
                     </td>
 
                     {/* Stock */}
@@ -207,7 +207,7 @@ export default function AdminProductsPage() {
 
                     {/* Status */}
                     <td className="p-4">
-                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                         prod.stock > 0 ? 'bg-success/10 text-success' : 'bg-red-500/10 text-red-500'
                       }`}>
                         {prod.stock > 0 ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
@@ -263,7 +263,7 @@ export default function AdminProductsPage() {
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-start gap-1">
                     <h4 className="font-bold text-sm text-neutral-850 dark:text-white truncate">{prod.name}</h4>
-                    <span className="text-[9px] font-bold text-neutral-450 shrink-0">{prod.id}</span>
+                    <span className="text-[10px] font-bold text-neutral-450 shrink-0">{prod.id}</span>
                   </div>
                   {prod.nameTamil && (
                     <span className="text-[10px] text-neutral-500 font-medium block">{prod.nameTamil}</span>
@@ -273,18 +273,18 @@ export default function AdminProductsPage() {
 
               <div className="flex justify-between items-center text-xs border-t border-neutral-50 dark:border-neutral-850/60 pt-2.5">
                 <div>
-                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Category</span>
-                  <span className="px-2 py-0.5 rounded-full text-[9px] font-bold bg-primary-500/10 text-primary-500 uppercase mt-0.5 inline-block">
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase block">Category</span>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 uppercase mt-0.5 inline-block">
                     {prod.category}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Price</span>
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase block">Price</span>
                   <p className="font-extrabold text-neutral-900 dark:text-white mt-0.5">₹{prod.price}</p>
-                  <span className="text-[9px] text-neutral-400 font-bold block">per {prod.unit}</span>
+                  <span className="text-[10px] text-neutral-400 font-bold block">per {prod.unit}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Stock</span>
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase block">Stock</span>
                   <div className="flex items-center gap-1 mt-0.5">
                     <span className={`font-extrabold ${prod.stock <= 10 ? 'text-red-500' : 'text-neutral-700 dark:text-neutral-300'}`}>
                       {prod.stock}
@@ -295,7 +295,7 @@ export default function AdminProductsPage() {
               </div>
 
               <div className="flex justify-between items-center border-t border-neutral-50 dark:border-neutral-850/60 pt-2.5">
-                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                   prod.stock > 0 ? 'bg-success/10 text-success' : 'bg-red-500/10 text-red-500'
                 }`}>
                   {prod.stock > 0 ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}

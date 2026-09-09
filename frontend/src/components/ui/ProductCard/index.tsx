@@ -153,14 +153,14 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </div>
 
         {/* Price & Cart row */}
-        <div className="flex items-center justify-between mt-auto pt-3 border-t border-neutral-100 dark:border-neutral-800">
-          <div className="flex flex-col">
+        <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-3 border-t border-neutral-100 dark:border-neutral-800">
+          <div className="flex flex-col min-w-0">
             {hasDiscount && (
-              <span className="text-xs text-neutral-600 line-through">
+              <span className="text-xs text-neutral-600 line-through truncate">
                 {formatPrice(originalPrice)}
               </span>
             )}
-            <span className="text-lg font-bold text-primary-700 dark:text-primary-400 leading-tight">
+            <span className="text-lg font-bold text-primary-700 dark:text-primary-400 leading-tight truncate">
               {formatPrice(product.price)}
               <span className="text-xs text-neutral-600 font-normal ml-1">/ {product.unit}</span>
             </span>
@@ -172,16 +172,17 @@ export const ProductCard: React.FC<ProductCardProps> = ({
               size="sm"
               onClick={handleAddToCart}
               leftIcon={<ShoppingBag className="w-4 h-4" />}
-              className="min-w-[40px] px-3 font-semibold h-9 rounded-card"
+              aria-label={t('products.add_to_cart', 'Add to cart')}
+              className="min-w-[40px] px-2.5 sm:px-3 font-semibold h-9 rounded-card shrink-0"
             >
-              {t('products.add_to_cart', 'Add')}
+              <span className="hidden sm:inline">{t('products.add_to_cart', 'Add')}</span>
             </Button>
           ) : (
             <Button
               variant="secondary"
               size="sm"
               disabled
-              className="min-w-[40px] px-3 font-semibold h-9 rounded-card opacity-50 cursor-not-allowed text-xs"
+              className="min-w-[40px] px-2.5 sm:px-3 font-semibold h-9 rounded-card opacity-50 cursor-not-allowed text-xs shrink-0"
             >
               {t('badge.sold-out', 'Sold Out')}
             </Button>

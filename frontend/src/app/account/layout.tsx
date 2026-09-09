@@ -307,7 +307,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                     <Icon className="w-3.5 h-3.5" />
                     <span>{item.label}</span>
                     {item.path === '/account/wishlist' && wishlistItems.length > 0 && (
-                      <span className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold leading-none ${
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
                         isActive ? 'bg-white text-primary-500' : 'bg-red-500 text-white'
                       }`}>
                         {wishlistItems.length}

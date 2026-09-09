@@ -228,7 +228,7 @@ export default function CategoryManagementPage() {
               <div key={cat.id} className="relative rounded-card overflow-hidden h-24 bg-neutral-100 group border">
                 <img src={cat.image} alt={cat.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                 <div className="absolute inset-0 bg-black/45 flex flex-col justify-end p-2.5">
-                  <span className="text-[9px] font-bold text-white uppercase tracking-widest">{cat.name}</span>
+                  <span className="text-[10px] font-bold text-white uppercase tracking-widest">{cat.name}</span>
                   <span className="text-[8px] font-semibold text-neutral-200 mt-0.5">{cat.itemCount} items</span>
                 </div>
               </div>

@@ -305,7 +305,7 @@ function ResetPasswordFormContent() {
           <div className="space-y-1.5 text-xs font-semibold select-none">
             {/* 8 characters check */}
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
                 criteria.length ? 'bg-success/15 text-success' : 'bg-red-500/10 text-red-500'
               }`}>
                 {criteria.length ? <Check className="w-2.5 h-2.5 stroke-[3px]" /> : <X className="w-2.5 h-2.5 stroke-[3px]" />}
@@ -317,7 +317,7 @@ function ResetPasswordFormContent() {
 
             {/* Uppercase check */}
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
                 criteria.uppercase ? 'bg-success/15 text-success' : 'bg-red-500/10 text-red-500'
               }`}>
                 {criteria.uppercase ? <Check className="w-2.5 h-2.5 stroke-[3px]" /> : <X className="w-2.5 h-2.5 stroke-[3px]" />}
@@ -329,7 +329,7 @@ function ResetPasswordFormContent() {
 
             {/* Number check */}
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
                 criteria.number ? 'bg-success/15 text-success' : 'bg-red-500/10 text-red-500'
               }`}>
                 {criteria.number ? <Check className="w-2.5 h-2.5 stroke-[3px]" /> : <X className="w-2.5 h-2.5 stroke-[3px]" />}
@@ -341,7 +341,7 @@ function ResetPasswordFormContent() {
 
             {/* Special check */}
             <div className="flex items-center gap-2">
-              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[9px] ${
+              <div className={`w-4 h-4 rounded-full flex items-center justify-center text-[10px] ${
                 criteria.special ? 'bg-success/15 text-success' : 'bg-red-500/10 text-red-500'
               }`}>
                 {criteria.special ? <Check className="w-2.5 h-2.5 stroke-[3px]" /> : <X className="w-2.5 h-2.5 stroke-[3px]" />}

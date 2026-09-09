@@ -839,25 +839,25 @@ export default function CheckoutPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-2">
                     <div className="flex items-center gap-2 p-3 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-card">
                       <Lock className="w-6 h-6 text-primary-500 flex-shrink-0" />
-                      <span className="text-[9px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
                         SSL Encryption
                       </span>
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-card">
                       <ShieldCheck className="w-6 h-6 text-primary-500 flex-shrink-0" />
-                      <span className="text-[9px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
                         PCI Compliant
                       </span>
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-card">
                       <Truck className="w-6 h-6 text-primary-500 flex-shrink-0" />
-                      <span className="text-[9px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
                         Secure Transit
                       </span>
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-card">
                       <CheckCircle2 className="w-6 h-6 text-primary-500 flex-shrink-0" />
-                      <span className="text-[9px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                      <span className="text-[10px] font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
                         Assured Quality
                       </span>
                     </div>

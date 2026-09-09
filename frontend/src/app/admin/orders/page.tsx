@@ -231,14 +231,14 @@ export default function OrderManagementPage() {
                     <td className="p-4 font-semibold text-neutral-500">{order.date}</td>
                     <td className="p-4 font-extrabold text-neutral-900 dark:text-white">₹{order.amount}</td>
                     <td className="p-4">
-                      <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase ${
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
                         order.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
                       }`}>
                         {order.paymentMethod.toUpperCase()} - {order.paymentStatus}
                       </span>
                     </td>
                     <td className="p-4">
-                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                      <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                         order.status === 'delivered' ? 'bg-success/15 text-success' :
                         order.status === 'processing' ? 'bg-blue-500/15 text-blue-500' :
                         order.status === 'shipped' ? 'bg-primary-500/10 text-primary-500' :
@@ -280,7 +280,7 @@ export default function OrderManagementPage() {
             <div key={order.id} className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 shadow-sm space-y-3">
               <div className="flex justify-between items-center">
                 <span className="font-bold text-sm text-neutral-900 dark:text-white">{order.id}</span>
-                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider ${
+                <span className={`inline-block px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
                   order.status === 'delivered' ? 'bg-success/15 text-success' :
                   order.status === 'processing' ? 'bg-blue-500/15 text-blue-500' :
                   order.status === 'shipped' ? 'bg-primary-500/10 text-primary-500' :
@@ -301,12 +301,12 @@ export default function OrderManagementPage() {
 
               <div className="flex justify-between items-center text-xs border-t border-neutral-50 dark:border-neutral-850/60 pt-2.5">
                 <div>
-                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Amount</span>
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase block">Amount</span>
                   <span className="font-extrabold text-neutral-900 dark:text-white">₹{order.amount}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-neutral-450 uppercase block">Payment</span>
-                  <span className={`inline-block px-2 py-0.5 rounded text-[9px] font-bold uppercase mt-0.5 ${
+                  <span className="text-[10px] font-bold text-neutral-450 uppercase block">Payment</span>
+                  <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase mt-0.5 ${
                     order.paymentStatus === 'paid' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'
                   }`}>
                     {order.paymentMethod.toUpperCase()} - {order.paymentStatus}

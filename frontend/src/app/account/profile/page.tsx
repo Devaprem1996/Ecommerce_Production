@@ -335,7 +335,7 @@ export default function ProfilePage() {
 
               <div>
                 <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                  Anniversary <span className="text-[9px] text-neutral-400 lowercase">(optional)</span>
+                  Anniversary <span className="text-[10px] text-neutral-400 lowercase">(optional)</span>
                 </label>
                 <div className="relative">
                   <Calendar className="absolute left-3.5 top-3 w-4 h-4 text-neutral-400" />

@@ -373,7 +373,7 @@ export default function ReviewsPage() {
                       <StarRating rating={rev.rating} />
                       <p className="text-[10px] text-neutral-500 font-semibold">{rev.date}</p>
                       {rev.verified && (
-                        <span className="text-[9px] font-bold text-success uppercase tracking-widest block">
+                        <span className="text-[10px] font-bold text-success uppercase tracking-widest block">
                           Verified Purchase
                         </span>
                       )}
