@@ -13,60 +13,113 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Default admin mock credentials
-    const validEmail = 'admin@yathuarokiyagam.com';
-    const validPassword = 'Password123';
+    const normalizedEmail = email.toLowerCase().trim();
+    const secret = process.env.JWT_SECRET || 'dev-secret-key-for-jwt-signing-tokens-123456';
+    const backendApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
 
-    if (email.toLowerCase() !== validEmail || password !== validPassword) {
+    // 1. Try real database authentication via Express backend
+    try {
+      const backendRes = await fetch(`${backendApiUrl}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: normalizedEmail, password }),
+      });
+
+      if (backendRes.ok) {
+        const backendJson = await backendRes.json();
+        if (backendJson.success && backendJson.data?.user) {
+          const backendUser = backendJson.data.user;
+          const token = backendJson.data.accessToken;
+
+          const adminUserPayload = {
+            id: backendUser.id,
+            name: `${backendUser.profile?.firstName || 'Super'} ${backendUser.profile?.lastName || 'Admin'}`.trim(),
+            mobile: backendUser.profile?.phone || '9876543210',
+            email: backendUser.email,
+            avatar: backendUser.profile?.avatarUrl || null,
+            role: 'admin' as const,
+            language: 'en' as const,
+            isVerified: backendUser.isVerified ?? true,
+            createdAt: backendUser.createdAt,
+          };
+
+          const isProduction = process.env.NODE_ENV === 'production';
+          const response = NextResponse.json({
+            success: true,
+            message: 'Admin logged in successfully via Live Database.',
+            user: adminUserPayload,
+            accessToken: token,
+          });
+
+          response.cookies.set('access_token', token, {
+            httpOnly: true,
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 15 * 60,
+          });
+
+          return response;
+        }
+      }
+    } catch (err) {
+      // Backend not running yet or connection refused; continue to allowed credentials
+    }
+
+    // 2. Allow valid admin credentials (admin@yathu.com or admin@yathuarokiyagam.com)
+    const isValidAdmin =
+      (normalizedEmail === 'admin@yathu.com' && password === 'admin123') ||
+      (normalizedEmail === 'admin@yathuarokiyagam.com' && password === 'Password123');
+
+    if (!isValidAdmin) {
       return NextResponse.json(
         { success: false, message: 'Invalid email or password.' },
         { status: 401 }
       );
     }
 
-    const secret = process.env.JWT_SECRET || 'default_jwt_secret_change_me_in_prod';
-
     const adminPayload = {
-      id: 'adm_yathu_super',
-      name: 'Yathu Administrator',
+      id: '13abcd44-1c05-4a5d-9587-f5e69f1ec184', // Seeded admin UUID in Neon DB
+      userId: '13abcd44-1c05-4a5d-9587-f5e69f1ec184',
+      name: 'Super Admin',
       mobile: '9876543210',
-      email: email.toLowerCase(),
+      email: normalizedEmail,
       avatar: null,
       role: 'admin' as const,
       language: 'en' as const,
       isVerified: true,
-      createdAt: new Date().toISOString()
+      createdAt: new Date().toISOString(),
     };
 
-    // Sign Access Token (15 mins) and Refresh Token (24 hours for Admin)
+    // Sign Access Token (15 mins) and Refresh Token (24 hours) with shared secret
     const accessToken = signToken(adminPayload, secret, 15);
     const refreshToken = signToken(adminPayload, secret, 24 * 60);
 
+    const isProduction = process.env.NODE_ENV === 'production';
     const response = NextResponse.json({
       success: true,
       message: 'Admin logged in successfully.',
-      user: adminPayload,
-      accessToken
+      user: {
+        ...adminPayload,
+        role: 'admin' as const,
+      },
+      accessToken,
     });
 
-    const isProduction = process.env.NODE_ENV === 'production';
-
-    // Set access token cookie
     response.cookies.set('access_token', accessToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'lax',
       path: '/',
-      maxAge: 15 * 60 // 15 minutes
+      maxAge: 15 * 60,
     });
 
-    // Set admin refresh token cookie (24 hours expiration)
     response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
       secure: isProduction,
       sameSite: 'strict',
       path: '/api/auth/refresh',
-      maxAge: 24 * 60 * 60 // 24 hours
+      maxAge: 24 * 60 * 60,
     });
 
     return response;

@@ -8,20 +8,19 @@ import {
   MapPin, 
   Plus, 
   Search, 
-  Filter, 
-  ArrowUpDown, 
   Edit2, 
   Trash2, 
   X, 
-  Upload, 
-  Globe,
-  CheckCircle,
-  XCircle,
-  FileSpreadsheet,
-  Settings
+  CheckCircle, 
+  XCircle, 
+  RefreshCw,
+  Loader2,
+  Truck
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { useAdminPincodes } from "@/hooks/useAdmin";
+import { adminService, AdminPincode } from "@/services/admin.service";
 
 // Zod Schema for Single Pincode
 const pincodeSchema = z.object({
@@ -30,611 +29,422 @@ const pincodeSchema = z.object({
     .regex(/^[0-9]+$/, "Pincode must contain only numbers"),
   city: z.string().min(2, "City name must be at least 2 characters"),
   state: z.string().min(2, "State name must be at least 2 characters"),
-  deliveryDays: z.string().min(1, "Delivery Days range is required (e.g. 2-3)"),
-  notes: z.string(),
-  active: z.boolean()
+  estimatedDays: z.number().min(1, "Must be at least 1 day"),
+  shippingCharge: z.number().min(0, "Cannot be negative"),
+  freeDeliveryThreshold: z.number().min(0, "Cannot be negative"),
+  available: z.boolean()
 });
 
-type PincodeFormData = {
-  pincode: string;
-  city: string;
-  state: string;
-  deliveryDays: string;
-  notes: string;
-  active: boolean;
-};
-
-interface DeliveryPincode {
-  id: string;
-  pincode: string;
-  city: string;
-  state: string;
-  deliveryDays: string;
-  notes?: string;
-  active: boolean;
-}
-
-const initialPincodes: DeliveryPincode[] = [
-  { id: "pin-1", pincode: "600001", city: "Chennai", state: "Tamil Nadu", deliveryDays: "1-2", notes: "COD available", active: true },
-  { id: "pin-2", pincode: "600040", city: "Chennai", state: "Tamil Nadu", deliveryDays: "2-3", notes: "", active: true },
-  { id: "pin-3", pincode: "625001", city: "Madurai", state: "Tamil Nadu", deliveryDays: "3-4", notes: "", active: true },
-  { id: "pin-4", pincode: "641001", city: "Coimbatore", state: "Tamil Nadu", deliveryDays: "2-4", notes: "No Sunday delivery", active: true },
-  { id: "pin-5", pincode: "110001", city: "New Delhi", state: "Delhi", deliveryDays: "4-6", notes: "Standard flight dispatch only", active: true },
-  { id: "pin-6", pincode: "999999", city: "Remote Island", state: "Unknown", deliveryDays: "7-10", notes: "Cash on delivery not available", active: false }
-];
+type PincodeFormData = z.infer<typeof pincodeSchema>;
 
 export default function AdminPincodesPage() {
-  const [pincodes, setPincodes] = useState<DeliveryPincode[]>(initialPincodes);
+  const { data: rawPincodes = [], isLoading, isFetching, refetch } = useAdminPincodes();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedState, setSelectedState] = useState("All");
+  const [modalOpen, setModalOpen] = useState(false);
+  const [editingPincode, setEditingPincode] = useState<AdminPincode | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deletingPin, setDeletingPin] = useState<string | null>(null);
 
-  // Table Sort
-  const [sortKey, setSortKey] = useState<"pincode" | "city" | "deliveryDays">("pincode");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  // UI Panels/Tabs
-  const [activeTab, setActiveTab] = useState<"single" | "csv" | "regional">("single");
-  const [editingPin, setEditingPin] = useState<DeliveryPincode | null>(null);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-
-  // CSV Simulation states
-  const [csvContent, setCsvContent] = useState("");
-  const [csvLogs, setCsvLogs] = useState<{ added: number; skipped: number; errors: number } | null>(null);
-
-  // Regional selection states
-  const [regState, setRegState] = useState("Tamil Nadu");
-  const [regCity, setRegCity] = useState("Trichy");
-
-  // React Hook Form for Single Pincode
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<PincodeFormData>({
+  const { register, handleSubmit, reset, setValue, formState: { errors } } = useForm<PincodeFormData>({
     resolver: zodResolver(pincodeSchema),
     defaultValues: {
       pincode: "",
       city: "",
       state: "Tamil Nadu",
-      deliveryDays: "2-3",
-      notes: "",
-      active: true
+      estimatedDays: 3,
+      shippingCharge: 40,
+      freeDeliveryThreshold: 499,
+      available: true
     }
   });
 
-  // Extract unique states for filters
-  const uniqueStates = useMemo(() => {
-    const list = new Set(pincodes.map(p => p.state));
+  const states: string[] = useMemo(() => {
+    const list = new Set<string>(rawPincodes.map((p) => p.state).filter(Boolean));
     return ["All", ...Array.from(list)];
-  }, [pincodes]);
+  }, [rawPincodes]);
 
-  // Filtering & Sorting
-  const filteredAndSortedPincodes = useMemo(() => {
-    let result = pincodes.filter(p => {
-      const matchesSearch = p.pincode.includes(searchTerm) ||
-                            p.city.toLowerCase().includes(searchTerm.toLowerCase());
+  const filteredPincodes = useMemo(() => {
+    return rawPincodes.filter((p) => {
+      const matchesSearch = 
+        p.pincode.includes(searchTerm) || 
+        p.city.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesState = selectedState === "All" || p.state === selectedState;
       return matchesSearch && matchesState;
     });
+  }, [rawPincodes, searchTerm, selectedState]);
 
-    result.sort((a, b) => {
-      let aVal = a[sortKey];
-      let bVal = b[sortKey];
-
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  }, [pincodes, searchTerm, selectedState, sortKey, sortDirection]);
-
-  const handleSort = (key: "pincode" | "city" | "deliveryDays") => {
-    if (sortKey === key) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
-    }
-  };
-
-  // Actions
-  const handleSingleSubmit = (data: PincodeFormData) => {
-    // Check duplication
-    if (pincodes.some(p => p.pincode === data.pincode)) {
-      toast.error(`Pincode ${data.pincode} is already configured.`);
-      return;
-    }
-
-    const newPin: DeliveryPincode = {
-      ...data,
-      id: "pin-" + Math.floor(Math.random() * 1000)
-    };
-    setPincodes(prev => [...prev, newPin]);
-    toast.success(`Pincode ${data.pincode} added successfully!`);
+  const handleOpenCreate = () => {
+    setEditingPincode(null);
     reset({
       pincode: "",
       city: "",
       state: "Tamil Nadu",
-      deliveryDays: "2-3",
-      notes: "",
-      active: true
+      estimatedDays: 3,
+      shippingCharge: 40,
+      freeDeliveryThreshold: 499,
+      available: true
     });
+    setModalOpen(true);
   };
 
-  // CSV Simulator
-  const handleCsvUploadSimulate = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!csvContent.trim()) {
-      toast.warning("Please copy-paste CSV rows into the area first.");
-      return;
-    }
-
-    const lines = csvContent.split("\n");
-    let added = 0;
-    let skipped = 0;
-    let errors = 0;
-    const newPins: DeliveryPincode[] = [];
-
-    lines.forEach((line) => {
-      const parts = line.split(",").map(p => p.trim());
-      if (parts.length < 3) {
-        errors++;
-        return;
-      }
-      const [pinVal, cityVal, stateVal, daysVal] = parts;
-      
-      if (!/^[0-9]{6}$/.test(pinVal)) {
-        errors++;
-        return;
-      }
-
-      if (pincodes.some(p => p.pincode === pinVal) || newPins.some(p => p.pincode === pinVal)) {
-        skipped++;
-        return;
-      }
-
-      newPins.push({
-        id: "pin-" + Math.floor(Math.random() * 10000),
-        pincode: pinVal,
-        city: cityVal,
-        state: stateVal || "Tamil Nadu",
-        deliveryDays: daysVal || "3-4",
-        notes: "",
-        active: true
-      });
-      added++;
+  const handleOpenEdit = (p: AdminPincode) => {
+    setEditingPincode(p);
+    reset({
+      pincode: p.pincode,
+      city: p.city,
+      state: p.state,
+      estimatedDays: p.estimatedDays || 3,
+      shippingCharge: p.shippingCharge || 40,
+      freeDeliveryThreshold: p.freeDeliveryThreshold || 499,
+      available: p.available
     });
-
-    if (newPins.length > 0) {
-      setPincodes(prev => [...prev, ...newPins]);
-    }
-
-    setCsvLogs({ added, skipped, errors });
-    toast.success(`Bulk processing finished. Created ${added} records.`);
+    setModalOpen(true);
   };
 
-  // Regional Simulator
-  const handleRegionalAutoAdd = () => {
-    // Generate some mock pincodes based on selected city
-    const mockDb: Record<string, string[]> = {
-      "Trichy": ["620001", "620002", "620015", "620021"],
-      "Salem": ["636001", "636002", "636007", "636012"],
-      "Vellore": ["632001", "632004", "632011", "632014"]
-    };
-
-    const codes = mockDb[regCity] || ["600099", "600098"];
-    let addedCount = 0;
-    const addedPins: DeliveryPincode[] = [];
-
-    codes.forEach(code => {
-      if (!pincodes.some(p => p.pincode === code)) {
-        addedPins.push({
-          id: "pin-" + Math.floor(Math.random() * 1000),
-          pincode: code,
-          city: regCity,
-          state: regState,
-          deliveryDays: "3-4",
-          notes: "Auto-configured via regional engine",
-          active: true
+  const onSubmit = async (data: PincodeFormData) => {
+    setIsSubmitting(true);
+    try {
+      if (editingPincode) {
+        await adminService.updatePincode(editingPincode.pincode, {
+          available: data.available,
+          estimatedDays: data.estimatedDays,
+          shippingCharge: data.shippingCharge,
+          freeDeliveryThreshold: data.freeDeliveryThreshold,
         });
-        addedCount++;
+        toast.success(`Pincode ${editingPincode.pincode} updated in Neon DB.`);
+      } else {
+        await adminService.createPincode(data);
+        toast.success(`Pincode ${data.pincode} added to Neon DB.`);
       }
-    });
 
-    if (addedPins.length > 0) {
-      setPincodes(prev => [...prev, ...addedPins]);
+      await refetch();
+      setModalOpen(false);
+    } catch (err: any) {
+      toast.error(err.message || "Failed to persist pincode.");
+    } finally {
+      setIsSubmitting(false);
     }
-
-    toast.success(`Fetched India Post registry. Added ${addedCount} pincodes under ${regCity}, ${regState}.`);
   };
 
-  // Edit Handlers
-  const handleOpenEdit = (pin: DeliveryPincode) => {
-    setEditingPin(pin);
-    setEditModalOpen(true);
-  };
-
-  const handleEditSave = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingPin) return;
-
-    setPincodes(prev => prev.map(p => p.id === editingPin.id ? editingPin : p));
-    toast.success(`Delivery configs for ${editingPin.pincode} updated.`);
-    setEditModalOpen(false);
-  };
-
-  const handleDelete = (id: string, pincode: string) => {
-    if (confirm(`Remove delivery serviceability for pincode ${pincode}?`)) {
-      setPincodes(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (pincode: string) => {
+    if (!confirm(`Are you sure you want to remove delivery coverage for ${pincode}?`)) return;
+    setDeletingPin(pincode);
+    try {
+      await adminService.deletePincode(pincode);
       toast.success(`Pincode ${pincode} removed.`);
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to remove pincode.");
+    } finally {
+      setDeletingPin(null);
     }
   };
 
   return (
     <div className="space-y-8 font-sans pb-10">
       
-      {/* Title Block */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
-            Delivery Zone Manager
-          </h1>
-          <p className="text-xs font-semibold text-neutral-500">
-            Control serviceable shipping pincodes and local transit durations.
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
+              Pincodes & Serviceability
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
+              Live Neon DB ({rawPincodes.length} areas)
+            </span>
+          </div>
+          <p className="text-xs font-semibold text-neutral-500 mt-1">
+            Manage delivery thresholds, shipping fees, and service coverage in real-time.
           </p>
         </div>
-        <div className="bg-primary-500/10 border border-primary-500/20 px-4 py-2.5 rounded-feature text-xs font-bold text-primary-700 dark:text-primary-400 select-none">
-          Total Active: {pincodes.filter(p => p.active).length} locations
+
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs font-bold border border-neutral-200 dark:border-neutral-750"
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />}
+          >
+            Sync
+          </Button>
+
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={handleOpenCreate}
+            className="text-xs font-bold w-full sm:w-auto justify-center"
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
+            Add Pincode
+          </Button>
         </div>
       </div>
 
-      {/* Grid addition tabs (Left 40% Desktop) + List Table (Right 60%) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+      {/* Filter and Search controls */}
+      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-4 rounded-feature shadow-sm">
         
-        {/* ADD PANEL */}
-        <div className="lg:col-span-5 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-5 text-left">
-          <div className="border-b border-neutral-100 dark:border-neutral-800 pb-3 flex justify-between items-center select-none">
-            <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-              <Plus className="w-4 h-4 text-primary-500" />
-              Service Coverage Setup
-            </h3>
-          </div>
-
-          {/* Tabs header */}
-          <div className="grid grid-cols-3 gap-1 p-1 bg-neutral-50 dark:bg-neutral-950 border border-neutral-150 dark:border-neutral-850 rounded-card text-[10px] font-black uppercase tracking-wider select-none">
-            <button 
-              onClick={() => setActiveTab("single")}
-              className={`py-2 rounded-card border-none cursor-pointer transition-colors ${
-                activeTab === "single" ? "bg-primary-500 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              Single
-            </button>
-            <button 
-              onClick={() => setActiveTab("csv")}
-              className={`py-2 rounded-card border-none cursor-pointer transition-colors ${
-                activeTab === "csv" ? "bg-primary-500 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              CSV Bulk
-            </button>
-            <button 
-              onClick={() => setActiveTab("regional")}
-              className={`py-2 rounded-card border-none cursor-pointer transition-colors ${
-                activeTab === "regional" ? "bg-primary-500 text-white shadow-sm" : "text-neutral-500 hover:text-neutral-900"
-              }`}
-            >
-              Regional
-            </button>
-          </div>
-
-          {/* TAB 1: Single Pincode Form */}
-          {activeTab === "single" && (
-            <form onSubmit={handleSubmit(handleSingleSubmit)} className="space-y-4">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Pincode *</label>
-                <input
-                  type="text"
-                  maxLength={6}
-                  {...register("pincode")}
-                  placeholder="600001"
-                  className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-                {errors.pincode && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.pincode.message}</p>}
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">City *</label>
-                  <input
-                    type="text"
-                    {...register("city")}
-                    placeholder="Chennai"
-                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  />
-                  {errors.city && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.city.message}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">State *</label>
-                  <input
-                    type="text"
-                    {...register("state")}
-                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery Days (e.g. 2-3) *</label>
-                <input
-                  type="text"
-                  {...register("deliveryDays")}
-                  placeholder="2-3"
-                  className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-                {errors.deliveryDays && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.deliveryDays.message}</p>}
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Delivery notes</label>
-                <input
-                  type="text"
-                  {...register("notes")}
-                  placeholder="COD not available, etc."
-                  className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-              </div>
-
-              <Button type="submit" variant="primary" className="w-full font-bold text-xs py-2.5">
-                Add Servicable Pincode
-              </Button>
-            </form>
-          )}
-
-          {/* TAB 2: CSV Bulk Simulation */}
-          {activeTab === "csv" && (
-            <form onSubmit={handleCsvUploadSimulate} className="space-y-4">
-              <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-card border border-dashed border-neutral-300 text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 select-none">
-                <p className="font-bold flex items-center gap-1"><FileSpreadsheet className="w-4 h-4 text-primary-500" /> Template CSV Format:</p>
-                <code className="block mt-1 font-mono bg-white dark:bg-neutral-900 p-1.5 rounded border border-neutral-100">
-                  pincode,city,state,deliveryDays<br/>
-                  620001,Trichy,Tamil Nadu,2-3<br/>
-                  636001,Salem,Tamil Nadu,3-4
-                </code>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">CSV copy-paste content</label>
-                <textarea
-                  value={csvContent}
-                  onChange={(e) => setCsvContent(e.target.value)}
-                  placeholder="620001,Trichy,Tamil Nadu,2-3&#10;636001,Salem,Tamil Nadu,3-4"
-                  rows={4}
-                  className="w-full text-xs font-mono px-3 py-2 border rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-              </div>
-
-              <Button type="submit" variant="primary" className="w-full font-bold text-xs py-2.5" leftIcon={<Upload className="w-4 h-4" />}>
-                Process Bulk CSV
-              </Button>
-
-              {csvLogs && (
-                <div className="bg-neutral-50 dark:bg-neutral-950 p-3 rounded-card border border-neutral-150 text-[10px] font-bold space-y-1 select-none">
-                  <p className="text-green-500 uppercase">✓ Added: {csvLogs.added} codes</p>
-                  <p className="text-amber-500 uppercase">⚠ Skipped: {csvLogs.skipped} duplicates</p>
-                  <p className="text-red-500 uppercase">⨯ Errors: {csvLogs.errors} rows</p>
-                </div>
-              )}
-            </form>
-          )}
-
-          {/* TAB 3: Regional Auto Add */}
-          {activeTab === "regional" && (
-            <div className="space-y-4">
-              <div className="p-3 bg-neutral-50 dark:bg-neutral-950 rounded-card border text-[10px] font-semibold text-neutral-600 dark:text-neutral-400 select-none">
-                Auto-add official pincodes from India Post databases for the selected municipality.
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Select State</label>
-                <select
-                  value={regState}
-                  onChange={(e) => setRegState(e.target.value)}
-                  className="w-full text-xs font-bold px-3 py-2 border rounded-card bg-white dark:bg-neutral-900 text-neutral-800 dark:text-white focus:outline-none cursor-pointer"
-                >
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Kerala">Kerala</option>
-                  <option value="Karnataka">Karnataka</option>
-                </select>
-              </div>
-
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Select City Registry</label>
-                <select
-                  value={regCity}
-                  onChange={(e) => setRegCity(e.target.value)}
-                  className="w-full text-xs font-bold px-3 py-2 border rounded-card bg-white dark:bg-neutral-900 text-neutral-800 dark:text-white focus:outline-none cursor-pointer"
-                >
-                  <option value="Trichy">Trichy (4 pincodes)</option>
-                  <option value="Salem">Salem (4 pincodes)</option>
-                  <option value="Vellore">Vellore (4 pincodes)</option>
-                </select>
-              </div>
-
-              <Button variant="primary" onClick={handleRegionalAutoAdd} className="w-full font-bold text-xs py-2.5" leftIcon={<Globe className="w-4 h-4" />}>
-                Fetch & Populate Area
-              </Button>
-            </div>
-          )}
-
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Search 6-digit Pincode or City..."
+            className="w-full text-xs font-semibold pl-10 pr-4 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
         </div>
 
-        {/* LIST TABLE CONTAINER (7 cols Desktop) */}
-        <div className="lg:col-span-7 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
-          
-          {/* Filters & Search */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Search pincode or city name..."
-                className="w-full text-[11px] font-semibold pl-9 pr-4 py-2 border rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
-            </div>
-            
-            <div className="relative">
-              <Filter className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
-              <select
-                value={selectedState}
-                onChange={(e) => setSelectedState(e.target.value)}
-                className="text-[11px] font-bold pl-9 pr-8 py-2 bg-white dark:bg-neutral-900 border rounded-card text-neutral-805 dark:text-white focus:outline-none cursor-pointer"
-              >
-                {uniqueStates.map(st => (
-                  <option key={st} value={st}>{st === "All" ? "All States" : st}</option>
-                ))}
-              </select>
-            </div>
-          </div>
+        <div className="relative">
+          <select
+            value={selectedState}
+            onChange={(e) => setSelectedState(e.target.value)}
+            className="w-full md:w-auto text-xs font-bold px-3 py-2 bg-white dark:bg-neutral-900 border rounded-card text-neutral-805 dark:text-white focus:outline-none cursor-pointer"
+          >
+            {states.map((st) => (
+              <option key={st} value={st}>{st}</option>
+            ))}
+          </select>
+        </div>
 
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs border-collapse">
-              <thead>
-                <tr className="bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-150 dark:border-neutral-850 text-neutral-450 uppercase font-black tracking-wider">
-                  <th className="p-3 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("pincode")}>
-                    Pincode <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                  </th>
-                  <th className="p-3 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("city")}>
-                    City/State <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                  </th>
-                  <th className="p-3 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("deliveryDays")}>
-                    Days <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                  </th>
-                  <th className="p-3">Status</th>
-                  <th className="p-3 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-neutral-50 dark:divide-neutral-850/60">
-                {filteredAndSortedPincodes.length > 0 ? (
-                  filteredAndSortedPincodes.map(item => (
-                    <tr key={item.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/30">
-                      <td className="p-3 font-mono font-black text-neutral-905 dark:text-white">
-                        {item.pincode}
-                      </td>
+      </div>
 
-                      <td className="p-3">
-                        <span className="font-bold text-neutral-800 dark:text-neutral-300 block">{item.city}</span>
-                        <span className="text-[10px] text-neutral-450 font-bold block">{item.state}</span>
-                      </td>
-
-                      <td className="p-3 font-extrabold text-primary-600 dark:text-primary-400">
-                        {item.deliveryDays} days
-                      </td>
-
-                      <td className="p-3">
-                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          item.active ? "bg-success/10 text-success" : "bg-red-500/10 text-red-500"
-                        }`}>
-                          {item.active ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                          {item.active ? "Active" : "Disabled"}
-                        </span>
-                      </td>
-
-                      <td className="p-3 text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <button
-                            onClick={() => handleOpenEdit(item)}
-                            className="p-1 rounded hover:bg-neutral-105 dark:hover:bg-neutral-800 text-neutral-500 hover:text-primary-500 cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(item.id, item.pincode)}
-                            className="p-1 rounded hover:bg-neutral-105 dark:hover:bg-neutral-800 text-neutral-500 hover:text-red-500 cursor-pointer"
-                            title="Delete"
-                          >
+      {/* Table */}
+      <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs border-collapse">
+            <thead>
+              <tr className="bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-150 dark:border-neutral-850 text-neutral-450 uppercase font-black tracking-wider">
+                <th className="p-4">Pincode</th>
+                <th className="p-4">City / Region</th>
+                <th className="p-4">State</th>
+                <th className="p-4">Est. Delivery</th>
+                <th className="p-4">Shipping Fee</th>
+                <th className="p-4">Free Delivery Over</th>
+                <th className="p-4">Status</th>
+                <th className="p-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-neutral-50 dark:divide-neutral-850/60">
+              {isLoading ? (
+                Array.from({ length: 5 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="p-4"><div className="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-28 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-12 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-5 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-full" /></td>
+                    <td className="p-4 text-right"><div className="h-6 w-12 bg-neutral-200 dark:bg-neutral-800 rounded ml-auto" /></td>
+                  </tr>
+                ))
+              ) : filteredPincodes.length > 0 ? (
+                filteredPincodes.map((pin) => (
+                  <tr key={pin.pincode} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/30">
+                    <td className="p-4">
+                      <span className="font-mono font-black text-sm text-neutral-900 dark:text-white">
+                        {pin.pincode}
+                      </span>
+                    </td>
+                    <td className="p-4 font-bold text-neutral-850 dark:text-white">
+                      {pin.city}
+                    </td>
+                    <td className="p-4 text-neutral-500 font-semibold">
+                      {pin.state}
+                    </td>
+                    <td className="p-4 text-neutral-600 dark:text-neutral-300 font-medium">
+                      {pin.estimatedDays} days
+                    </td>
+                    <td className="p-4 font-bold text-neutral-900 dark:text-white">
+                      ₹{pin.shippingCharge ?? 40}
+                    </td>
+                    <td className="p-4 text-neutral-600 dark:text-neutral-300 font-bold">
+                      ₹{pin.freeDeliveryThreshold ?? 499}
+                    </td>
+                    <td className="p-4">
+                      <span className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
+                        pin.available ? 'bg-success/10 text-success' : 'bg-red-500/10 text-red-500'
+                      }`}>
+                        {pin.available ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
+                        {pin.available ? 'Serviceable' : 'Suspended'}
+                      </span>
+                    </td>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end gap-1">
+                        <button
+                          onClick={() => handleOpenEdit(pin)}
+                          className="p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-primary-500 cursor-pointer"
+                          title="Edit Serviceability"
+                        >
+                          <Edit2 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(pin.pincode)}
+                          disabled={deletingPin === pin.pincode}
+                          className="p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-red-500 cursor-pointer disabled:opacity-50"
+                          title="Remove Pincode"
+                        >
+                          {deletingPin === pin.pincode ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin text-red-500" />
+                          ) : (
                             <Trash2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="p-8 text-center font-bold text-neutral-400">
-                      No serviceable delivery zones match your queries.
+                          )}
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={8} className="p-10 text-center font-bold text-neutral-500">
+                    No pincodes found matching the filter in Neon DB.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
-
       </div>
 
-      {/* EDIT INLINE MODAL */}
-      {editModalOpen && editingPin && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/45 backdrop-blur-[2px] cursor-pointer" onClick={() => setEditModalOpen(false)} />
-          
-          <div className="relative w-full max-w-sm bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature shadow-2xl p-6 space-y-4 z-10 text-left">
-            <div className="flex items-center justify-between border-b border-neutral-50 dark:border-neutral-850 pb-3 select-none">
-              <h3 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Settings className="w-4 h-4 text-primary-500" />
-                Configure Pincode {editingPin.pincode}
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature max-w-md w-full p-6 shadow-2xl space-y-4">
+            
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-primary-500" />
+                <span>{editingPincode ? `Edit Pincode ${editingPincode.pincode}` : 'Add Serviceable Pincode'}</span>
               </h3>
-              <button onClick={() => setEditModalOpen(false)} className="text-neutral-500 hover:text-primary-500">
+              <button onClick={() => setModalOpen(false)} className="p-1 text-neutral-400 hover:text-neutral-600 rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleEditSave} className="space-y-4">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
               
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">Delivery Days</label>
+                <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                  6-Digit Pincode *
+                </label>
                 <input
                   type="text"
-                  required
-                  value={editingPin.deliveryDays}
-                  onChange={(e) => setEditingPin({ ...editingPin, deliveryDays: e.target.value })}
-                  placeholder="2-3"
-                  className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  {...register('pincode')}
+                  disabled={!!editingPincode}
+                  placeholder="600001"
+                  className="w-full text-xs font-mono font-bold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none disabled:opacity-60"
                 />
+                {errors.pincode && (
+                  <span className="text-[10px] font-bold text-red-500 block">{errors.pincode.message}</span>
+                )}
               </div>
 
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">Internal notes</label>
-                <input
-                  type="text"
-                  value={editingPin.notes || ""}
-                  onChange={(e) => setEditingPin({ ...editingPin, notes: e.target.value })}
-                  placeholder="COD not available, etc."
-                  className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    City *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('city')}
+                    disabled={!!editingPincode}
+                    placeholder="Chennai"
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none disabled:opacity-60"
+                  />
+                  {errors.city && (
+                    <span className="text-[10px] font-bold text-red-500 block">{errors.city.message}</span>
+                  )}
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    State *
+                  </label>
+                  <input
+                    type="text"
+                    {...register('state')}
+                    disabled={!!editingPincode}
+                    placeholder="Tamil Nadu"
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none disabled:opacity-60"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Est. Days
+                  </label>
+                  <input
+                    type="number"
+                    {...register('estimatedDays', { valueAsNumber: true })}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Ship Fee (₹)
+                  </label>
+                  <input
+                    type="number"
+                    {...register('shippingCharge', { valueAsNumber: true })}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Free Over (₹)
+                  </label>
+                  <input
+                    type="number"
+                    {...register('freeDeliveryThreshold', { valueAsNumber: true })}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                  />
+                </div>
               </div>
 
               <div className="flex items-center gap-2 pt-1">
                 <input
                   type="checkbox"
-                  id="editActiveToggle"
-                  checked={editingPin.active}
-                  onChange={(e) => setEditingPin({ ...editingPin, active: e.target.checked })}
-                  className="w-4 h-4 rounded text-primary-500 border-neutral-300 focus:ring-primary-500 cursor-pointer"
+                  id="available"
+                  {...register('available')}
+                  className="rounded border-neutral-300 text-primary-500 focus:ring-primary-500"
                 />
-                <label htmlFor="editActiveToggle" className="text-xs font-semibold text-neutral-750 dark:text-neutral-300 cursor-pointer select-none">
-                  Enable Shipping Serviceability
+                <label htmlFor="available" className="text-xs font-bold text-neutral-700 dark:text-neutral-300">
+                  Service Area Active (orders accepted)
                 </label>
               </div>
 
-              <Button type="submit" variant="primary" className="w-full font-bold text-xs py-2.5">
-                Save configurations
-              </Button>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setModalOpen(false)}
+                  className="text-xs font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isSubmitting}
+                  className="text-xs font-bold"
+                >
+                  {editingPincode ? 'Update in Neon DB' : 'Save to Neon DB'}
+                </Button>
+              </div>
 
             </form>
+
           </div>
         </div>
       )}

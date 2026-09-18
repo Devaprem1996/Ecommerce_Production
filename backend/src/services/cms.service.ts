@@ -309,7 +309,10 @@ export class CmsService {
    */
   static async getProductBySlug(slug: string) {
     const product = await prisma.product.findFirst({
-      where: { slug, deletedAt: null },
+      where: {
+        OR: [{ slug }, { id: slug }],
+        deletedAt: null,
+      },
       include: {
         category: true,
         variants: {

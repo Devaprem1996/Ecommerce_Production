@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/auth-store';
+import { QueryProvider } from '@/providers/QueryProvider';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
@@ -150,7 +151,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const unreadCount = notifications.filter(n => !n.read).length;
 
   return (
-    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 transition-colors duration-normal">
+    <QueryProvider>
+      <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 transition-colors duration-normal">
 
       {/* SIDEBAR - DESKTOP */}
       <aside
@@ -391,9 +393,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             {children}
           </motion.div>
         </main>
-
       </div>
-
     </div>
-  );
+  </QueryProvider>
+);
 }

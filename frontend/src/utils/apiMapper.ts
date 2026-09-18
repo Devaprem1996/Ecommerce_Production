@@ -1,4 +1,4 @@
-﻿import { ProductType, CategoryType } from '@/types';
+import { ProductType, CategoryType } from '@/types';
 
 const PRODUCT_TYPE_IMAGE = {
   oils: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=600',
@@ -156,7 +156,12 @@ export function mapCategoryToFrontend(backendCategory: any): CategoryType {
   const slug = backendCategory.slug;
   const rawImage = backendCategory.imageUrl || '';
 
-  const isPlaceholderUrl = !rawImage || rawImage.includes('yathu/categories/');
+  // Only consider non-existent demo domain or generic placeholders as placeholder
+  const isPlaceholderUrl =
+    !rawImage ||
+    rawImage.includes('yathu-iyarkaiyagam') ||
+    rawImage.includes('placeholder.svg') ||
+    rawImage.includes('via.placeholder.com');
   const image = isPlaceholderUrl ? (CATEGORY_IMAGE_MAP[slug] || DEFAULT_CATEGORY_IMAGE) : rawImage;
 
   return {
@@ -172,7 +177,12 @@ export function mapCategoryToFrontend(backendCategory: any): CategoryType {
 export function mapProductToFrontend(backendProduct: any): ProductType {
   const firstVariant = backendProduct.variants?.[0];
   const rawImage = backendProduct.thumbnailUrl || firstVariant?.images?.[0] || '';
-  const isPlaceholderUrl = !rawImage || rawImage.includes('yathu/products/') || rawImage.includes('placeholder');
+  // Authentic Cloudinary URLs (from cloud chv6xh1d or user's account) or external CDN URLs are preserved
+  const isPlaceholderUrl =
+    !rawImage ||
+    rawImage.includes('yathu-iyarkaiyagam') ||
+    rawImage.includes('placeholder.svg') ||
+    rawImage.includes('via.placeholder.com');
 
   const image = isPlaceholderUrl
     ? resolveProductImage(backendProduct.slug, backendProduct.category?.slug)

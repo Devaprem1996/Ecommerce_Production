@@ -88,5 +88,6 @@ exports.listProductsQuerySchema = zod_1.z.object({
         maxPrice: zod_1.z.string().regex(/^\d+(\.\d{1,2})?$/, "maxPrice must be a valid number").optional(),
         sortBy: zod_1.z.enum(["price", "createdAt", "nameEn"]).optional().default("createdAt"),
         sortOrder: zod_1.z.enum(["asc", "desc"]).optional().default("desc"),
+        includeInactive: zod_1.z.string().optional(),
     }),
 });

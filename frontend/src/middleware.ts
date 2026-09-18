@@ -80,9 +80,9 @@ export function middleware(request: NextRequest) {
     pathname === '/admin/reset-password';
 
   if ((pathname ?? '').startsWith('/admin') && !isAdminGuestPath) {
-    if (!isTokenValid || !user || user.role !== 'admin') {
+    if (!isTokenValid || !user || user.role?.toLowerCase() !== 'admin') {
       // If not logged in or role is not admin
-      if (user && user.role === 'customer') {
+      if (user && user.role?.toLowerCase() === 'customer') {
         // Logged in customer tries to access admin -> redirect to home
         return NextResponse.redirect(new URL('/', request.url));
       }
@@ -93,7 +93,7 @@ export function middleware(request: NextRequest) {
   // 3. Guest Only / Auth Pages (/login, /register)
   if (pathname === '/login' || pathname === '/register') {
     if (isTokenValid && user) {
-      if (user.role === 'customer') {
+      if (user.role?.toLowerCase() === 'customer') {
         return NextResponse.redirect(new URL('/account', request.url));
       }
     }
@@ -101,8 +101,8 @@ export function middleware(request: NextRequest) {
 
   // 4. Admin Auth Pages (/admin/login, /admin/forgot-password, /admin/reset-password)
   if (isAdminGuestPath) {
-    if (isTokenValid && user && user.role === 'admin') {
-      return NextResponse.redirect(new URL('/admin/dashboard', request.url));
+    if (isTokenValid && user && user.role?.toLowerCase() === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
   }
 

@@ -2,9 +2,29 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.uploadToCloudinary = uploadToCloudinary;
 exports.deleteFromCloudinary = deleteFromCloudinary;
+require("dotenv/config");
 const cloudinary_1 = require("cloudinary");
-// Cloudinary SDK automatically configures itself if CLOUDINARY_URL is present in process.env
-cloudinary_1.v2.config();
+// Configure Cloudinary: supports standard CLOUDINARY_URL or discrete credentials
+if (process.env.CLOUDINARY_URL) {
+    cloudinary_1.v2.config({
+        cloudinary_url: process.env.CLOUDINARY_URL,
+        secure: true,
+    });
+}
+else if (process.env.CLOUDINARY_CLOUD_NAME &&
+    process.env.CLOUDINARY_API_KEY &&
+    process.env.CLOUDINARY_API_SECRET) {
+    cloudinary_1.v2.config({
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        api_secret: process.env.CLOUDINARY_API_SECRET,
+        secure: true,
+    });
+}
+else {
+    // Fallback to auto-detection
+    cloudinary_1.v2.config();
+}
 /**
  * Uploads a file buffer directly to Cloudinary using streams with automatic format and quality optimization.
  * Bypasses writing files to local disk.

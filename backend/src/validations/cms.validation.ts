@@ -93,5 +93,6 @@ export const listProductsQuerySchema = z.object({
     maxPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, "maxPrice must be a valid number").optional(),
     sortBy: z.enum(["price", "createdAt", "nameEn"]).optional().default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
+    includeInactive: z.string().optional(),
   }),
 });

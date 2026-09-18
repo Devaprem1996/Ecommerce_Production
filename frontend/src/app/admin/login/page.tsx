@@ -105,12 +105,15 @@ export default function AdminLoginPage() {
         
         // Save session state
         localStorage.setItem('admin_logged_in', 'true');
+        if (resData.accessToken) {
+          localStorage.setItem('admin_access_token', resData.accessToken);
+        }
         
         // Log in to Zustand store
         login(resData.user, resData.accessToken);
         
         toast.success(`Welcome back, ${resData.user.name || 'Administrator'}!`);
-        router.replace('/admin/dashboard');
+        router.replace('/admin');
       } else {
         // Log failed attempt
         console.warn(`[SECURITY] Failed admin login attempt for email: ${data.email} at ${new Date().toISOString()}`);

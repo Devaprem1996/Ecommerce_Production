@@ -17,12 +17,18 @@ declare global {
  * Restricts route access to verified JWT Access Token holders
  */
 export function requireAuth(req: Request, res: Response, next: NextFunction) {
+  let token: string | undefined;
   const authHeader = req.headers.authorization;
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies && (req.cookies.access_token || req.cookies.accessToken)) {
+    token = req.cookies.access_token || req.cookies.accessToken;
+  }
+
+  if (!token) {
     return next(ApiError.unauthorized("Authentication token required."));
   }
 
-  const token = authHeader.split(" ")[1];
   try {
     const decoded = AuthService.verifyAccessToken(token);
     req.user = decoded;
@@ -42,7 +48,9 @@ export function requireRole(allowedRoles: string[]) {
       return next(ApiError.unauthorized("Not authenticated."));
     }
 
-    if (!allowedRoles.includes(req.user.role)) {
+    const normalizedAllowed = allowedRoles.map((r) => r.toUpperCase());
+    const userRole = (req.user.role || "").toUpperCase();
+    if (!normalizedAllowed.includes(userRole)) {
       return next(ApiError.forbidden("Access denied. Insufficient permissions."));
     }
 
@@ -62,10 +70,10 @@ export function validateRequest(schema: AnyZodObject) {
         query: req.query,
         params: req.params,
       });
-      // Replace original request parts with sanitized parsed data
-      req.body = parsed.body;
-      req.query = parsed.query;
-      req.params = parsed.params;
+      // Replace original request parts with sanitized parsed data only if specified by schema
+      if (parsed.body !== undefined) req.body = parsed.body;
+      if (parsed.query !== undefined) req.query = parsed.query;
+      if (parsed.params !== undefined) req.params = parsed.params;
       return next();
     } catch (error) {
       if (error instanceof ZodError) {

@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEditor, EditorContent } from '@tiptap/react';
@@ -19,16 +19,21 @@ import {
   Heading1, 
   Image as ImageIcon,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  Loader2,
+  CloudUpload,
+  Check
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
+import { useAdminCategories } from '@/hooks/useAdmin';
+import { adminService } from '@/services/admin.service';
 
 // Form validation schema using Zod
 const productFormSchema = z.object({
   name: z.string().min(3, { message: 'English name must be at least 3 characters' }),
   nameTamil: z.string().optional(),
-  category: z.string().min(1, { message: 'Category is required' }),
+  categoryId: z.string().min(1, { message: 'Category is required' }),
   price: z.number().min(1, { message: 'Price must be greater than 0' }),
   originalPrice: z.number().optional(),
   unit: z.string().min(1, { message: 'UoM (e.g. 500g, 1L) is required' }),
@@ -42,12 +47,55 @@ type ProductFormData = z.infer<typeof productFormSchema>;
 export default function NewProductPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const { data: categories = [] } = useAdminCategories();
   
   // Image states
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [images, setImages] = useState<string[]>([
     'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400'
   ]);
   const [newImageUrl, setNewImageUrl] = useState('');
+
+  const processImageFile = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (JPG, PNG, or WEBP).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Image size must be under 5MB.');
+      return;
+    }
+
+    try {
+      setUploadingImage(true);
+      const url = await adminService.uploadImage(file, 'products');
+      setImages(prev => [url, ...prev.filter(img => !img.includes('unsplash.com/photo-1615485290382'))]);
+      toast.success('Image uploaded to Cloudinary!');
+    } catch (err: any) {
+      console.error('Upload error:', err);
+      toast.error(err.message || 'Failed to upload image to Cloudinary.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await processImageFile(file);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) {
+      await processImageFile(file);
+    }
+  };
 
   // Weight variants state
   const [variants, setVariants] = useState<{ weight: string; price: number }[]>([
@@ -63,12 +111,12 @@ export default function NewProductPage() {
     content: '<p>Organic, hand-picked, and chemically unprocessed farm produce.</p>',
   });
 
-  const { register, handleSubmit, control, formState: { errors } } = useForm<ProductFormData>({
+  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormData>({
     resolver: zodResolver(productFormSchema),
     defaultValues: {
       name: '',
       nameTamil: '',
-      category: 'Fruits & Vegetables',
+      categoryId: '',
       price: 0,
       originalPrice: 0,
       unit: '500g',
@@ -107,23 +155,56 @@ export default function NewProductPage() {
     setVariants(prev => prev.filter((_, i) => i !== index));
   };
 
-  const onSubmit = (data: ProductFormData) => {
+  const onSubmit = async (data: ProductFormData) => {
     setLoading(true);
-    const descContent = editor ? editor.getHTML() : '';
+    const descContent = editor ? editor.getHTML() : data.name;
 
-    setTimeout(() => {
-      setLoading(false);
-      const completeProductPayload = {
-        ...data,
-        description: descContent,
-        images,
-        variants
+    try {
+      // Determine target category ID
+      const targetCategoryId = data.categoryId || categories[0]?.id;
+      if (!targetCategoryId) {
+        throw new Error('Please select a valid category.');
+      }
+
+      // Format payload for backend CMS Service
+      const skuPrefix = data.name.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'PROD');
+      const randomSuffix = Math.floor(1000 + Math.random() * 9000);
+
+      const payloadVariants = variants.length > 0 ? variants.map((v, i) => ({
+        nameEn: v.weight,
+        nameTa: v.weight,
+        sku: `${skuPrefix}-${v.weight.toUpperCase()}-${randomSuffix + i}`,
+        price: Number(v.price),
+        discountPrice: undefined,
+        availableQuantity: Number(data.stock),
+      })) : [{
+        nameEn: data.unit,
+        nameTa: data.unit,
+        sku: `${skuPrefix}-${randomSuffix}`,
+        price: Number(data.price),
+        discountPrice: data.originalPrice && data.originalPrice > data.price ? Number(data.price) : undefined,
+        availableQuantity: Number(data.stock),
+      }];
+
+      const payload = {
+        categoryId: targetCategoryId,
+        nameEn: data.name.trim(),
+        nameTa: (data.nameTamil || data.name).trim(),
+        brand: 'Yathu Arokiyagam',
+        descriptionEn: descContent,
+        descriptionTa: descContent,
+        thumbnailUrl: images[0] || '',
+        variants: payloadVariants,
       };
 
-      console.log('Submitted Product: ', completeProductPayload);
-      toast.success('Organic product registered in Catalog successfully!');
+      await adminService.createProduct(payload);
+      toast.success('Product registered in live Neon database!');
       router.push('/admin/products');
-    }, 1200);
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to create product.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -142,7 +223,7 @@ export default function NewProductPage() {
             Add Product
           </h1>
           <p className="text-xs font-semibold text-neutral-500">
-            Publish a new crop, honey batch, or fresh dairy variant.
+            Publish a new crop, honey batch, or fresh dairy variant directly to Neon PostgreSQL.
           </p>
         </div>
       </div>
@@ -240,45 +321,139 @@ export default function NewProductPage() {
 
           </div>
 
-          {/* Multiple Image upload UI */}
+          {/* Multiple Image upload UI with Cloudinary */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2 flex items-center gap-1.5">
-              <ImageIcon className="w-4 h-4 text-primary-500" /> Image Attachments
-            </h3>
-
-            {/* Thumbnail Preview list */}
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
-              {images.map((imgUrl, idx) => (
-                <div key={imgUrl + idx} className="relative aspect-square rounded-card overflow-hidden border bg-neutral-100">
-                  <img src={imgUrl} alt="Upload Preview" className="w-full h-full object-cover" />
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveImage(idx)}
-                    className="absolute top-1 right-1 p-1 rounded-full bg-red-500 text-white shadow-sm hover:scale-105 transition-transform cursor-pointer"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-
-              <div className="aspect-square border border-dashed rounded-card flex flex-col items-center justify-center text-neutral-450 p-2.5 text-center bg-neutral-50/50">
-                <Upload className="w-6 h-6 mb-1" />
-                <span className="text-[10px] font-bold uppercase tracking-wider leading-none">Drag & Drop Files</span>
-              </div>
+            <div className="flex items-center justify-between border-b pb-2">
+              <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-primary-500" /> Product Images & Media
+              </h3>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                Cloudinary Connected
+              </span>
             </div>
 
-            {/* New Image URL Input helper */}
-            <div className="flex gap-2">
-              <input
-                type="url"
-                value={newImageUrl}
-                onChange={(e) => setNewImageUrl(e.target.value)}
-                placeholder="https://unsplash.com/photo-..."
-                className="flex-1 text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              <Button type="button" variant="ghost" size="sm" onClick={handleAddImage} className="text-xs font-bold border border-neutral-250 dark:border-neutral-750 py-2.5 md:py-2 px-4">
-                Add URL
-              </Button>
+            {/* Hidden native file input */}
+            <input
+              type="file"
+              ref={fileInputRef}
+              onChange={handleFileUpload}
+              accept="image/png,image/jpeg,image/webp,image/jpg"
+              className="hidden"
+            />
+
+            {/* Drag & Drop Upload Zone */}
+            <div
+              onClick={() => !uploadingImage && fileInputRef.current?.click()}
+              onDragOver={(e) => { e.preventDefault(); setIsDragOver(true); }}
+              onDragLeave={() => setIsDragOver(false)}
+              onDrop={handleDrop}
+              className={`border-2 border-dashed rounded-feature p-6 text-center cursor-pointer transition-all ${
+                isDragOver 
+                  ? 'border-primary-500 bg-primary-500/5 scale-[1.01]' 
+                  : 'border-neutral-200 dark:border-neutral-800 hover:border-primary-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-850/50'
+              }`}
+            >
+              {uploadingImage ? (
+                <div className="flex flex-col items-center justify-center py-3">
+                  <Loader2 className="w-8 h-8 text-primary-500 animate-spin mb-2" />
+                  <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                    Optimizing & uploading directly to Cloudinary...
+                  </p>
+                  <span className="text-[10px] text-neutral-450 mt-0.5">Please wait a moment</span>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center py-2">
+                  <div className="w-12 h-12 rounded-full bg-primary-500/10 text-primary-500 flex items-center justify-center mb-3">
+                    <CloudUpload className="w-6 h-6" />
+                  </div>
+                  <p className="text-xs font-bold text-neutral-850 dark:text-white">
+                    Click to upload product image, or drag and drop
+                  </p>
+                  <p className="text-[10px] font-semibold text-neutral-450 mt-1">
+                    PNG, JPG, or WEBP up to 5MB • Automatically scaled & optimized on Cloudinary
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Thumbnail Preview list */}
+            {images.length > 0 && (
+              <div className="space-y-2 pt-2">
+                <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block">
+                  Current Images ({images.length}) — First image is primary thumbnail
+                </label>
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
+                  {images.map((imgUrl, idx) => {
+                    const isCloudinary = imgUrl.includes('cloudinary.com');
+                    return (
+                      <div key={imgUrl + idx} className="group relative aspect-square rounded-card overflow-hidden border border-neutral-200 dark:border-neutral-800 bg-neutral-100 dark:bg-neutral-850 shadow-2xs">
+                        <img src={imgUrl} alt={`Product ${idx + 1}`} className="w-full h-full object-cover" />
+                        
+                        {/* Primary Badge */}
+                        {idx === 0 ? (
+                          <span className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-black bg-primary-500 text-white shadow-sm">
+                            PRIMARY
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const newOrder = [images[idx], ...images.filter((_, i) => i !== idx)];
+                              setImages(newOrder);
+                              toast.success('Set as primary thumbnail.');
+                            }}
+                            className="absolute top-1.5 left-1.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-black/60 text-white opacity-0 group-hover:opacity-100 transition-opacity hover:bg-primary-500 cursor-pointer"
+                          >
+                            Set Primary
+                          </button>
+                        )}
+
+                        {/* Cloudinary Host Indicator */}
+                        {isCloudinary && (
+                          <span className="absolute bottom-1.5 left-1.5 px-1 py-0.2 rounded text-[8px] font-bold bg-sky-500/90 text-white">
+                            Cloudinary
+                          </span>
+                        )}
+
+                        {/* Delete Button */}
+                        <button 
+                          type="button"
+                          onClick={() => handleRemoveImage(idx)}
+                          className="absolute top-1.5 right-1.5 p-1 rounded-full bg-red-500 text-white shadow-sm hover:scale-110 transition-transform cursor-pointer"
+                          title="Remove image"
+                        >
+                          <X className="w-3 h-3" />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* Manual Image URL Input helper */}
+            <div className="pt-2 border-t border-neutral-150 dark:border-neutral-800">
+              <label className="text-[10px] font-bold text-neutral-450 uppercase tracking-wider block mb-1.5">
+                Or attach external image URL
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={newImageUrl}
+                  onChange={(e) => setNewImageUrl(e.target.value)}
+                  placeholder="https://images.unsplash.com/photo-..."
+                  className="flex-1 text-base md:text-xs font-semibold px-3 py-2 border rounded-card bg-transparent focus:outline-none"
+                />
+                <Button 
+                  type="button" 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleAddImage} 
+                  className="text-xs font-bold border border-neutral-250 dark:border-neutral-750 px-4"
+                >
+                  Add URL
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -297,15 +472,17 @@ export default function NewProductPage() {
                 Category Group *
               </label>
               <select
-                {...register('category')}
+                {...register('categoryId')}
                 className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
               >
-                <option value="Fruits & Vegetables">Fruits & Vegetables</option>
-                <option value="Dairy & Eggs">Dairy & Eggs</option>
-                <option value="Honey & Spices">Honey & Spices</option>
-                <option value="Grains & Flours">Grains & Flours</option>
-                <option value="Beverages">Beverages</option>
+                <option value="">-- Select Category --</option>
+                {categories.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.nameEn}</option>
+                ))}
               </select>
+              {errors.categoryId && (
+                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.categoryId.message}</span>
+              )}
             </div>
 
             {/* Price */}
@@ -437,7 +614,7 @@ export default function NewProductPage() {
             className="w-full py-3 text-xs font-bold"
             isLoading={loading}
           >
-            Save Product Card
+            Save Product to Neon DB
           </Button>
 
         </div>

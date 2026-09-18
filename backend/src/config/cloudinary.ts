@@ -1,7 +1,27 @@
+import "dotenv/config";
 import { v2 as cloudinary } from "cloudinary";
 
-// Cloudinary SDK automatically configures itself if CLOUDINARY_URL is present in process.env
-cloudinary.config();
+// Configure Cloudinary: supports standard CLOUDINARY_URL or discrete credentials
+if (process.env.CLOUDINARY_URL) {
+  cloudinary.config({
+    cloudinary_url: process.env.CLOUDINARY_URL,
+    secure: true,
+  });
+} else if (
+  process.env.CLOUDINARY_CLOUD_NAME &&
+  process.env.CLOUDINARY_API_KEY &&
+  process.env.CLOUDINARY_API_SECRET
+) {
+  cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET,
+    secure: true,
+  });
+} else {
+  // Fallback to auto-detection
+  cloudinary.config();
+}
 
 /**
  * Uploads a file buffer directly to Cloudinary using streams with automatic format and quality optimization.

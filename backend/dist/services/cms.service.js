@@ -251,7 +251,10 @@ class CmsService {
      */
     static async getProductBySlug(slug) {
         const product = await db_js_1.default.product.findFirst({
-            where: { slug, deletedAt: null },
+            where: {
+                OR: [{ slug }, { id: slug }],
+                deletedAt: null,
+            },
             include: {
                 category: true,
                 variants: {

@@ -10,6 +10,7 @@ import authRouter from "./routes/auth.routes.js";
 import cmsRouter from "./routes/cms.routes.js";
 import paymentRouter from "./routes/payment.routes.js";
 import shippingRouter from "./routes/shipping.routes.js";
+import adminRouter from "./routes/admin.routes.js";
 
 const app = express();
 
@@ -76,6 +77,9 @@ app.use("/api/v1/payments", paymentRouter);
 
 // Shipping & Pincode API routes
 app.use("/api/v1/shipping", shippingRouter);
+
+// Admin Dashboard & Overview API routes
+app.use("/api/v1/admin", adminRouter);
 
 // Health check endpoint
 app.get("/api/v1/health", async (req, res, next) => {

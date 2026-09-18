@@ -21,13 +21,27 @@ class ApiClient {
       headers.set("Content-Type", "application/json");
     }
 
-    // Set authorization access token if available in memory
-    const token = typeof window !== "undefined" ? (window as any).__accessToken : null;
+    // Set authorization access token if available in memory, localStorage, or cookies
+    let token = typeof window !== "undefined" ? (window as any).__accessToken : null;
+    if (!token && typeof window !== "undefined") {
+      token = localStorage.getItem("admin_access_token") || localStorage.getItem("access_token");
+      if (!token) {
+        const match = document.cookie.match(new RegExp('(^| )access_token=([^;]+)'));
+        if (match) {
+          token = match[2];
+        }
+      }
+      if (token) {
+        (window as any).__accessToken = token;
+      }
+    }
+
     if (token) {
       headers.set("Authorization", `Bearer ${token}`);
     }
 
     const config: RequestInit = {
+      credentials: "include",
       ...options,
       headers,
     };

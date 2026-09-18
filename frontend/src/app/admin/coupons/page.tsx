@@ -8,22 +8,23 @@ import {
   Ticket, 
   Plus, 
   Search, 
-  Filter, 
   ArrowUpDown, 
-  Edit2, 
   Trash2, 
   X, 
   TrendingUp, 
-  Users, 
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Sparkles
+  Calendar, 
+  CheckCircle, 
+  XCircle, 
+  RefreshCw,
+  Loader2,
+  Percent
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { useAdminCoupons } from "@/hooks/useAdmin";
+import { adminService, AdminCoupon } from "@/services/admin.service";
 
-// Zod Validation Schema
+// Form Schema
 const couponSchema = z.object({
   code: z.string()
     .min(3, "Code must be at least 3 characters")
@@ -31,429 +32,234 @@ const couponSchema = z.object({
     .regex(/^[A-Z0-9]+$/, "Code must contain only uppercase letters and numbers"),
   description: z.string().optional(),
   discountType: z.enum(["percentage", "fixed", "free_delivery"]),
-  discountValue: z.preprocess((val) => Number(val), z.number().min(0, "Value cannot be negative")),
-  maxDiscountCap: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(0).optional()),
-  minOrderValue: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().min(0).optional()),
+  discountValue: z.number().min(0, "Value cannot be negative"),
+  maxDiscountCap: z.number().optional(),
+  minOrderValue: z.number().optional(),
   validFrom: z.string().min(1, "Start date is required"),
   validUntil: z.string().min(1, "End date is required"),
-  usageLimitTotal: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().int().positive().optional()),
-  usageLimitPerUser: z.preprocess((val) => val === "" ? undefined : Number(val), z.number().int().positive().optional()),
-  firstOrderOnly: z.boolean().default(false),
-  active: z.boolean().default(true)
-}).refine(data => {
-  return new Date(data.validUntil) >= new Date(data.validFrom);
-}, {
-  message: "End date must be after start date",
-  path: ["validUntil"]
+  usageLimitTotal: z.number().optional(),
+  firstOrderOnly: z.boolean(),
+  active: z.boolean()
 });
 
 type CouponFormData = z.infer<typeof couponSchema>;
 
-interface Coupon {
-  id: string;
-  code: string;
-  description?: string;
-  discountType: "percentage" | "fixed" | "free_delivery";
-  discountValue: number;
-  maxDiscountCap?: number;
-  minOrderValue?: number;
-  validFrom: string;
-  validUntil: string;
-  usageCount: number;
-  usageLimitTotal?: number;
-  usageLimitPerUser?: number;
-  firstOrderOnly: boolean;
-  active: boolean;
-  revenueGenerated: number;
-}
-
-const initialCoupons: Coupon[] = [
-  {
-    id: "coup-1",
-    code: "FRESH20",
-    description: "20% off on all organic vegetables and greens",
-    discountType: "percentage",
-    discountValue: 20,
-    maxDiscountCap: 150,
-    minOrderValue: 499,
-    validFrom: "2026-06-01",
-    validUntil: "2026-12-31",
-    usageCount: 45,
-    usageLimitTotal: 100,
-    usageLimitPerUser: 1,
-    firstOrderOnly: false,
-    active: true,
-    revenueGenerated: 24500
-  },
-  {
-    id: "coup-2",
-    code: "FLAT50",
-    description: "Flat ₹50 off on order totals",
-    discountType: "fixed",
-    discountValue: 50,
-    minOrderValue: 299,
-    validFrom: "2026-06-15",
-    validUntil: "2026-08-30",
-    usageCount: 23,
-    usageLimitPerUser: 2,
-    firstOrderOnly: false,
-    active: true,
-    revenueGenerated: 12800
-  },
-  {
-    id: "coup-3",
-    code: "FREESHIP",
-    description: "Free home delivery on organic spices",
-    discountType: "free_delivery",
-    discountValue: 0,
-    minOrderValue: 199,
-    validFrom: "2026-01-01",
-    validUntil: "2026-06-30",
-    usageCount: 200,
-    usageLimitTotal: 200,
-    firstOrderOnly: false,
-    active: false,
-    revenueGenerated: 42000
-  }
-];
-
 export default function AdminCouponsPage() {
-  const [coupons, setCoupons] = useState<Coupon[]>(initialCoupons);
+  const { data: coupons = [], isLoading, isFetching, refetch } = useAdminCoupons();
+
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedType, setSelectedType] = useState("All");
-  
-  // Table sorting
-  const [sortKey, setSortKey] = useState<"code" | "discountValue" | "usageCount">("code");
-  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
-
-  // Modal / Form States
   const [modalOpen, setModalOpen] = useState(false);
-  const [editingCoupon, setEditingCoupon] = useState<Coupon | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // React Hook Form
-  const { register, handleSubmit, setValue, watch, reset, formState: { errors: rawErrors } } = useForm<any>({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<CouponFormData>({
     resolver: zodResolver(couponSchema),
     defaultValues: {
       code: "",
       description: "",
       discountType: "percentage",
-      discountValue: 0,
-      maxDiscountCap: undefined,
-      minOrderValue: undefined,
+      discountValue: 10,
+      minOrderValue: 499,
       validFrom: new Date().toISOString().split("T")[0],
       validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      usageLimitTotal: undefined,
-      usageLimitPerUser: 1,
       firstOrderOnly: false,
       active: true
     }
   });
 
-  const errors = rawErrors as any;
+  const filteredCoupons = useMemo(() => {
+    return coupons.filter((c) =>
+      c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (c.description && c.description.toLowerCase().includes(searchTerm.toLowerCase()))
+    );
+  }, [coupons, searchTerm]);
 
-  const watchDiscountType = watch("discountType");
-
-  // Statistics
-  const stats = useMemo(() => {
-    const active = coupons.filter(c => c.active).length;
-    const totalUses = coupons.reduce((sum, c) => sum + c.usageCount, 0);
-    const totalRevenue = coupons.reduce((sum, c) => sum + c.revenueGenerated, 0);
-    return { active, totalUses, totalRevenue };
-  }, [coupons]);
-
-  // Filtering & Sorting
-  const filteredAndSortedCoupons = useMemo(() => {
-    let result = coupons.filter(c => {
-      const matchesSearch = c.code.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                            (c.description || "").toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesType = selectedType === "All" || c.discountType === selectedType;
-      return matchesSearch && matchesType;
-    });
-
-    result.sort((a, b) => {
-      let aVal = a[sortKey];
-      let bVal = b[sortKey];
-
-      if (typeof aVal === "string") {
-        aVal = aVal.toLowerCase();
-        bVal = (bVal as string).toLowerCase();
-      }
-
-      if (aVal < bVal) return sortDirection === "asc" ? -1 : 1;
-      if (aVal > bVal) return sortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-
-    return result;
-  }, [coupons, searchTerm, selectedType, sortKey, sortDirection]);
-
-  const handleSort = (key: "code" | "discountValue" | "usageCount") => {
-    if (sortKey === key) {
-      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDirection("asc");
+  const handleCreateCoupon = async (data: CouponFormData) => {
+    setIsSubmitting(true);
+    try {
+      await adminService.createCoupon(data);
+      toast.success(`Coupon ${data.code} created in Neon DB!`);
+      reset();
+      setModalOpen(false);
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to create coupon.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleOpenAdd = () => {
-    setEditingCoupon(null);
-    reset({
-      code: "",
-      description: "",
-      discountType: "percentage",
-      discountValue: 0,
-      maxDiscountCap: undefined,
-      minOrderValue: undefined,
-      validFrom: new Date().toISOString().split("T")[0],
-      validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      usageLimitTotal: undefined,
-      usageLimitPerUser: 1,
-      firstOrderOnly: false,
-      active: true
-    });
-    setModalOpen(true);
-  };
-
-  const handleOpenEdit = (coupon: Coupon) => {
-    setEditingCoupon(coupon);
-    reset({
-      code: coupon.code,
-      description: coupon.description,
-      discountType: coupon.discountType,
-      discountValue: coupon.discountValue,
-      maxDiscountCap: coupon.maxDiscountCap,
-      minOrderValue: coupon.minOrderValue,
-      validFrom: coupon.validFrom,
-      validUntil: coupon.validUntil,
-      usageLimitTotal: coupon.usageLimitTotal,
-      usageLimitPerUser: coupon.usageLimitPerUser,
-      firstOrderOnly: coupon.firstOrderOnly,
-      active: coupon.active
-    });
-    setModalOpen(true);
-  };
-
-  const handleFormSubmit = (data: CouponFormData) => {
-    if (editingCoupon) {
-      // Edit
-      setCoupons(prev => prev.map(c => c.id === editingCoupon.id ? {
-        ...c,
-        ...data,
-        discountValue: data.discountType === "free_delivery" ? 0 : data.discountValue
-      } : c));
-      toast.success(`Coupon ${data.code} updated successfully!`);
-    } else {
-      // Add
-      const newCoupon: Coupon = {
-        ...data,
-        id: "coup-" + Math.floor(Math.random() * 1000),
-        usageCount: 0,
-        discountValue: data.discountType === "free_delivery" ? 0 : data.discountValue,
-        revenueGenerated: 0
-      };
-      setCoupons(prev => [...prev, newCoupon]);
-      toast.success(`Coupon ${data.code} created!`);
+  const handleToggleActive = async (id: string, code: string) => {
+    setTogglingId(id);
+    try {
+      await adminService.toggleCoupon(id);
+      toast.success(`Coupon ${code} status toggled.`);
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to toggle coupon.");
+    } finally {
+      setTogglingId(null);
     }
-    setModalOpen(false);
   };
 
-  const handleDelete = (id: string, code: string) => {
-    if (confirm(`Are you sure you want to delete coupon "${code}"?`)) {
-      setCoupons(prev => prev.filter(c => c.id !== id));
-      toast.success(`Coupon "${code}" deleted.`);
+  const handleDeleteCoupon = async (id: string, code: string) => {
+    if (!confirm(`Are you sure you want to delete coupon "${code}" from Neon DB?`)) return;
+    setDeletingId(id);
+    try {
+      await adminService.deleteCoupon(id);
+      toast.success(`Coupon ${code} deleted.`);
+      await refetch();
+    } catch (err: any) {
+      toast.error(err.message || "Failed to delete coupon.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
     <div className="space-y-8 font-sans pb-10">
       
-      {/* Header Block */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
-            Coupons & Offers
-          </h1>
-          <p className="text-xs font-semibold text-neutral-500">
-            Define promotional coupon structures and check customer response metrics.
+          <div className="flex items-center gap-2">
+            <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
+              Coupons Engine
+            </h1>
+            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
+              Live Neon DB ({coupons.length} coupons)
+            </span>
+          </div>
+          <p className="text-xs font-semibold text-neutral-500 mt-1">
+            Create and monitor discount vouchers and seasonal promotions.
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          onClick={handleOpenAdd}
-          className="text-xs font-bold w-full sm:w-auto justify-center"
-          leftIcon={<Plus className="w-4 h-4" />}
-        >
-          Create Coupon
-        </Button>
-      </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => refetch()}
+            disabled={isFetching}
+            className="text-xs font-bold border border-neutral-200 dark:border-neutral-750"
+            leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />}
+          >
+            Sync
+          </Button>
 
-      {/* Stats Blocks */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-        {/* Active Coupons */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-5 rounded-feature shadow-sm flex items-center gap-4 select-none">
-          <div className="p-3 bg-green-500/5 text-green-500 rounded-full border border-green-500/10">
-            <Ticket className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Active Coupons</span>
-            <span className="text-xl font-black font-heading text-neutral-905 dark:text-white mt-1 block">
-              {stats.active}
-            </span>
-          </div>
-        </div>
-
-        {/* Total Uses */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-5 rounded-feature shadow-sm flex items-center gap-4 select-none">
-          <div className="p-3 bg-amber-500/5 text-amber-500 rounded-full border border-amber-500/10">
-            <Users className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Redemptions</span>
-            <span className="text-xl font-black font-heading text-neutral-905 dark:text-white mt-1 block">
-              {stats.totalUses}
-            </span>
-          </div>
-        </div>
-
-        {/* Revenue */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-5 rounded-feature shadow-sm flex items-center gap-4 select-none">
-          <div className="p-3 bg-primary-500/5 text-primary-500 rounded-full border border-primary-500/10">
-            <TrendingUp className="w-6 h-6" />
-          </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-450 uppercase tracking-widest block">Coupon Revenue</span>
-            <span className="text-xl font-black font-heading text-primary-600 dark:text-primary-400 mt-1 block">
-              ₹{stats.totalRevenue.toLocaleString()}
-            </span>
-          </div>
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setModalOpen(true)}
+            className="text-xs font-bold w-full sm:w-auto justify-center"
+            leftIcon={<Plus className="w-4 h-4" />}
+          >
+            Create Coupon
+          </Button>
         </div>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-4 rounded-feature shadow-sm">
-        <div className="relative flex-1">
+      {/* Filter / Search Bar */}
+      <div className="flex justify-between items-center gap-4 bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 p-4 rounded-feature shadow-sm">
+        <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search code or description..."
-            className="w-full text-xs font-semibold pl-10 pr-4 py-2 bg-transparent border border-neutral-200 dark:border-neutral-700 rounded-card text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+            placeholder="Search coupon code..."
+            className="w-full text-xs font-semibold pl-10 pr-4 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
           />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <div className="relative w-full md:w-auto">
-            <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-450" />
-            <select
-              value={selectedType}
-              onChange={(e) => setSelectedType(e.target.value)}
-              className="w-full md:w-auto text-xs font-bold pl-10 pr-8 py-2 bg-white dark:bg-neutral-900 border rounded-card text-neutral-800 dark:text-white focus:outline-none cursor-pointer"
-            >
-              <option value="All">All Types</option>
-              <option value="percentage">Percentage</option>
-              <option value="fixed">Fixed Discount</option>
-              <option value="free_delivery">Free Delivery</option>
-            </select>
-          </div>
         </div>
       </div>
 
-      {/* Coupon Data List Grid */}
+      {/* Coupons Table */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
               <tr className="bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-150 dark:border-neutral-850 text-neutral-450 uppercase font-black tracking-wider">
-                <th className="p-4 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("code")}>
-                  Coupon Code <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                </th>
-                <th className="p-4">Type</th>
-                <th className="p-4 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("discountValue")}>
-                  Value <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                </th>
-                <th className="p-4 cursor-pointer hover:bg-neutral-100 dark:hover:bg-neutral-800" onClick={() => handleSort("usageCount")}>
-                  Redemptions <ArrowUpDown className="inline w-3 h-3 ml-0.5" />
-                </th>
-                <th className="p-4">Validity</th>
-                <th className="p-4">Status</th>
+                <th className="p-4">Coupon Code</th>
+                <th className="p-4">Discount</th>
+                <th className="p-4">Min Order</th>
+                <th className="p-4">Valid Window</th>
+                <th className="p-4">Usage Count</th>
+                <th className="p-4">Active</th>
                 <th className="p-4 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-50 dark:divide-neutral-850/60">
-              {filteredAndSortedCoupons.length > 0 ? (
-                filteredAndSortedCoupons.map(coupon => {
-                  const isExpired = new Date(coupon.validUntil) < new Date();
-                  
-                  return (
-                    <tr key={coupon.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/30">
-                      <td className="p-4 font-black text-neutral-905 dark:text-white">
-                        <span className="flex items-center gap-1.5 font-mono">
-                          <Ticket className="w-3.5 h-3.5 text-primary-500" />
-                          {coupon.code}
-                        </span>
-                        <span className="text-[10px] text-neutral-450 font-normal block mt-1 leading-normal max-w-xs">{coupon.description}</span>
-                      </td>
-
-                      <td className="p-4 capitalize font-semibold">
-                        {coupon.discountType.replace("_", " ")}
-                      </td>
-
-                      <td className="p-4 font-black">
-                        {coupon.discountType === "percentage" && `${coupon.discountValue}%`}
-                        {coupon.discountType === "fixed" && `₹${coupon.discountValue}`}
-                        {coupon.discountType === "free_delivery" && "₹0 (Free)"}
-                      </td>
-
-                      <td className="p-4 font-bold">
-                        {coupon.usageCount} {coupon.usageLimitTotal ? `/ ${coupon.usageLimitTotal}` : "/ Unlimited"}
-                      </td>
-
-                      <td className="p-4 font-semibold text-neutral-500">
-                        <span className="flex items-center gap-1 text-[10px]">
-                          <Calendar className="w-3.5 h-3.5" />
-                          {coupon.validFrom} to {coupon.validUntil}
-                        </span>
-                      </td>
-
-                      <td className="p-4">
-                        <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                          coupon.active && !isExpired
-                            ? "bg-success/10 text-success"
-                            : "bg-red-500/10 text-red-500"
-                        }`}>
-                          {coupon.active && !isExpired ? <CheckCircle className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                          {isExpired ? "Expired" : coupon.active ? "Active" : "Disabled"}
-                        </span>
-                      </td>
-
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-1.5">
-                          <button 
-                            onClick={() => handleOpenEdit(coupon)}
-                            className="p-1.5 rounded hover:bg-neutral-105 dark:hover:bg-neutral-800 text-neutral-500 hover:text-primary-500 cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                          </button>
-                          <button 
-                            onClick={() => handleDelete(coupon.id, coupon.code)}
-                            className="p-1.5 rounded hover:bg-neutral-105 dark:hover:bg-neutral-800 text-neutral-500 hover:text-red-500 cursor-pointer"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, idx) => (
+                  <tr key={idx} className="animate-pulse">
+                    <td className="p-4"><div className="h-4 w-24 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-16 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-12 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-32 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-4 w-12 bg-neutral-200 dark:bg-neutral-800 rounded" /></td>
+                    <td className="p-4"><div className="h-5 w-16 bg-neutral-200 dark:bg-neutral-800 rounded-full" /></td>
+                    <td className="p-4 text-right"><div className="h-6 w-12 bg-neutral-200 dark:bg-neutral-800 rounded ml-auto" /></td>
+                  </tr>
+                ))
+              ) : filteredCoupons.length > 0 ? (
+                filteredCoupons.map((c) => (
+                  <tr key={c.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-850/30">
+                    <td className="p-4">
+                      <span className="font-mono font-black text-sm text-primary-500 bg-primary-500/10 px-2.5 py-1 rounded-card border border-primary-500/20">
+                        {c.code}
+                      </span>
+                    </td>
+                    <td className="p-4 font-extrabold text-neutral-900 dark:text-white">
+                      {c.discountType === 'percentage' ? `${c.discountValue}% OFF` : `₹${c.discountValue} FLAT`}
+                    </td>
+                    <td className="p-4 text-neutral-600 dark:text-neutral-400 font-bold">
+                      ₹{c.minOrderValue || 0}
+                    </td>
+                    <td className="p-4 text-neutral-500 font-medium">
+                      {c.validFrom} to {c.validUntil}
+                    </td>
+                    <td className="p-4 font-bold text-neutral-900 dark:text-white">
+                      {c.usageCount} {c.usageLimitTotal ? `/ ${c.usageLimitTotal}` : 'used'}
+                    </td>
+                    <td className="p-4">
+                      <button
+                        onClick={() => handleToggleActive(c.id, c.code)}
+                        disabled={togglingId === c.id}
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider cursor-pointer border ${
+                          c.active ? 'bg-success/10 text-success border-success/20' : 'bg-neutral-200 dark:bg-neutral-800 text-neutral-500 border-neutral-300 dark:border-neutral-700'
+                        }`}
+                      >
+                        {togglingId === c.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : c.active ? (
+                          <CheckCircle className="w-3 h-3" />
+                        ) : (
+                          <XCircle className="w-3 h-3" />
+                        )}
+                        {c.active ? 'Active' : 'Disabled'}
+                      </button>
+                    </td>
+                    <td className="p-4 text-right">
+                      <button
+                        onClick={() => handleDeleteCoupon(c.id, c.code)}
+                        disabled={deletingId === c.id}
+                        className="p-1.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 hover:text-red-500 cursor-pointer disabled:opacity-50"
+                        title="Delete Coupon"
+                      >
+                        {deletingId === c.id ? (
+                          <Loader2 className="w-4 h-4 animate-spin text-red-500" />
+                        ) : (
+                          <Trash2 className="w-4 h-4" />
+                        )}
+                      </button>
+                    </td>
+                  </tr>
+                ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="p-10 text-center font-bold text-neutral-400">
-                    No offers or coupons matches your search parameters.
+                  <td colSpan={7} className="p-10 text-center font-bold text-neutral-500">
+                    No coupons found in Neon database.
                   </td>
                 </tr>
               )}
@@ -462,194 +268,141 @@ export default function AdminCouponsPage() {
         </div>
       </div>
 
-      {/* CREATE / EDIT DIALOG */}
+      {/* Create Coupon Modal */}
       {modalOpen && (
-        <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/45 backdrop-blur-[2px] cursor-pointer" onClick={() => setModalOpen(false)} />
-          
-          <div className="relative w-full max-w-lg bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature shadow-2xl p-6 space-y-4 z-10 max-h-[90vh] overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature max-w-md w-full p-6 shadow-2xl space-y-4">
             
-            <div className="flex items-center justify-between border-b border-neutral-50 dark:border-neutral-850 pb-3">
-              <h3 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-primary-500" />
-                {editingCoupon ? "Edit Coupon details" : "Create New Coupon"}
+            <div className="flex justify-between items-center border-b pb-3">
+              <h3 className="text-base font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                <Ticket className="w-4 h-4 text-primary-500" />
+                <span>Create Discount Coupon</span>
               </h3>
-              <button onClick={() => setModalOpen(false)} className="text-neutral-500 hover:text-primary-500">
+              <button onClick={() => setModalOpen(false)} className="p-1 text-neutral-400 hover:text-neutral-600 rounded">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit(handleFormSubmit)} className="space-y-4 text-left">
+            <form onSubmit={handleSubmit(handleCreateCoupon)} className="space-y-4">
               
-              {/* Code */}
               <div className="space-y-1">
                 <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
                   Coupon Code *
                 </label>
                 <input
                   type="text"
-                  {...register("code")}
-                  placeholder="FRESH20"
-                  className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white uppercase focus:outline-none focus:ring-1 focus:ring-primary-500"
+                  {...register('code')}
+                  placeholder="YATHU25"
+                  className="w-full text-xs font-mono font-bold uppercase px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
                 />
-                {errors.code && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.code.message}</p>}
-              </div>
-
-              {/* Description */}
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                  Description / Internal note
-                </label>
-                <textarea
-                  {...register("description")}
-                  placeholder="20% off on all fresh spices..."
-                  rows={2}
-                  className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                />
-              </div>
-
-              {/* Type & Value */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Discount Type *
-                  </label>
-                  <select
-                    {...register("discountType")}
-                    className="w-full text-xs font-bold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 text-neutral-805 dark:text-white focus:outline-none cursor-pointer"
-                  >
-                    <option value="percentage">Percentage Discount (%)</option>
-                    <option value="fixed">Fixed Amount Off (₹)</option>
-                    <option value="free_delivery">Free Delivery</option>
-                  </select>
-                </div>
-
-                {watchDiscountType !== "free_delivery" && (
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                      Value *
-                    </label>
-                    <input
-                      type="number"
-                      {...register("discountValue")}
-                      className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                    />
-                    {errors.discountValue && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.discountValue.message}</p>}
-                  </div>
+                {errors.code && (
+                  <span className="text-[10px] font-bold text-red-500 block">{errors.code.message}</span>
                 )}
               </div>
 
-              {/* Caps & Minimum Orders */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Max Discount Cap (₹)
+                    Discount Type
+                  </label>
+                  <select
+                    {...register('discountType')}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
+                  >
+                    <option value="percentage">Percentage (%)</option>
+                    <option value="fixed">Fixed Amount (₹)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Discount Value *
                   </label>
                   <input
                     type="number"
-                    {...register("maxDiscountCap")}
-                    placeholder="None"
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    {...register('discountValue', { valueAsNumber: true })}
+                    placeholder="10"
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none"
                   />
+                  {errors.discountValue && (
+                    <span className="text-[10px] font-bold text-red-500 block">{errors.discountValue.message}</span>
+                  )}
                 </div>
+              </div>
 
+              <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
                     Min Order Value (₹)
                   </label>
                   <input
                     type="number"
-                    {...register("minOrderValue")}
-                    placeholder="None"
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    {...register('minOrderValue', { valueAsNumber: true })}
+                    placeholder="499"
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none"
                   />
-                </div>
-              </div>
-
-              {/* Dates */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Valid From *
-                  </label>
-                  <input
-                    type="date"
-                    {...register("validFrom")}
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  />
-                  {errors.validFrom && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.validFrom.message}</p>}
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Valid Until *
-                  </label>
-                  <input
-                    type="date"
-                    {...register("validUntil")}
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                  />
-                  {errors.validUntil && <p className="text-[10px] font-bold text-red-500 mt-1">{errors.validUntil.message}</p>}
-                </div>
-              </div>
-
-              {/* Usage limits */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Total Usage Cap
+                    Max Discount Cap (₹)
                   </label>
                   <input
                     type="number"
-                    {...register("usageLimitTotal")}
-                    placeholder="Unlimited"
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    {...register('maxDiscountCap', { valueAsNumber: true })}
+                    placeholder="100"
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Valid From
+                  </label>
+                  <input
+                    type="date"
+                    {...register('validFrom')}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none"
                   />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                    Limit Per Customer
+                    Valid Until
                   </label>
                   <input
-                    type="number"
-                    {...register("usageLimitPerUser")}
-                    className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    type="date"
+                    {...register('validUntil')}
+                    className="w-full text-xs font-semibold px-3 py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none"
                   />
                 </div>
               </div>
 
-              {/* Toggles */}
-              <div className="flex items-center gap-6 pt-2">
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-750 dark:text-neutral-300">
-                  <input
-                    type="checkbox"
-                    {...register("firstOrderOnly")}
-                    className="w-4 h-4 rounded text-primary-500 border-neutral-300 focus:ring-primary-500"
-                  />
-                  <span>First Order Only</span>
-                </label>
-
-                <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-neutral-750 dark:text-neutral-300">
-                  <input
-                    type="checkbox"
-                    {...register("active")}
-                    className="w-4 h-4 rounded text-primary-500 border-neutral-300 focus:ring-primary-500"
-                  />
-                  <span>Enabled (Active)</span>
-                </label>
+              <div className="flex justify-end gap-2 pt-2 border-t">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setModalOpen(false)}
+                  className="text-xs font-bold"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  variant="primary"
+                  size="sm"
+                  isLoading={isSubmitting}
+                  className="text-xs font-bold"
+                >
+                  Save to Neon DB
+                </Button>
               </div>
-
-              {/* Submit */}
-              <Button
-                type="submit"
-                variant="primary"
-                className="w-full font-bold text-xs py-3 mt-4"
-              >
-                {editingCoupon ? "Save Changes" : "Publish Offer Coupon"}
-              </Button>
 
             </form>
+
           </div>
         </div>
       )}

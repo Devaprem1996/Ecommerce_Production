@@ -7,7 +7,7 @@ export interface JWTPayload {
   mobile: string;
   email: string | null;
   avatar: string | null;
-  role: 'customer' | 'admin';
+  role: 'customer' | 'admin' | 'CUSTOMER' | 'ADMIN';
   language: 'en' | 'ta';
   isVerified: boolean;
   createdAt: string;
@@ -96,7 +96,7 @@ export async function isAuthenticated(): Promise<boolean> {
 
 export async function isAdmin(): Promise<boolean> {
   const session = await getSession();
-  return session?.role === 'admin';
+  return session?.role?.toLowerCase() === 'admin';
 }
 
 // Throw error assertions for securing pages/endpoints
@@ -110,7 +110,7 @@ export async function requireAuth(): Promise<JWTPayload> {
 
 export async function requireAdmin(): Promise<JWTPayload> {
   const session = await getSession();
-  if (!session || session.role !== 'admin') {
+  if (!session || session.role?.toLowerCase() !== 'admin') {
     throw new Error('Forbidden');
   }
   return session;
