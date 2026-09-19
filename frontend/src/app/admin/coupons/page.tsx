@@ -79,7 +79,7 @@ export default function AdminCouponsPage() {
     setIsSubmitting(true);
     try {
       await adminService.createCoupon(data);
-      toast.success(`Coupon ${data.code} created in Neon DB!`);
+      toast.success(`Coupon ${data.code} created successfully!`);
       reset();
       setModalOpen(false);
       await refetch();
@@ -104,7 +104,7 @@ export default function AdminCouponsPage() {
   };
 
   const handleDeleteCoupon = async (id: string, code: string) => {
-    if (!confirm(`Are you sure you want to delete coupon "${code}" from Neon DB?`)) return;
+    if (!confirm(`Are you sure you want to delete coupon "${code}"?`)) return;
     setDeletingId(id);
     try {
       await adminService.deleteCoupon(id);
@@ -128,7 +128,7 @@ export default function AdminCouponsPage() {
               Coupons Engine
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
-              Live Neon DB ({coupons.length} coupons)
+              Active Coupons ({coupons.length})
             </span>
           </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
@@ -259,7 +259,7 @@ export default function AdminCouponsPage() {
               ) : (
                 <tr>
                   <td colSpan={7} className="p-10 text-center font-bold text-neutral-500">
-                    No coupons found in Neon database.
+                    No coupons found.
                   </td>
                 </tr>
               )}
@@ -397,7 +397,7 @@ export default function AdminCouponsPage() {
                   isLoading={isSubmitting}
                   className="text-xs font-bold"
                 >
-                  Save to Neon DB
+                  Save Coupon
                 </Button>
               </div>
 

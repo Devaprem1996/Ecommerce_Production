@@ -198,7 +198,7 @@ export default function NewProductPage() {
       };
 
       await adminService.createProduct(payload);
-      toast.success('Product registered in live Neon database!');
+      toast.success('Product published successfully!');
       router.push('/admin/products');
     } catch (err: any) {
       toast.error(err.message || 'Failed to create product.');
@@ -223,7 +223,7 @@ export default function NewProductPage() {
             Add Product
           </h1>
           <p className="text-xs font-semibold text-neutral-500">
-            Publish a new crop, honey batch, or fresh dairy variant directly to Neon PostgreSQL.
+            Add a new organic product or variant to your store catalog.
           </p>
         </div>
       </div>
@@ -614,7 +614,7 @@ export default function NewProductPage() {
             className="w-full py-3 text-xs font-bold"
             isLoading={loading}
           >
-            Save Product to Neon DB
+            Save Product
           </Button>
 
         </div>

@@ -166,11 +166,11 @@ export default function AdminSettingsPage() {
   };
 
   const handleTestEmail = () => {
-    toast.info("Sending test dispatch via configured SMTP mailers... Check logs!");
+    toast.info("Sending test email...");
   };
 
   const handleTestSms = () => {
-    toast.info("Triggering test SMS payload to configured SMS gateway credentials...");
+    toast.info("Sending test SMS message...");
   };
 
   const tabItems = [

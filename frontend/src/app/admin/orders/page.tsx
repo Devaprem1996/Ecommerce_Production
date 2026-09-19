@@ -76,7 +76,7 @@ export default function AdminOrdersPage() {
               Orders Management
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
-              Live Neon DB ({orders.length} orders)
+              All Orders ({orders.length})
             </span>
           </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
@@ -200,7 +200,7 @@ export default function AdminOrdersPage() {
               ) : (
                 <tr>
                   <td colSpan={7} className="p-10 text-center font-bold text-neutral-500">
-                    No orders found matching the filter in Neon DB.
+                    No orders found matching the filter.
                   </td>
                 </tr>
               )}
@@ -310,7 +310,7 @@ export default function AdminOrdersPage() {
             {/* Status Mutation Controls */}
             <div className="border-t pt-4 space-y-3">
               <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Change Order Status in Neon DB
+                Update Order Status
               </label>
               <div className="flex gap-2">
                 <select

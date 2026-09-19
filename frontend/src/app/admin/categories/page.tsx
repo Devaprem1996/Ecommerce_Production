@@ -120,23 +120,22 @@ export default function CategoryManagementPage() {
     setSubmitting(true);
     try {
       if (editingCategory) {
-        // Edit existing category in Neon DB
         await adminService.updateCategory(editingCategory.id, {
           nameEn: name.trim(),
           nameTa: (nameTamil || name).trim(),
           imageUrl: imageUrl.trim() || undefined,
           sortOrder: Number(sortOrder),
         });
-        toast.success(`Category "${name}" updated in database.`);
+        toast.success(`Category "${name}" updated successfully.`);
       } else {
-        // Create new category in Neon DB
+        // Create new category
         await adminService.createCategory({
           nameEn: name.trim(),
           nameTa: (nameTamil || name).trim(),
           imageUrl: imageUrl.trim() || undefined,
           sortOrder: Number(sortOrder),
         });
-        toast.success(`Category "${name}" created in database.`);
+        toast.success(`Category "${name}" created successfully.`);
       }
 
       await refetch();
@@ -149,7 +148,7 @@ export default function CategoryManagementPage() {
   };
 
   const handleDeleteCategory = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete category "${name}" from Neon DB? Only empty categories can be deleted.`)) {
+    if (!confirm(`Are you sure you want to delete category "${name}"? Only empty categories can be deleted.`)) {
       return;
     }
 
@@ -176,7 +175,7 @@ export default function CategoryManagementPage() {
               Category Hierarchy
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
-              Live Neon DB ({categories.length} categories)
+              All Categories ({categories.length})
             </span>
           </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
@@ -296,7 +295,7 @@ export default function CategoryManagementPage() {
             ))
           ) : (
             <div className="p-10 text-center font-bold text-neutral-500">
-              No categories found in Neon database.
+              No categories found.
             </div>
           )}
         </div>
@@ -454,7 +453,7 @@ export default function CategoryManagementPage() {
                   isLoading={submitting}
                   className="text-xs font-bold"
                 >
-                  {editingCategory ? 'Update in Neon DB' : 'Save to Neon DB'}
+                  {editingCategory ? 'Update Category' : 'Save Category'}
                 </Button>
               </div>
 

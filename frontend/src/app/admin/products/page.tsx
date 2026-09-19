@@ -119,9 +119,9 @@ export default function AdminProductsPage() {
         targetUrl = modalImageUrlInput.trim();
       }
 
-      // Update product in live Neon database
+      // Update product in catalog
       await adminService.updateProduct(imageModalProduct.id, { thumbnailUrl: targetUrl });
-      toast.success(`Photo for "${imageModalProduct.name}" updated on Cloudinary & saved to live Neon database!`);
+      toast.success(`Photo for "${imageModalProduct.name}" updated successfully!`);
       await refetch();
       handleCloseImageModal();
     } catch (err: any) {
@@ -261,13 +261,13 @@ export default function AdminProductsPage() {
   }, [filteredAndSortedProducts, safePage, pageSize]);
 
   const handleDeleteProduct = async (id: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete "${name}" from the live database? This action cannot be undone.`)) {
+    if (!confirm(`Are you sure you want to delete "${name}"? This action cannot be undone.`)) {
       return;
     }
     try {
       setIsDeleting(id);
       await adminService.deleteProduct(id);
-      toast.success(`"${name}" deleted from database.`);
+      toast.success(`"${name}" deleted successfully.`);
       await refetch();
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete product.');
@@ -287,11 +287,11 @@ export default function AdminProductsPage() {
               Product Catalog
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
-              Live Neon DB ({products.length} items)
+              Active ({products.length} items)
             </span>
           </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
-            Real-time catalog connected directly to Neon PostgreSQL with connected media.
+            Manage your store's products, inventory, pricing, and media.
           </p>
         </div>
 
@@ -577,7 +577,7 @@ export default function AdminProductsPage() {
                   ) : (
                     <tr>
                       <td colSpan={7} className="p-10 text-center font-bold text-neutral-500">
-                        No matching products found in Neon database.
+                        No products found matching your search.
                       </td>
                     </tr>
                   )}
@@ -676,7 +676,7 @@ export default function AdminProductsPage() {
               ))
             ) : (
               <div className="bg-white dark:bg-neutral-900 border rounded-feature p-8 text-center font-bold text-neutral-500">
-                No matching products found in database.
+                No products found matching your search.
               </div>
             )}
           </div>

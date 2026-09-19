@@ -35,7 +35,7 @@ export default function OrdersListPage() {
       setOrders(data);
     } catch (err: any) {
       console.error('Error fetching customer orders:', err);
-      toast.error('Failed to load orders from server.');
+      toast.error('Unable to load orders. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -126,7 +126,7 @@ export default function OrdersListPage() {
           My Orders
         </h2>
         <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-          Track, cancel, and review your order history stored in our live database.
+          Track, cancel, and review your order history.
         </p>
       </div>
 
@@ -153,7 +153,7 @@ export default function OrdersListPage() {
           <div className="text-center py-16 px-4 bg-neutral-50/50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature flex flex-col items-center justify-center space-y-3">
             <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
             <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-              Connecting to Neon PostgreSQL...
+              Loading your orders...
             </p>
           </div>
         ) : filteredOrders.length === 0 ? (

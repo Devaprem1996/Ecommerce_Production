@@ -437,12 +437,6 @@ function LoginForm() {
                   </>
                 )}
               </button>
-
-              {/* Demo credentials hint */}
-              <div className="bg-primary-50/50 dark:bg-primary-950/20 border border-primary-100/50 dark:border-primary-900/30 rounded-card p-3 text-[11px] text-neutral-600 dark:text-neutral-400">
-                <p className="font-bold text-primary-700 dark:text-primary-300">Live DB Test Credentials:</p>
-                <p className="mt-0.5 font-mono">customer@gmail.com &bull; customer123</p>
-              </div>
             </motion.form>
           ) : step === 1 ? (
             /* MOBILE OTP: STEP 1 (PHONE) */

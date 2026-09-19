@@ -84,10 +84,10 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       setUploadingImage(true);
       const url = await adminService.uploadImage(file, 'products');
       setImages(prev => [url, ...prev]);
-      toast.success('Image uploaded to Cloudinary! Click Save Changes to commit to database.');
+      toast.success('Image uploaded! Click Save Changes to apply.');
     } catch (err: any) {
       console.error('Upload error:', err);
-      toast.error(err.message || 'Failed to upload image to Cloudinary.');
+      toast.error(err.message || 'Failed to upload image.');
     } finally {
       setUploadingImage(false);
     }
@@ -183,7 +183,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       })
       .catch((err) => {
         console.error("Failed to load product:", err);
-        toast.error("Failed to load product from live database.");
+        toast.error("Failed to load product details.");
       })
       .finally(() => {
         if (isMounted) setFetching(false);
@@ -256,7 +256,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
       }
 
       await adminService.updateProduct(productId, payload);
-      toast.success('Product updated in live Neon database!');
+      toast.success('Product updated successfully!');
       router.push('/admin/products');
     } catch (err: any) {
       toast.error(err.message || 'Failed to update product.');
@@ -289,7 +289,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             Edit Product: {productData?.nameEn || 'Loading...'}
           </h1>
           <p className="text-xs font-semibold text-neutral-500">
-            Modify product details, category, and images in Neon PostgreSQL.
+            Update product details, pricing, and media.
           </p>
         </div>
       </div>

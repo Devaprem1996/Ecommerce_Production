@@ -112,7 +112,7 @@ export default function ProfilePage() {
 
       setSaving(false);
       setSavedSuccess(true);
-      toast.success('Profile preferences saved to database.');
+      toast.success('Profile preferences saved successfully.');
       setTimeout(() => setSavedSuccess(false), 2500);
     } catch (err: any) {
       setSaving(false);
@@ -159,7 +159,7 @@ export default function ProfilePage() {
       });
       try {
         await accountService.updateProfile({ avatarUrl: tempImage });
-        toast.success('Avatar updated and saved to database!');
+        toast.success('Profile picture updated successfully!');
       } catch {
         toast.info('Avatar preview updated.');
       }
@@ -189,7 +189,7 @@ export default function ProfilePage() {
     toast.info('Sending verification code...');
     setTimeout(() => {
       setOtpStep('otp');
-      toast.success(`[MOCK OTP] Verification code: ${code}`);
+      toast.success(`Verification code: ${code}`);
       console.log(`Generated OTP code: ${code}`);
     }, 800);
   };
@@ -201,7 +201,7 @@ export default function ProfilePage() {
     setGeneratedOtp(code);
     setCountdown(60);
     setOtpError(false);
-    toast.success(`[MOCK OTP] Verification code: ${code}`);
+    toast.success(`Verification code: ${code}`);
   };
 
   // OTP Verification: Final Verify and save mobile to DB
@@ -212,9 +212,9 @@ export default function ProfilePage() {
         updateProfile({
           mobile: newMobile
         });
-        toast.success('Mobile number updated in database!');
+        toast.success('Mobile number updated successfully!');
       } catch (err: any) {
-        toast.error(err?.message || 'Failed to update phone number in database.');
+        toast.error(err?.message || 'Failed to update mobile number.');
       }
       setShowOtpModal(false);
       setNewMobile('');

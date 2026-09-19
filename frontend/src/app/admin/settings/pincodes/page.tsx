@@ -113,10 +113,10 @@ export default function AdminPincodesPage() {
           shippingCharge: data.shippingCharge,
           freeDeliveryThreshold: data.freeDeliveryThreshold,
         });
-        toast.success(`Pincode ${editingPincode.pincode} updated in Neon DB.`);
+        toast.success(`Pincode ${editingPincode.pincode} updated successfully.`);
       } else {
         await adminService.createPincode(data);
-        toast.success(`Pincode ${data.pincode} added to Neon DB.`);
+        toast.success(`Pincode ${data.pincode} added successfully.`);
       }
 
       await refetch();
@@ -153,7 +153,7 @@ export default function AdminPincodesPage() {
               Pincodes & Serviceability
             </h1>
             <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-primary-500/10 text-primary-500 border border-primary-500/20">
-              Live Neon DB ({rawPincodes.length} areas)
+              Serviceable Areas ({rawPincodes.length})
             </span>
           </div>
           <p className="text-xs font-semibold text-neutral-500 mt-1">
@@ -302,7 +302,7 @@ export default function AdminPincodesPage() {
               ) : (
                 <tr>
                   <td colSpan={8} className="p-10 text-center font-bold text-neutral-500">
-                    No pincodes found matching the filter in Neon DB.
+                    No serviceable areas found matching the filter.
                   </td>
                 </tr>
               )}
@@ -439,7 +439,7 @@ export default function AdminPincodesPage() {
                   isLoading={isSubmitting}
                   className="text-xs font-bold"
                 >
-                  {editingPincode ? 'Update in Neon DB' : 'Save to Neon DB'}
+                  {editingPincode ? 'Update Pincode' : 'Save Pincode'}
                 </Button>
               </div>
 

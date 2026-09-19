@@ -16,7 +16,6 @@ import {
   TrendingUp, 
   Package, 
   Compass, 
-  Database, 
   Loader2 
 } from 'lucide-react';
 import { formatPrice } from '@/utils/formatPrice';
@@ -29,9 +28,9 @@ export default function AccountDashboard() {
 
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
-  const [reviewsCount, setReviewsCount] = useState(2); // Reviews count
+  const [addressCount, setAddressCount] = useState(0);
 
-  // Load live orders from database
+  // Load customer orders and saved addresses
   useEffect(() => {
     let isMounted = true;
     accountService.getOrders()
@@ -42,8 +41,18 @@ export default function AccountDashboard() {
         }
       })
       .catch((err) => {
-        console.error('Failed to load orders from database:', err);
+        console.error('Failed to load orders:', err);
         if (isMounted) setLoadingOrders(false);
+      });
+
+    accountService.getAddresses()
+      .then((data) => {
+        if (isMounted) {
+          setAddressCount(data.length);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load addresses:', err);
       });
 
     return () => {
@@ -103,12 +112,12 @@ export default function AccountDashboard() {
               Hello, {user?.name || user?.email?.split('@')[0] || 'Customer'}! 👋
             </h2>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              LIVE NEON DB
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              Verified Account
             </span>
           </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-            Welcome to your premium personal portal. Manage your orders, delivery addresses, and profile preferences in real-time.
+            Welcome to your personal portal. Manage your orders, delivery addresses, and profile preferences seamlessly.
           </p>
         </div>
         <Link href="/account/profile">
@@ -151,19 +160,20 @@ export default function AccountDashboard() {
           </div>
         </div>
 
-        {/* Database Sync Status */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow">
-          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/30 dark:border-emerald-900/20 rounded-full flex items-center justify-center text-emerald-500">
-            <Database className="w-6 h-6" />
+        {/* Saved Addresses Stats */}
+        <Link href="/account/addresses" className="block">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow cursor-pointer h-full">
+            <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/30 dark:border-emerald-900/20 rounded-full flex items-center justify-center text-emerald-500">
+              <MapPin className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Saved Addresses</span>
+              <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
+                {addressCount}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Database Sync</span>
-            <span className="text-sm font-black font-heading text-emerald-600 dark:text-emerald-400 block mt-0.5">
-              Neon PostgreSQL
-            </span>
-            <span className="text-[10px] text-neutral-400 font-medium">Real-time Connected</span>
-          </div>
-        </div>
+        </Link>
       </div>
 
       {/* Recent Orders Section */}
@@ -184,7 +194,7 @@ export default function AccountDashboard() {
           {loadingOrders ? (
             <div className="p-8 text-center flex flex-col items-center justify-center space-y-2">
               <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
-              <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Loading orders from database...</p>
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Loading your orders...</p>
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-10 px-4 space-y-3">

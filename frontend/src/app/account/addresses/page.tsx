@@ -36,7 +36,7 @@ export default function AddressesPage() {
       setAddresses(data);
     } catch (err: any) {
       console.error('Failed to load addresses:', err);
-      toast.error('Failed to load addresses from server.');
+      toast.error('Unable to load addresses. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -140,7 +140,7 @@ export default function AddressesPage() {
           state: state.trim(),
           postalCode: pincode.trim(),
         });
-        toast.success('Address updated successfully in database.');
+        toast.success('Address updated successfully.');
       } else {
         // Add mode
         await accountService.createAddress({
@@ -153,7 +153,7 @@ export default function AddressesPage() {
           country: 'India',
           isDefault: addresses.length === 0,
         });
-        toast.success('New address added to database.');
+        toast.success('New address added successfully.');
       }
 
       await loadAddresses();
@@ -174,7 +174,7 @@ export default function AddressesPage() {
             Saved Addresses
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-            Manage your delivery locations stored in the Neon database. (Max 10 addresses)
+            Manage your delivery locations for quick and easy checkout. (Max 10 addresses)
           </p>
         </div>
 
@@ -193,7 +193,7 @@ export default function AddressesPage() {
         <div className="text-center py-16 px-4 bg-neutral-50/50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature flex flex-col items-center justify-center space-y-3">
           <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
           <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
-            Loading saved addresses from database...
+            Loading saved addresses...
           </p>
         </div>
       ) : addresses.length === 0 ? (

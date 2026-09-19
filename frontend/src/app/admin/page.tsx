@@ -91,9 +91,9 @@ export default function AdminDashboardOverview() {
           <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 rounded-full flex items-center justify-center mx-auto">
             <AlertCircle className="w-6 h-6" />
           </div>
-          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Unable to reach Neon DB</h2>
+          <h2 className="text-lg font-bold text-neutral-900 dark:text-white">Unable to Load Dashboard</h2>
           <p className="text-xs text-neutral-500">
-            {error?.message || "Failed to establish a live connection to the backend database."}
+            {error?.message || "Failed to load dashboard metrics. Please check your connection and try again."}
           </p>
           <Button 
             variant="primary" 
@@ -102,7 +102,7 @@ export default function AdminDashboardOverview() {
             className="mt-2 text-xs font-bold"
             leftIcon={<RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />}
           >
-            Retry Connection
+            Retry
           </Button>
         </div>
       </div>
@@ -160,7 +160,7 @@ export default function AdminDashboardOverview() {
             </h1>
             <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              Live Neon DB
+              Live
             </span>
           </div>
           <div className="flex items-center gap-3 mt-1 text-xs text-neutral-500">
@@ -278,7 +278,7 @@ export default function AdminDashboardOverview() {
             <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-850 pb-3">
               <div>
                 <h3 className="font-bold text-sm text-neutral-900 dark:text-white uppercase tracking-wider">Recent Orders</h3>
-                <p className="text-[10px] font-semibold text-neutral-500">Live checkout receipts from Neon DB</p>
+                <p className="text-[10px] font-semibold text-neutral-500">Latest customer orders and transactions</p>
               </div>
               <Link href="/admin/orders" className="text-[10px] font-black text-primary-500 uppercase tracking-widest hover:underline flex items-center gap-1">
                 <span>View all</span>
