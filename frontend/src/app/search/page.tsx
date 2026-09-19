@@ -22,14 +22,15 @@ import {
   ChevronRight,
   HelpCircle
 } from "lucide-react";
-import { mockProducts, mockCategories } from "@/constants/mockData";
+import apiClient from "@/lib/apiClient";
+import { mapProductToFrontend, mapCategoryToFrontend } from "@/utils/apiMapper";
 import { ProductCard } from "@/components/ui/ProductCard";
 import { SkeletonLoader } from "@/components/ui/SkeletonLoader";
 import { Button } from "@/components/ui/Button";
 import { useCart } from "@/hooks/useCart";
 import { useWishlist } from "@/hooks/useWishlist";
 import { toast } from "@/components/ui/Toast";
-import { ProductType } from "@/types";
+import { ProductType, CategoryType } from "@/types";
 import { slugify } from "@/utils/slugify";
 
 // Static mapping of spelling typos to correct queries
@@ -66,6 +67,8 @@ function SearchContent() {
   }, [queryParam]);
 
   // Filtering & Sorting States
+  const [categories, setCategories] = useState<CategoryType[]>([]);
+  const [dbProducts, setDbProducts] = useState<ProductType[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(1000);
@@ -81,13 +84,50 @@ function SearchContent() {
   const [isFilterLoading, setIsFilterLoading] = useState<boolean>(false);
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState<boolean>(false);
 
-  // Simulate initial loading
+  // 1. Fetch live categories from database on mount
   useEffect(() => {
+    apiClient.get('/api/v1/cms/categories')
+      .then((res) => {
+        if (res?.data?.categories && Array.isArray(res.data.categories)) {
+          setCategories(res.data.categories.map(mapCategoryToFrontend));
+        }
+      })
+      .catch((err) => console.error("Failed to load categories:", err));
+  }, []);
+
+  // 2. Fetch live products from database when search query changes
+  useEffect(() => {
+    let isMounted = true;
     setIsPageLoading(true);
-    const timer = setTimeout(() => {
-      setIsPageLoading(false);
-    }, 600);
-    return () => clearTimeout(timer);
+
+    const queryParams: Record<string, string> = {
+      limit: '100',
+    };
+    if (queryParam.trim()) {
+      queryParams.search = queryParam.trim();
+    }
+
+    apiClient.get('/api/v1/cms/products', { params: queryParams })
+      .then((res) => {
+        if (isMounted) {
+          if (res?.data?.products && Array.isArray(res.data.products)) {
+            setDbProducts(res.data.products.map(mapProductToFrontend));
+          } else {
+            setDbProducts([]);
+          }
+        }
+      })
+      .catch((err) => {
+        console.error("Failed to fetch products:", err);
+        if (isMounted) setDbProducts([]);
+      })
+      .finally(() => {
+        if (isMounted) setIsPageLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [queryParam]);
 
   // Handle Search submit
@@ -157,17 +197,20 @@ function SearchContent() {
   // Basic Filtered Results
   const filteredProducts = useMemo(() => {
     const cleanQuery = queryParam.toLowerCase().trim();
-    if (!cleanQuery) return [];
+    let result = [...dbProducts];
 
-    let result = mockProducts.filter((product) => {
-      const matchName = product.name.toLowerCase().includes(cleanQuery);
-      const matchNameTamil = product.nameTamil ? product.nameTamil.toLowerCase().includes(cleanQuery) : false;
-      const matchCat = product.category.toLowerCase().includes(cleanQuery);
-      const matchDesc = product.description.toLowerCase().includes(cleanQuery);
-      const matchDescTamil = product.descriptionTamil ? product.descriptionTamil.toLowerCase().includes(cleanQuery) : false;
+    // Multilingual search across English and Tamil names, categories, descriptions
+    if (cleanQuery) {
+      result = result.filter((product) => {
+        const matchName = product.name?.toLowerCase().includes(cleanQuery);
+        const matchNameTamil = product.nameTamil ? product.nameTamil.toLowerCase().includes(cleanQuery) : false;
+        const matchCat = product.category?.toLowerCase().includes(cleanQuery);
+        const matchDesc = product.description ? product.description.toLowerCase().includes(cleanQuery) : false;
+        const matchDescTamil = product.descriptionTamil ? product.descriptionTamil.toLowerCase().includes(cleanQuery) : false;
 
-      return matchName || matchNameTamil || matchCat || matchDesc || matchDescTamil;
-    });
+        return matchName || matchNameTamil || matchCat || matchDesc || matchDescTamil;
+      });
+    }
 
     // Category Filter
     if (selectedCategories.length > 0) {
@@ -195,18 +238,18 @@ function SearchContent() {
     } else if (sortBy === "rating") {
       result.sort((a, b) => b.rating - a.rating);
     } else if (sortBy === "newest") {
-      result.sort((a, b) => b.id.localeCompare(a.id));
+      result.sort((a, b) => (b.id || '').localeCompare(a.id || ''));
     }
 
     return result;
-  }, [queryParam, selectedCategories, minPrice, maxPrice, selectedRating, inStockOnly, sortBy]);
+  }, [dbProducts, queryParam, selectedCategories, minPrice, maxPrice, selectedRating, inStockOnly, sortBy]);
 
   // Recommendations for Empty State (Popular items)
   const popularRecommendations = useMemo(() => {
-    return [...mockProducts]
+    return [...dbProducts]
       .sort((a, b) => b.rating - a.rating)
       .slice(0, 4);
-  }, []);
+  }, [dbProducts]);
 
   const paginatedProducts = useMemo(() => {
     return filteredProducts.slice(0, visibleCount);
@@ -222,11 +265,26 @@ function SearchContent() {
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = {};
-    mockProducts.forEach((product) => {
-      counts[product.category] = (counts[product.category] || 0) + 1;
+    dbProducts.forEach((product) => {
+      if (product.category) {
+        counts[product.category] = (counts[product.category] || 0) + 1;
+      }
     });
     return counts;
-  }, []);
+  }, [dbProducts]);
+
+  const displayCategories = useMemo(() => {
+    if (categories.length > 0) return categories;
+    const uniqueCatNames = Array.from(new Set(dbProducts.map((p) => p.category).filter(Boolean)));
+    return uniqueCatNames.map((name, i) => ({
+      id: `cat-${i}`,
+      name,
+      nameTamil: undefined,
+      slug: slugify(name),
+      image: '',
+      itemCount: categoryCounts[name] || 0,
+    }));
+  }, [categories, dbProducts, categoryCounts]);
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-16 transition-colors duration-normal">
@@ -256,9 +314,11 @@ function SearchContent() {
               )}
             </h1>
 
-            {queryParam && !isPageLoading && (
+            {!isPageLoading && (
               <p className="text-xs sm:text-sm font-semibold text-neutral-500 mt-1">
-                {t("search_page.showing_results", "Showing {{count}} results", { count: filteredProducts.length })}
+                {queryParam
+                  ? t("search_page.showing_results", "Showing {{count}} results", { count: filteredProducts.length })
+                  : `Showing all ${filteredProducts.length} organic products in store`}
               </p>
             )}
 
@@ -402,7 +462,7 @@ function SearchContent() {
                   {t("shop.category", "Categories")}
                 </h4>
                 <div className="flex flex-col gap-2.5">
-                  {mockCategories.map((cat) => {
+                  {displayCategories.map((cat) => {
                     const displayName = currentLang === "ta" && cat.nameTamil ? cat.nameTamil : cat.name;
                     const isChecked = selectedCategories.includes(cat.name);
                     return (
@@ -769,7 +829,7 @@ function SearchContent() {
                     {t("shop.category", "Categories")}
                   </h4>
                   <div className="flex flex-wrap gap-2">
-                    {mockCategories.map((cat) => {
+                    {displayCategories.map((cat) => {
                       const displayName = currentLang === "ta" && cat.nameTamil ? cat.nameTamil : cat.name;
                       const isChecked = selectedCategories.includes(cat.name);
                       return (

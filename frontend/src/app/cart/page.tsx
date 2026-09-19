@@ -21,7 +21,7 @@ import {
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/Button';
-import { OTPModal } from '@/components/ui/OTPModal';
+import { AuthCheckoutModal } from '@/components/ui/AuthCheckoutModal';
 import { toast } from '@/components/ui/Toast';
 
 export default function CartPage() {
@@ -425,8 +425,8 @@ export default function CartPage() {
 
       </div>
 
-      {/* OTP Login Modal Portal */}
-      <OTPModal
+      {/* Checkout Authentication Modal Portal */}
+      <AuthCheckoutModal
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
         onSuccess={handleLoginSuccess}
