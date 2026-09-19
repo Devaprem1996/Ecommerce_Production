@@ -28,7 +28,11 @@ class ApiClient {
     // Set authorization access token if available in memory, localStorage, or cookies
     let token = typeof window !== "undefined" ? (window as any).__accessToken : null;
     if (!token && typeof window !== "undefined") {
-      token = localStorage.getItem("admin_access_token") || localStorage.getItem("access_token");
+      const isAdminRoute = path.startsWith("/admin");
+      token = isAdminRoute
+        ? localStorage.getItem("admin_access_token") || localStorage.getItem("access_token")
+        : localStorage.getItem("access_token") || localStorage.getItem("admin_access_token");
+
       if (!token) {
         const match = document.cookie.match(new RegExp('(^| )access_token=([^;]+)'));
         if (match) {
@@ -79,6 +83,12 @@ class ApiClient {
       }
 
       if (!response.ok) {
+        // Attach numeric status codes to rejected object
+        if (typeof json === 'object' && json !== null) {
+          json.status = response.status;
+          json.statusCode = response.status;
+        }
+
         // Handle unauthorized token refresh triggers if needed
         if (response.status === 401 && path !== "/auth/refresh") {
           // Future expansion: Trigger access token refresh flows

@@ -50,6 +50,7 @@ class AuthService {
     static async loginUser(email, passwordHash) {
         const user = await db_js_1.default.user.findUnique({
             where: { email },
+            include: { profile: true },
         });
         if (!user || !user.isActive) {
             throw api_error_js_1.ApiError.unauthorized("Invalid email or password.");
@@ -144,10 +145,10 @@ class AuthService {
      */
     static generateTokens(payload) {
         const accessToken = jsonwebtoken_1.default.sign(payload, process.env.JWT_SECRET, {
-            expiresIn: "15m",
+            expiresIn: "7d",
         });
         const refreshToken = jsonwebtoken_1.default.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
-            expiresIn: "7d",
+            expiresIn: "30d",
         });
         return { accessToken, refreshToken };
     }

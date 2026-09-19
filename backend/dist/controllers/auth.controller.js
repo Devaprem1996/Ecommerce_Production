@@ -56,12 +56,18 @@ class AuthController {
             });
             // Write refresh token into secure httpOnly cookie
             res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
+            const profileName = user.profile
+                ? `${user.profile.firstName || ''} ${user.profile.lastName || ''}`.trim()
+                : user.email.split('@')[0];
             return res.status(200).json({
                 success: true,
                 message: "Logged in successfully.",
                 data: {
                     accessToken,
-                    user,
+                    user: {
+                        ...user,
+                        name: profileName || user.email,
+                    },
                 },
                 timestamp: new Date().toISOString(),
                 requestId: req.headers["x-request-id"],

@@ -106,7 +106,7 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                     </span>
                   </Link>
                 ) : (
-                  <Link href="/login" onClick={onClose} className="flex flex-col text-left focus:outline-none">
+                  <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none">
                     <span className="text-sm text-primary-200 leading-tight font-medium">
                       {t('nav.welcome_guest', 'Welcome Guest')}
                     </span>

@@ -40,29 +40,56 @@ export const useAuthStore = create<AuthState>()(
       role: "guest",
       token: null,
       login: (user, token) => {
-        // Expose token in-memory or on window for standard interceptors
         if (typeof window !== "undefined") {
           (window as any).__accessToken = token;
+          try {
+            localStorage.setItem("access_token", token);
+            document.cookie = `access_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          } catch (e) {
+            console.error("Failed to persist token to storage:", e);
+          }
         }
-        const normalizedRole = (user.role.toLowerCase() === 'admin' ? 'admin' : 'customer') as 'customer' | 'admin';
+        const roleStr = user?.role || "customer";
+        const normalizedRole = (roleStr.toLowerCase() === "admin" ? "admin" : "customer") as "customer" | "admin";
         set({ user, isLoggedIn: true, isAuthenticated: true, role: normalizedRole, token, isLoading: false });
       },
       setAuth: (user, token) => {
         if (typeof window !== "undefined") {
           (window as any).__accessToken = token;
+          try {
+            localStorage.setItem("access_token", token);
+            document.cookie = `access_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          } catch (e) {
+            console.error("Failed to persist token to storage:", e);
+          }
         }
-        const normalizedRole = (user.role.toLowerCase() === 'admin' ? 'admin' : 'customer') as 'customer' | 'admin';
+        const roleStr = user?.role || "customer";
+        const normalizedRole = (roleStr.toLowerCase() === "admin" ? "admin" : "customer") as "customer" | "admin";
         set({ user, isLoggedIn: true, isAuthenticated: true, role: normalizedRole, token, isLoading: false });
       },
       logout: () => {
         if (typeof window !== "undefined") {
           delete (window as any).__accessToken;
+          try {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("admin_access_token");
+            document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+          } catch (e) {
+            console.error("Failed to clear storage:", e);
+          }
         }
         set({ user: null, isLoggedIn: false, isAuthenticated: false, role: "guest", token: null, isLoading: false });
       },
       clearAuth: () => {
         if (typeof window !== "undefined") {
           delete (window as any).__accessToken;
+          try {
+            localStorage.removeItem("access_token");
+            localStorage.removeItem("admin_access_token");
+            document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+          } catch (e) {
+            console.error("Failed to clear storage:", e);
+          }
         }
         set({ user: null, isLoggedIn: false, isAuthenticated: false, role: "guest", token: null, isLoading: false });
       },
