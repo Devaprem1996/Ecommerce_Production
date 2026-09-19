@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { ProductType } from '@/types';
 import { accountService } from '@/services/account.service';
+import { useAuthStore } from '@/store/auth-store';
 
 interface WishlistState {
   items: ProductType[];
@@ -28,10 +29,14 @@ export const useWishlist = create<WishlistState>()(
         set({ items: nextItems });
 
         // If user is authenticated, sync mutation with live Neon PostgreSQL database
-        if (
+        const isAuth =
           typeof window !== 'undefined' &&
-          (localStorage.getItem('access_token') || document.cookie.includes('access_token='))
-        ) {
+          (Boolean(localStorage.getItem('access_token')) ||
+           Boolean((window as any).__accessToken) ||
+           document.cookie.includes('access_token=') ||
+           useAuthStore.getState().isLoggedIn);
+
+        if (isAuth) {
           accountService.toggleWishlist(product.id).catch((err) => {
             console.error('Failed to sync wishlist change with database:', err);
           });
@@ -39,10 +44,14 @@ export const useWishlist = create<WishlistState>()(
       },
       hasItem: (productId) => get().items.some((item) => item.id === productId),
       syncWithDb: async () => {
-        if (
-          typeof window === 'undefined' ||
-          (!localStorage.getItem('access_token') && !document.cookie.includes('access_token='))
-        ) {
+        const isAuth =
+          typeof window !== 'undefined' &&
+          (Boolean(localStorage.getItem('access_token')) ||
+           Boolean((window as any).__accessToken) ||
+           document.cookie.includes('access_token=') ||
+           useAuthStore.getState().isLoggedIn);
+
+        if (!isAuth) {
           return;
         }
 

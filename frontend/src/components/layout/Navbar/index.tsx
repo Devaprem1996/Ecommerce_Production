@@ -29,6 +29,12 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const wishlistCount = useWishlist((state) => state.items.length);
   const { isLoggedIn } = useAuthStore();
 
+  // Synchronize wishlist from live database when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      useWishlist.getState().syncWithDb();
+    }
+  }, [isLoggedIn]);
 
   // Monitor scroll height
   useEffect(() => {

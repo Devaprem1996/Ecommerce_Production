@@ -13,22 +13,48 @@ export interface ApiResponse<T = any> {
   errors?: any[];
 }
 
+export interface RequestOptions extends RequestInit {
+  params?: Record<string, any>;
+}
+
 class ApiClient {
   private async request<T = any>(
     path: string,
-    options: RequestInit = {}
+    options: RequestOptions = {}
   ): Promise<ApiResponse<T>> {
-    const url = `${API_BASE_URL}${path}`;
-    const headers = new Headers(options.headers);
+    // Normalize path to prevent duplicate /api/v1 prefix
+    let normalizedPath = path.startsWith("/") ? path : `/${path}`;
+    if (normalizedPath.startsWith("/api/v1/")) {
+      normalizedPath = normalizedPath.replace(/^\/api\/v1/, "");
+    }
 
-    if (!headers.has("Content-Type") && !(options.body instanceof FormData)) {
+    // Append query params if provided
+    let queryString = "";
+    if (options.params && typeof options.params === "object") {
+      const searchParams = new URLSearchParams();
+      Object.entries(options.params).forEach(([key, val]) => {
+        if (val !== undefined && val !== null && val !== "") {
+          searchParams.append(key, String(val));
+        }
+      });
+      const qs = searchParams.toString();
+      if (qs) {
+        queryString = normalizedPath.includes("?") ? `&${qs}` : `?${qs}`;
+      }
+    }
+
+    const url = `${API_BASE_URL}${normalizedPath}${queryString}`;
+    const { params, ...fetchOptions } = options;
+    const headers = new Headers(fetchOptions.headers);
+
+    if (!headers.has("Content-Type") && !(fetchOptions.body instanceof FormData)) {
       headers.set("Content-Type", "application/json");
     }
 
     // Set authorization access token if available in memory, localStorage, or cookies
     let token = typeof window !== "undefined" ? (window as any).__accessToken : null;
     if (!token && typeof window !== "undefined") {
-      const isAdminRoute = path.startsWith("/admin");
+      const isAdminRoute = normalizedPath.startsWith("/admin");
       token = isAdminRoute
         ? localStorage.getItem("admin_access_token") || localStorage.getItem("access_token")
         : localStorage.getItem("access_token") || localStorage.getItem("admin_access_token");
@@ -50,7 +76,7 @@ class ApiClient {
 
     const config: RequestInit = {
       credentials: "include",
-      ...options,
+      ...fetchOptions,
       headers,
     };
 
@@ -108,11 +134,11 @@ class ApiClient {
     }
   }
 
-  public get<T = any>(path: string, options?: RequestInit) {
+  public get<T = any>(path: string, options?: RequestOptions) {
     return this.request<T>(path, { ...options, method: "GET" });
   }
 
-  public post<T = any>(path: string, body?: any, options?: RequestInit) {
+  public post<T = any>(path: string, body?: any, options?: RequestOptions) {
     return this.request<T>(path, {
       ...options,
       method: "POST",
@@ -120,7 +146,7 @@ class ApiClient {
     });
   }
 
-  public put<T = any>(path: string, body?: any, options?: RequestInit) {
+  public put<T = any>(path: string, body?: any, options?: RequestOptions) {
     return this.request<T>(path, {
       ...options,
       method: "PUT",
@@ -128,7 +154,7 @@ class ApiClient {
     });
   }
 
-  public patch<T = any>(path: string, body?: any, options?: RequestInit) {
+  public patch<T = any>(path: string, body?: any, options?: RequestOptions) {
     return this.request<T>(path, {
       ...options,
       method: "PATCH",
@@ -136,7 +162,7 @@ class ApiClient {
     });
   }
 
-  public delete<T = any>(path: string, options?: RequestInit) {
+  public delete<T = any>(path: string, options?: RequestOptions) {
     return this.request<T>(path, { ...options, method: "DELETE" });
   }
 }

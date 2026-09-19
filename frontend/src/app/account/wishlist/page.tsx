@@ -19,13 +19,14 @@ import { toast } from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function WishlistPage() {
-  const { items, toggleItem } = useWishlist();
+  const { items, toggleItem, syncWithDb, isLoading } = useWishlist();
   const addItem = useCartStore((state) => state.addItem);
   const openMiniCart = useCartStore((state) => state.openMiniCart);
+  const [initialLoading, setInitialLoading] = React.useState(true);
 
   React.useEffect(() => {
-    useWishlist.getState().syncWithDb();
-  }, []);
+    syncWithDb().finally(() => setInitialLoading(false));
+  }, [syncWithDb]);
 
   // Action: Move to Cart
   const handleMoveToCart = (product: any, e: React.MouseEvent) => {
@@ -59,7 +60,17 @@ export default function WishlistPage() {
       </div>
 
       {/* Product Grid */}
-      {items.length === 0 ? (
+      {initialLoading || (isLoading && items.length === 0) ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+          {[1, 2, 3].map((n) => (
+            <div key={n} className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-4 animate-pulse space-y-3">
+              <div className="w-full aspect-square bg-neutral-200 dark:bg-neutral-800 rounded-card" />
+              <div className="w-2/3 h-4 bg-neutral-200 dark:bg-neutral-800 rounded" />
+              <div className="w-1/3 h-3 bg-neutral-200 dark:bg-neutral-800 rounded" />
+            </div>
+          ))}
+        </div>
+      ) : items.length === 0 ? (
         /* Empty State */
         <div className="text-center py-16 px-4 bg-neutral-50/50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature space-y-4 select-none">
           <div className="w-14 h-14 bg-neutral-200/50 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-450 mx-auto">

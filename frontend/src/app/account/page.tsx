@@ -29,8 +29,10 @@ export default function AccountDashboard() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const [addressCount, setAddressCount] = useState(0);
+  const [wishlistCount, setWishlistCount] = useState<number>(0);
+  const [loadingWishlist, setLoadingWishlist] = useState(true);
 
-  // Load customer orders and saved addresses
+  // Load customer orders, saved addresses, and wishlist from live database
   useEffect(() => {
     let isMounted = true;
     accountService.getOrders()
@@ -55,8 +57,25 @@ export default function AccountDashboard() {
         console.error('Failed to load addresses:', err);
       });
 
-    // Synchronize customer wishlist from live database
-    useWishlist.getState().syncWithDb();
+    accountService.getWishlist()
+      .then((items) => {
+        if (isMounted) {
+          setWishlistCount(Array.isArray(items) ? items.length : 0);
+          setLoadingWishlist(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load wishlist:', err);
+        if (isMounted) setLoadingWishlist(false);
+      });
+
+    // Synchronize customer wishlist Zustand store from live database
+    useWishlist.getState().syncWithDb().then(() => {
+      if (isMounted) {
+        setWishlistCount(useWishlist.getState().items.length);
+        setLoadingWishlist(false);
+      }
+    });
 
     return () => {
       isMounted = false;
@@ -134,34 +153,42 @@ export default function AccountDashboard() {
       {/* 3 Stat Cards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-5 select-none">
         {/* Orders Stats */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow">
-          <div className="w-12 h-12 bg-primary-50 dark:bg-primary-950/20 border border-primary-100/30 dark:border-primary-900/20 rounded-full flex items-center justify-center text-primary-500">
-            <ShoppingBag className="w-6 h-6" />
+        <Link href="/account/orders" className="block">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow cursor-pointer h-full">
+            <div className="w-12 h-12 bg-primary-50 dark:bg-primary-950/20 border border-primary-100/30 dark:border-primary-900/20 rounded-full flex items-center justify-center text-primary-500">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Total Orders</span>
+              <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
+                {loadingOrders ? (
+                  <div className="w-8 h-6 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
+                ) : (
+                  orders.length
+                )}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Total Orders</span>
-            <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
-              {loadingOrders ? (
-                <div className="w-8 h-6 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
-              ) : (
-                orders.length
-              )}
-            </span>
-          </div>
-        </div>
+        </Link>
 
         {/* Wishlist Stats */}
-        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow">
-          <div className="w-12 h-12 bg-red-50 dark:bg-red-950/20 border border-red-100/30 dark:border-red-900/20 rounded-full flex items-center justify-center text-red-500">
-            <Heart className="w-6 h-6" />
+        <Link href="/account/wishlist" className="block">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow cursor-pointer h-full">
+            <div className="w-12 h-12 bg-red-50 dark:bg-red-950/20 border border-red-100/30 dark:border-red-900/20 rounded-full flex items-center justify-center text-red-500">
+              <Heart className="w-6 h-6" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Wishlist Items</span>
+              <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
+                {loadingWishlist ? (
+                  <div className="w-8 h-6 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
+                ) : (
+                  Math.max(wishlistCount, wishlistItems.length)
+                )}
+              </span>
+            </div>
           </div>
-          <div>
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Wishlist Items</span>
-            <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
-              {wishlistItems.length}
-            </span>
-          </div>
-        </div>
+        </Link>
 
         {/* Saved Addresses Stats */}
         <Link href="/account/addresses" className="block">
