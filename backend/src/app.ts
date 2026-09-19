@@ -21,15 +21,27 @@ app.set("trust proxy", 1);
 app.use(helmet());
 
 // Cross-Origin Resource Sharing
-const whitelist = process.env.FRONTEND_URL ? [process.env.FRONTEND_URL] : ["http://localhost:3000"];
+const explicitWhitelist = [
+  process.env.FRONTEND_URL,
+  "https://yathuiyarkaiyagam.vercel.app",
+  "https://yathuarokiyagam.vercel.app",
+  "http://localhost:3000",
+  "http://localhost:3001",
+].filter(Boolean) as string[];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || whitelist.indexOf(origin) !== -1) {
-        callback(null, true);
-      } else {
-        callback(new Error("Blocked by CORS policy."));
+      if (!origin) {
+        return callback(null, true);
       }
+      if (
+        explicitWhitelist.includes(origin) ||
+        /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error(`Blocked by CORS policy: ${origin}`));
     },
     credentials: true,
   })

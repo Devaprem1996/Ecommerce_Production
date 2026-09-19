@@ -1,4 +1,8 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/api/v1";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
+    ? "https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1"
+    : "http://localhost:8080/api/v1");
 
 export interface ApiResponse<T = any> {
   success: boolean;
@@ -59,7 +63,20 @@ class ApiClient {
         };
       }
 
-      const json = await response.json();
+      const text = await response.text();
+      let json: any;
+      try {
+        json = text ? JSON.parse(text) : {};
+      } catch {
+        // Response is HTML or non-JSON (e.g. 404/502/503 from reverse proxy or server)
+        const errorMessage = response.ok
+          ? "Invalid response from server."
+          : `Server returned HTTP ${response.status}: ${response.statusText || 'Service Error'}`;
+        json = {
+          success: false,
+          message: errorMessage,
+        };
+      }
 
       if (!response.ok) {
         // Handle unauthorized token refresh triggers if needed

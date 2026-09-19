@@ -27,21 +27,38 @@ export async function GET(request: NextRequest) {
       token = signToken(fallbackAdmin, secret, 15);
     }
 
-    // 3. Query Express backend on port 8080
-    const backendRes = await fetch("http://localhost:8080/api/v1/admin/dashboard", {
+    // 3. Query Express backend (supports Fly.io in prod and localhost:8080 in local dev)
+    const backendApiUrl =
+      process.env.NEXT_PUBLIC_API_URL ||
+      (process.env.NODE_ENV === "production"
+        ? "https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1"
+        : "http://localhost:8080/api/v1");
+
+    const backendRes = await fetch(`${backendApiUrl}/admin/dashboard`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
       cache: "no-store",
     });
 
-    const data = await backendRes.json();
+    const text = await backendRes.text();
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      data = {
+        success: false,
+        message: `Backend returned non-JSON response (${backendRes.status}).`,
+        raw: text.slice(0, 300),
+      };
+    }
+
     return NextResponse.json(data, { status: backendRes.status });
   } catch (err: any) {
     return NextResponse.json(
       {
         success: false,
-        message: err.message || "Failed to communicate with Express backend.",
+        message: err.message || "Failed to communicate with backend service.",
       },
       { status: 500 }
     );
