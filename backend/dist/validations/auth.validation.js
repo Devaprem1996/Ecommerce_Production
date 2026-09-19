@@ -7,7 +7,7 @@ exports.registerSchema = zod_1.z.object({
         email: zod_1.z.string().trim().email("Invalid email address"),
         password: zod_1.z.string().min(8, "Password must be at least 8 characters long").max(100),
         firstName: zod_1.z.string().trim().min(1, "First name is required").max(50),
-        lastName: zod_1.z.string().trim().min(1, "Last name is required").max(50),
+        lastName: zod_1.z.string().trim().max(50).optional().default(""),
         phone: zod_1.z.string().trim().optional(),
     }),
 });

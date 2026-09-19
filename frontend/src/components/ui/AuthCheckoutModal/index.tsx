@@ -155,14 +155,24 @@ export const AuthCheckoutModal: React.FC<AuthCheckoutModalProps> = ({
   // 2. Handle Create Account (Register)
   const handleRegisterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!regName.trim() || !regEmail.trim() || !regPassword) {
+    const trimmedName = regName.trim();
+    const trimmedEmail = regEmail.trim().toLowerCase();
+
+    if (!trimmedName || !trimmedEmail || !regPassword) {
       setErrorMessage('Please enter your name, email, and password.');
       triggerShake();
       return;
     }
 
-    if (regPassword.length < 6) {
-      setErrorMessage('Password must be at least 6 characters.');
+    if (regPassword.length < 8) {
+      setErrorMessage('Password must be at least 8 characters long.');
+      triggerShake();
+      return;
+    }
+
+    const cleanPhone = regPhone.trim() ? regPhone.replace(/\D/g, '') : undefined;
+    if (cleanPhone && cleanPhone.length !== 10) {
+      setErrorMessage('Please enter a valid 10-digit mobile number or leave it empty.');
       triggerShake();
       return;
     }
@@ -171,28 +181,39 @@ export const AuthCheckoutModal: React.FC<AuthCheckoutModalProps> = ({
     setErrorMessage(null);
 
     try {
-      const nameParts = regName.trim().split(' ');
-      const firstName = nameParts[0] || 'Customer';
-      const lastName = nameParts.slice(1).join(' ') || '';
+      // Robust name splitting: if single name, use it for both first & last name
+      const spaceIdx = trimmedName.indexOf(' ');
+      let firstName = trimmedName;
+      let lastName = trimmedName;
+      if (spaceIdx > -1) {
+        firstName = trimmedName.substring(0, spaceIdx).trim();
+        lastName = trimmedName.substring(spaceIdx + 1).trim() || firstName;
+      }
 
-      const regRes = await apiClient.post('/auth/register', {
+      const regRes: any = await apiClient.post('/auth/register', {
         firstName,
         lastName,
-        email: regEmail.trim().toLowerCase(),
+        email: trimmedEmail,
         password: regPassword,
-        phone: regPhone.trim() ? regPhone.replace(/\D/g, '') : undefined,
+        phone: cleanPhone,
       });
 
       if (!regRes.success) {
         setIsLoading(false);
-        setErrorMessage(regRes.message || 'Registration failed. Please try a different email.');
+        const detailedMsg =
+          regRes.errors?.[0]?.message ||
+          (regRes.message === 'User with this email already exists.'
+            ? 'An account with this email already exists. Please switch to Sign In.'
+            : regRes.message) ||
+          'Registration failed. Please check your details.';
+        setErrorMessage(detailedMsg);
         triggerShake();
         return;
       }
 
       // Automatically log in newly created user
-      const loginRes = await apiClient.post('/auth/login', {
-        email: regEmail.trim().toLowerCase(),
+      const loginRes: any = await apiClient.post('/auth/login', {
+        email: trimmedEmail,
         password: regPassword,
       });
 
@@ -204,14 +225,20 @@ export const AuthCheckoutModal: React.FC<AuthCheckoutModalProps> = ({
       } else {
         toast.success('Account created! Please sign in with your password.');
         setActiveTab('login');
-        setLoginEmail(regEmail.trim());
+        setLoginEmail(trimmedEmail);
       }
     } catch (err: any) {
       setIsLoading(false);
-      setErrorMessage(err?.message || 'Unable to create account. Please try again.');
+      const detailedMsg =
+        err?.response?.data?.errors?.[0]?.message ||
+        err?.response?.data?.message ||
+        err?.message ||
+        'Unable to create account. Please try again.';
+      setErrorMessage(detailedMsg);
       triggerShake();
     }
   };
+
 
   // 3. Handle Mobile OTP: Send Code
   const handleSendOtp = (e: React.FormEvent) => {
@@ -521,7 +548,7 @@ export const AuthCheckoutModal: React.FC<AuthCheckoutModalProps> = ({
                         required
                         value={regPassword}
                         onChange={(e) => setRegPassword(e.target.value)}
-                        placeholder="At least 6 characters"
+                        placeholder="At least 8 characters"
                         className="w-full text-xs font-semibold pl-10 pr-10 py-2 border border-neutral-200 dark:border-neutral-750 rounded-card bg-white dark:bg-neutral-950 text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
                       />
                       <button
