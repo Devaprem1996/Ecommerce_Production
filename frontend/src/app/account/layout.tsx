@@ -89,6 +89,7 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       if (typeof window !== 'undefined') {
         localStorage.removeItem('access_token');
         localStorage.removeItem('admin_access_token');
+        document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';
       }
       logout();
       toast.success("You've been logged out successfully");

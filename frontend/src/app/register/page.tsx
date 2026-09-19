@@ -126,6 +126,7 @@ export default function RegisterPage() {
 
         if (typeof window !== 'undefined') {
           localStorage.setItem('access_token', loginRes.data.accessToken);
+          document.cookie = `access_token=${loginRes.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
 
         login(loginRes.data.user, loginRes.data.accessToken);

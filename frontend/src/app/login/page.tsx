@@ -102,9 +102,10 @@ function LoginForm() {
       if (res.success && res.data?.accessToken) {
         setIsSuccess(true);
 
-        // Store access token in localStorage for client requests
+        // Store access token in localStorage and cookies for client requests and Next.js middleware
         if (typeof window !== 'undefined') {
           localStorage.setItem('access_token', res.data.accessToken);
+          document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
 
         // Save session in Zustand store
