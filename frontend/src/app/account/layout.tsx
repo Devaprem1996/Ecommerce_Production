@@ -65,9 +65,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
       .getProfile()
       .then((liveUser) => {
         if (liveUser) {
-          const profileName = liveUser.profile
-            ? `${liveUser.profile.firstName || ''} ${liveUser.profile.lastName || ''}`.trim()
-            : liveUser.email.split('@')[0];
+          const fn = liveUser.profile?.firstName || '';
+          const ln = liveUser.profile?.lastName || '';
+          const profileName = (fn === ln || !ln) ? fn : `${fn} ${ln}`.trim();
 
           const userObj = {
             id: liveUser.id,
@@ -83,6 +83,9 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
           } else {
             useAuthStore.getState().updateProfile(userObj);
           }
+
+          // Synchronize customer wishlist from live database
+          useWishlist.getState().syncWithDb();
         }
         setChecking(false);
       })

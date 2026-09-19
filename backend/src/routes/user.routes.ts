@@ -6,6 +6,7 @@ import {
   createAddressSchema,
   updateAddressSchema,
   createOrderSchema,
+  wishlistSchema,
 } from "../validations/user.validation.js";
 
 const router = Router();
@@ -19,6 +20,20 @@ router.put(
   "/profile",
   validateRequest(updateProfileSchema),
   UserController.updateProfile
+);
+
+// Wishlist
+router.get("/wishlist", UserController.getWishlist);
+router.post(
+  "/wishlist",
+  validateRequest(wishlistSchema),
+  UserController.addToWishlist
+);
+router.delete("/wishlist/:productId", UserController.removeFromWishlist);
+router.post(
+  "/wishlist/toggle",
+  validateRequest(wishlistSchema),
+  UserController.toggleWishlist
 );
 
 // Orders

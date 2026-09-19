@@ -279,5 +279,99 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/user/wishlist
+   */
+  static async getWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const items = await UserService.getWishlist(userId);
+      return res.status(200).json({
+        success: true,
+        message: "Wishlist retrieved successfully.",
+        data: { items },
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/user/wishlist
+   */
+  static async addToWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const { productId } = req.body;
+      const item = await UserService.addToWishlist(userId, productId);
+      return res.status(201).json({
+        success: true,
+        message: "Item added to wishlist successfully.",
+        data: { item },
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * DELETE /api/v1/user/wishlist/:productId
+   */
+  static async removeFromWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const { productId } = req.params;
+      await UserService.removeFromWishlist(userId, productId);
+      return res.status(200).json({
+        success: true,
+        message: "Item removed from wishlist successfully.",
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/v1/user/wishlist/toggle
+   */
+  static async toggleWishlist(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const { productId } = req.body;
+      const result = await UserService.toggleWishlist(userId, productId);
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+        data: result,
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

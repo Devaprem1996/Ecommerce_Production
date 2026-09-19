@@ -221,6 +221,37 @@ class AccountService {
     const res = await apiClient.post<{ order: CustomerOrder }>("/user/orders", data);
     return res.data!.order;
   }
+
+  /**
+   * Fetch customer wishlist products
+   */
+  async getWishlist(): Promise<any[]> {
+    const res = await apiClient.get<{ items: any[] }>("/user/wishlist");
+    return res.data?.items || [];
+  }
+
+  /**
+   * Add a product to customer wishlist
+   */
+  async addToWishlist(productId: string): Promise<any> {
+    const res = await apiClient.post("/user/wishlist", { productId });
+    return res.data;
+  }
+
+  /**
+   * Remove a product from customer wishlist
+   */
+  async removeFromWishlist(productId: string): Promise<void> {
+    await apiClient.delete(`/user/wishlist/${productId}`);
+  }
+
+  /**
+   * Toggle a product in customer wishlist
+   */
+  async toggleWishlist(productId: string): Promise<{ inWishlist: boolean }> {
+    const res = await apiClient.post<{ inWishlist: boolean }>("/user/wishlist/toggle", { productId });
+    return res.data!;
+  }
 }
 
 export const accountService = new AccountService();

@@ -55,6 +55,9 @@ export default function AccountDashboard() {
         console.error('Failed to load addresses:', err);
       });
 
+    // Synchronize customer wishlist from live database
+    useWishlist.getState().syncWithDb();
+
     return () => {
       isMounted = false;
     };

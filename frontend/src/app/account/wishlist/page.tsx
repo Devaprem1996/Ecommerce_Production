@@ -23,6 +23,10 @@ export default function WishlistPage() {
   const addItem = useCartStore((state) => state.addItem);
   const openMiniCart = useCartStore((state) => state.openMiniCart);
 
+  React.useEffect(() => {
+    useWishlist.getState().syncWithDb();
+  }, []);
+
   // Action: Move to Cart
   const handleMoveToCart = (product: any, e: React.MouseEvent) => {
     e.stopPropagation();

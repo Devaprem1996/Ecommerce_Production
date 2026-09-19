@@ -59,9 +59,13 @@ export class AuthController {
       // Write refresh token into secure httpOnly cookie
       res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
 
-      const profileName = (user as any).profile
-        ? `${(user as any).profile.firstName || ''} ${(user as any).profile.lastName || ''}`.trim()
-        : user.email.split('@')[0];
+      const userProfile = (user as any).profile;
+      let profileName = user.email.split('@')[0];
+      if (userProfile) {
+        const fn = userProfile.firstName || '';
+        const ln = userProfile.lastName || '';
+        profileName = (fn === ln || !ln) ? fn : `${fn} ${ln}`.trim();
+      }
 
       return res.status(200).json({
         success: true,

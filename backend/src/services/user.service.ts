@@ -546,5 +546,129 @@ export class UserService {
       return order;
     });
   }
+
+  /**
+   * Get all wishlist products for the user
+   */
+  static async getWishlist(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    const items = await prisma.wishlist.findMany({
+      where: { userId },
+      include: {
+        product: {
+          include: {
+            category: true,
+            variants: {
+              where: { isActive: true },
+              include: { inventory: true },
+              orderBy: { price: "asc" },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    return items.map((item: any) => {
+      const p = item.product;
+      const primaryVariant = p.variants?.[0];
+      const price = primaryVariant ? Number(primaryVariant.price) : 0;
+      const discountPrice = primaryVariant?.discountPrice ? Number(primaryVariant.discountPrice) : undefined;
+      const availableStock = primaryVariant?.inventory?.availableQuantity ?? 10;
+
+      return {
+        id: p.id,
+        productId: p.id,
+        name: p.nameEn,
+        nameEn: p.nameEn,
+        nameTa: p.nameTa,
+        slug: p.slug,
+        price,
+        basePrice: price,
+        discountPrice,
+        category: p.category?.nameEn || "General",
+        image: p.thumbnailUrl || "",
+        thumbnailUrl: p.thumbnailUrl || "",
+        inStock: availableStock > 0,
+        stockQuantity: availableStock,
+        unit: "pack",
+        addedAt: item.createdAt,
+      };
+    });
+  }
+
+  /**
+   * Add a product to customer's wishlist
+   */
+  static async addToWishlist(userId: string, productId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product || !product.isActive) {
+      throw ApiError.notFound("Product not found or unavailable.");
+    }
+
+    return await prisma.wishlist.upsert({
+      where: {
+        userId_productId: { userId, productId },
+      },
+      create: { userId, productId },
+      update: {},
+    });
+  }
+
+  /**
+   * Remove a product from customer's wishlist
+   */
+  static async removeFromWishlist(userId: string, productId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    return await prisma.wishlist.deleteMany({
+      where: { userId, productId },
+    });
+  }
+
+  /**
+   * Toggle a product in customer's wishlist
+   */
+  static async toggleWishlist(userId: string, productId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product || !product.isActive) {
+      throw ApiError.notFound("Product not found or unavailable.");
+    }
+
+    const existing = await prisma.wishlist.findUnique({
+      where: {
+        userId_productId: { userId, productId },
+      },
+    });
+
+    if (existing) {
+      await prisma.wishlist.delete({
+        where: { id: existing.id },
+      });
+      return { inWishlist: false, message: "Removed from wishlist" };
+    } else {
+      await prisma.wishlist.create({
+        data: { userId, productId },
+      });
+      return { inWishlist: true, message: "Added to wishlist" };
+    }
+  }
 }
 

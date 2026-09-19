@@ -56,7 +56,9 @@ export default function ProfilePage() {
     accountService.getProfile()
       .then((customer) => {
         if (customer.profile) {
-          const fullName = `${customer.profile.firstName || ''} ${customer.profile.lastName || ''}`.trim();
+          const fn = customer.profile.firstName || '';
+          const ln = customer.profile.lastName || '';
+          const fullName = (fn === ln || !ln) ? fn : `${fn} ${ln}`.trim();
           setName(fullName || customer.email.split('@')[0]);
           setEmail(customer.email);
           if (customer.profile.dateOfBirth) {
@@ -91,9 +93,14 @@ export default function ProfilePage() {
     setSavedSuccess(false);
 
     try {
-      const nameParts = name.trim().split(' ');
-      const firstName = nameParts[0] || 'Customer';
-      const lastName = nameParts.slice(1).join(' ') || '';
+      const trimmedName = name.trim();
+      const spaceIdx = trimmedName.indexOf(' ');
+      let firstName = trimmedName;
+      let lastName = '';
+      if (spaceIdx > -1) {
+        firstName = trimmedName.substring(0, spaceIdx).trim();
+        lastName = trimmedName.substring(spaceIdx + 1).trim();
+      }
 
       await accountService.updateProfile({
         firstName,
@@ -104,7 +111,7 @@ export default function ProfilePage() {
 
       // Save standard fields in Zustand Auth Store
       updateProfile({
-        name,
+        name: trimmedName,
         email,
         language,
         avatar: avatarBase64 || user?.avatar || null,
@@ -116,7 +123,12 @@ export default function ProfilePage() {
       setTimeout(() => setSavedSuccess(false), 2500);
     } catch (err: any) {
       setSaving(false);
-      toast.error(err?.message || 'Failed to update profile.');
+      const detailedMsg =
+        err?.errors?.[0]?.message ||
+        err?.response?.data?.errors?.[0]?.message ||
+        err?.message ||
+        'Failed to update profile.';
+      toast.error(detailedMsg);
     }
   };
 

@@ -3,11 +3,17 @@ import { z } from "zod";
 export const updateProfileSchema = z.object({
   body: z.object({
     firstName: z.string().trim().min(1, "First name cannot be empty").max(50).optional(),
-    lastName: z.string().trim().min(1, "Last name cannot be empty").max(50).optional(),
+    lastName: z.string().trim().max(50).optional().default(""),
     phone: z.string().trim().max(20).optional().nullable(),
     dateOfBirth: z.string().optional().nullable(),
     gender: z.string().trim().max(20).optional().nullable(),
     avatarUrl: z.string().trim().optional().nullable(),
+  }),
+});
+
+export const wishlistSchema = z.object({
+  body: z.object({
+    productId: z.string().min(1, "Product ID is required"),
   }),
 });
 

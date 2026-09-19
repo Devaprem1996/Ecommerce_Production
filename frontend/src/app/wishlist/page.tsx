@@ -53,6 +53,10 @@ function StandaloneWishlistContent() {
   const shareParam = searchParams?.get("share");
 
   useEffect(() => {
+    useWishlist.getState().syncWithDb();
+  }, []);
+
+  useEffect(() => {
     if (shareParam) {
       setIsSharedView(true);
       // Parse product IDs from comma-separated string
