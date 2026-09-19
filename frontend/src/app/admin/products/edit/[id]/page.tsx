@@ -236,10 +236,23 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         descriptionTa: descContent,
         thumbnailUrl: images[0] || undefined,
         isActive: data.status === 'active',
+        price: Number(data.price),
+        originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
+        unit: data.unit,
+        stock: Number(data.stock),
       };
 
       if (data.categoryId) {
         payload.categoryId = data.categoryId;
+      }
+
+      if (variants.length > 0) {
+        payload.variants = variants.map((v) => ({
+          nameEn: v.weight,
+          nameTa: v.weight,
+          price: Number(v.price),
+          availableQuantity: Number(data.stock),
+        }));
       }
 
       await adminService.updateProduct(productId, payload);

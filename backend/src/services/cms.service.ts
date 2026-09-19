@@ -441,25 +441,162 @@ export class CmsService {
       descriptionTa?: string;
       thumbnailUrl?: string;
       isActive?: boolean;
+      price?: number;
+      originalPrice?: number;
+      unit?: string;
+      stock?: number;
+      variants?: Array<{
+        id?: string;
+        nameEn: string;
+        nameTa?: string;
+        price: number;
+        discountPrice?: number;
+        weight?: number;
+        availableQuantity?: number;
+      }>;
     },
     userId?: string
   ) {
     const product = await prisma.product.findFirst({
       where: { id, deletedAt: null },
+      include: {
+        variants: {
+          where: { deletedAt: null },
+          include: { inventory: true },
+        },
+      },
     });
 
     if (!product) {
       throw ApiError.notFound("Product not found.");
     }
 
-    const updateData: any = { ...data };
+    const { price, originalPrice, unit, stock, variants, ...productFields } = data;
+    const updateData: any = { ...productFields };
     if (data.nameEn) {
       updateData.slug = toSlug(data.nameEn);
     }
 
-    const updated = await prisma.product.update({
-      where: { id },
-      data: updateData,
+    await prisma.$transaction(async (tx) => {
+      // 1. Update Product metadata
+      if (Object.keys(updateData).length > 0) {
+        await tx.product.update({
+          where: { id },
+          data: updateData,
+        });
+      }
+
+      // 2. If explicit variants array is passed, update them
+      if (variants && variants.length > 0) {
+        for (let i = 0; i < variants.length; i++) {
+          const v = variants[i];
+          const existingVariant = product.variants[i];
+          if (existingVariant) {
+            await tx.productVariant.update({
+              where: { id: existingVariant.id },
+              data: {
+                nameEn: v.nameEn,
+                nameTa: v.nameTa || v.nameEn,
+                price: v.price,
+                discountPrice: v.discountPrice,
+                weight: v.weight,
+              },
+            });
+            if (v.availableQuantity !== undefined) {
+              if (existingVariant.inventory) {
+                await tx.inventory.update({
+                  where: { id: existingVariant.inventory.id },
+                  data: { availableQuantity: v.availableQuantity },
+                });
+              } else {
+                await tx.inventory.create({
+                  data: {
+                    variantId: existingVariant.id,
+                    availableQuantity: v.availableQuantity,
+                    minimumStock: 5,
+                  },
+                });
+              }
+            }
+          } else {
+            const sku = `${(data.nameEn || product.nameEn).slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}-${i}`;
+            const newVar = await tx.productVariant.create({
+              data: {
+                productId: id,
+                nameEn: v.nameEn,
+                nameTa: v.nameTa || v.nameEn,
+                sku,
+                price: v.price,
+                discountPrice: v.discountPrice,
+                weight: v.weight,
+              },
+            });
+            await tx.inventory.create({
+              data: {
+                variantId: newVar.id,
+                availableQuantity: v.availableQuantity ?? 50,
+                minimumStock: 5,
+              },
+            });
+          }
+        }
+      } else if (price !== undefined || stock !== undefined || unit !== undefined) {
+        // 3. Update primary variant & inventory directly
+        const primaryVariant = product.variants[0];
+        if (primaryVariant) {
+          const variantUpdates: any = {};
+          if (price !== undefined) variantUpdates.price = price;
+          if (originalPrice !== undefined) variantUpdates.discountPrice = originalPrice > (price || Number(primaryVariant.price)) ? price : undefined;
+          if (unit !== undefined) {
+            variantUpdates.nameEn = unit;
+            variantUpdates.nameTa = unit;
+          }
+
+          if (Object.keys(variantUpdates).length > 0) {
+            await tx.productVariant.update({
+              where: { id: primaryVariant.id },
+              data: variantUpdates,
+            });
+          }
+
+          if (stock !== undefined) {
+            if (primaryVariant.inventory) {
+              await tx.inventory.update({
+                where: { id: primaryVariant.inventory.id },
+                data: { availableQuantity: stock },
+              });
+            } else {
+              await tx.inventory.create({
+                data: {
+                  variantId: primaryVariant.id,
+                  availableQuantity: stock,
+                  minimumStock: 5,
+                },
+              });
+            }
+          }
+        } else {
+          // No existing variant: create a initial variant & inventory
+          const sku = `${(data.nameEn || product.nameEn).slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+          const newVar = await tx.productVariant.create({
+            data: {
+              productId: id,
+              nameEn: unit || "Unit",
+              nameTa: unit || "Unit",
+              sku,
+              price: price || 100,
+              discountPrice: originalPrice,
+            },
+          });
+          await tx.inventory.create({
+            data: {
+              variantId: newVar.id,
+              availableQuantity: stock !== undefined ? stock : 50,
+              minimumStock: 5,
+            },
+          });
+        }
+      }
     });
 
     await prisma.auditLog.create({
@@ -467,14 +604,14 @@ export class CmsService {
         userId,
         action: "UPDATE_PRODUCT",
         entity: "Product",
-        entityId: updated.id,
+        entityId: id,
         oldValue: JSON.parse(JSON.stringify(product)),
-        newValue: JSON.parse(JSON.stringify(updated)),
+        newValue: JSON.parse(JSON.stringify(data)),
       },
     }).catch(err => logger.error("AuditLog creation failed:", err));
 
-    logger.info(`Product updated: ${updated.nameEn} (ID: ${updated.id})`);
-    return updated;
+    logger.info(`Product updated: ${data.nameEn || product.nameEn} (ID: ${id})`);
+    return this.getProductBySlug(id);
   }
 
   /**
@@ -489,10 +626,16 @@ export class CmsService {
       throw ApiError.notFound("Product not found.");
     }
 
-    await prisma.product.update({
-      where: { id },
-      data: { deletedAt: new Date() },
-    });
+    await prisma.$transaction([
+      prisma.product.update({
+        where: { id },
+        data: { deletedAt: new Date(), isActive: false },
+      }),
+      prisma.productVariant.updateMany({
+        where: { productId: id },
+        data: { deletedAt: new Date(), isActive: false },
+      }),
+    ]);
 
     await prisma.auditLog.create({
       data: {

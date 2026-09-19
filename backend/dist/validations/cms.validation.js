@@ -59,6 +59,19 @@ exports.updateProductSchema = zod_1.z.object({
         descriptionTa: zod_1.z.string().trim().optional(),
         thumbnailUrl: zod_1.z.string().trim().url("Invalid thumbnail URL").optional().or(zod_1.z.literal("")),
         isActive: zod_1.z.boolean().optional(),
+        price: zod_1.z.number().positive("Price must be positive").optional(),
+        originalPrice: zod_1.z.number().positive().optional(),
+        unit: zod_1.z.string().trim().optional(),
+        stock: zod_1.z.number().int().nonnegative().optional(),
+        variants: zod_1.z.array(zod_1.z.object({
+            id: zod_1.z.string().optional(),
+            nameEn: zod_1.z.string().trim().min(1),
+            nameTa: zod_1.z.string().trim().optional(),
+            price: zod_1.z.number().positive(),
+            discountPrice: zod_1.z.number().nonnegative().optional(),
+            weight: zod_1.z.number().positive().optional(),
+            availableQuantity: zod_1.z.number().int().nonnegative().optional(),
+        })).optional(),
     }),
 });
 // Standalone Create Product Variant Schema

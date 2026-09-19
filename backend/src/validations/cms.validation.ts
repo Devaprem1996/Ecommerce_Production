@@ -61,6 +61,19 @@ export const updateProductSchema = z.object({
     descriptionTa: z.string().trim().optional(),
     thumbnailUrl: z.string().trim().url("Invalid thumbnail URL").optional().or(z.literal("")),
     isActive: z.boolean().optional(),
+    price: z.number().positive("Price must be positive").optional(),
+    originalPrice: z.number().positive().optional(),
+    unit: z.string().trim().optional(),
+    stock: z.number().int().nonnegative().optional(),
+    variants: z.array(z.object({
+      id: z.string().optional(),
+      nameEn: z.string().trim().min(1),
+      nameTa: z.string().trim().optional(),
+      price: z.number().positive(),
+      discountPrice: z.number().nonnegative().optional(),
+      weight: z.number().positive().optional(),
+      availableQuantity: z.number().int().nonnegative().optional(),
+    })).optional(),
   }),
 });
 

@@ -344,30 +344,158 @@ class CmsService {
     static async updateProduct(id, data, userId) {
         const product = await db_js_1.default.product.findFirst({
             where: { id, deletedAt: null },
+            include: {
+                variants: {
+                    where: { deletedAt: null },
+                    include: { inventory: true },
+                },
+            },
         });
         if (!product) {
             throw api_error_js_1.ApiError.notFound("Product not found.");
         }
-        const updateData = { ...data };
+        const { price, originalPrice, unit, stock, variants, ...productFields } = data;
+        const updateData = { ...productFields };
         if (data.nameEn) {
             updateData.slug = toSlug(data.nameEn);
         }
-        const updated = await db_js_1.default.product.update({
-            where: { id },
-            data: updateData,
+        await db_js_1.default.$transaction(async (tx) => {
+            // 1. Update Product metadata
+            if (Object.keys(updateData).length > 0) {
+                await tx.product.update({
+                    where: { id },
+                    data: updateData,
+                });
+            }
+            // 2. If explicit variants array is passed, update them
+            if (variants && variants.length > 0) {
+                for (let i = 0; i < variants.length; i++) {
+                    const v = variants[i];
+                    const existingVariant = product.variants[i];
+                    if (existingVariant) {
+                        await tx.productVariant.update({
+                            where: { id: existingVariant.id },
+                            data: {
+                                nameEn: v.nameEn,
+                                nameTa: v.nameTa || v.nameEn,
+                                price: v.price,
+                                discountPrice: v.discountPrice,
+                                weight: v.weight,
+                            },
+                        });
+                        if (v.availableQuantity !== undefined) {
+                            if (existingVariant.inventory) {
+                                await tx.inventory.update({
+                                    where: { id: existingVariant.inventory.id },
+                                    data: { availableQuantity: v.availableQuantity },
+                                });
+                            }
+                            else {
+                                await tx.inventory.create({
+                                    data: {
+                                        variantId: existingVariant.id,
+                                        availableQuantity: v.availableQuantity,
+                                        minimumStock: 5,
+                                    },
+                                });
+                            }
+                        }
+                    }
+                    else {
+                        const sku = `${(data.nameEn || product.nameEn).slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}-${i}`;
+                        const newVar = await tx.productVariant.create({
+                            data: {
+                                productId: id,
+                                nameEn: v.nameEn,
+                                nameTa: v.nameTa || v.nameEn,
+                                sku,
+                                price: v.price,
+                                discountPrice: v.discountPrice,
+                                weight: v.weight,
+                            },
+                        });
+                        await tx.inventory.create({
+                            data: {
+                                variantId: newVar.id,
+                                availableQuantity: v.availableQuantity ?? 50,
+                                minimumStock: 5,
+                            },
+                        });
+                    }
+                }
+            }
+            else if (price !== undefined || stock !== undefined || unit !== undefined) {
+                // 3. Update primary variant & inventory directly
+                const primaryVariant = product.variants[0];
+                if (primaryVariant) {
+                    const variantUpdates = {};
+                    if (price !== undefined)
+                        variantUpdates.price = price;
+                    if (originalPrice !== undefined)
+                        variantUpdates.discountPrice = originalPrice > (price || Number(primaryVariant.price)) ? price : undefined;
+                    if (unit !== undefined) {
+                        variantUpdates.nameEn = unit;
+                        variantUpdates.nameTa = unit;
+                    }
+                    if (Object.keys(variantUpdates).length > 0) {
+                        await tx.productVariant.update({
+                            where: { id: primaryVariant.id },
+                            data: variantUpdates,
+                        });
+                    }
+                    if (stock !== undefined) {
+                        if (primaryVariant.inventory) {
+                            await tx.inventory.update({
+                                where: { id: primaryVariant.inventory.id },
+                                data: { availableQuantity: stock },
+                            });
+                        }
+                        else {
+                            await tx.inventory.create({
+                                data: {
+                                    variantId: primaryVariant.id,
+                                    availableQuantity: stock,
+                                    minimumStock: 5,
+                                },
+                            });
+                        }
+                    }
+                }
+                else {
+                    // No existing variant: create a initial variant & inventory
+                    const sku = `${(data.nameEn || product.nameEn).slice(0, 4).toUpperCase()}-${Math.floor(1000 + Math.random() * 9000)}`;
+                    const newVar = await tx.productVariant.create({
+                        data: {
+                            productId: id,
+                            nameEn: unit || "Unit",
+                            nameTa: unit || "Unit",
+                            sku,
+                            price: price || 100,
+                            discountPrice: originalPrice,
+                        },
+                    });
+                    await tx.inventory.create({
+                        data: {
+                            variantId: newVar.id,
+                            availableQuantity: stock !== undefined ? stock : 50,
+                            minimumStock: 5,
+                        },
+                    });
+                }
+            }
         });
         await db_js_1.default.auditLog.create({
             data: {
                 userId,
                 action: "UPDATE_PRODUCT",
                 entity: "Product",
-                entityId: updated.id,
+                entityId: id,
                 oldValue: JSON.parse(JSON.stringify(product)),
-                newValue: JSON.parse(JSON.stringify(updated)),
+                newValue: JSON.parse(JSON.stringify(data)),
             },
         }).catch(err => index_js_1.default.error("AuditLog creation failed:", err));
-        index_js_1.default.info(`Product updated: ${updated.nameEn} (ID: ${updated.id})`);
-        return updated;
+        index_js_1.default.info(`Product updated: ${data.nameEn || product.nameEn} (ID: ${id})`);
+        return this.getProductBySlug(id);
     }
     /**
      * Soft delete product (admin function)
@@ -379,10 +507,16 @@ class CmsService {
         if (!product) {
             throw api_error_js_1.ApiError.notFound("Product not found.");
         }
-        await db_js_1.default.product.update({
-            where: { id },
-            data: { deletedAt: new Date() },
-        });
+        await db_js_1.default.$transaction([
+            db_js_1.default.product.update({
+                where: { id },
+                data: { deletedAt: new Date(), isActive: false },
+            }),
+            db_js_1.default.productVariant.updateMany({
+                where: { productId: id },
+                data: { deletedAt: new Date(), isActive: false },
+            }),
+        ]);
         await db_js_1.default.auditLog.create({
             data: {
                 userId,
