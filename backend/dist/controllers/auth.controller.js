@@ -56,9 +56,13 @@ class AuthController {
             });
             // Write refresh token into secure httpOnly cookie
             res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
-            const profileName = user.profile
-                ? `${user.profile.firstName || ''} ${user.profile.lastName || ''}`.trim()
-                : user.email.split('@')[0];
+            const userProfile = user.profile;
+            let profileName = user.email.split('@')[0];
+            if (userProfile) {
+                const fn = userProfile.firstName || '';
+                const ln = userProfile.lastName || '';
+                profileName = (fn === ln || !ln) ? fn : `${fn} ${ln}`.trim();
+            }
             return res.status(200).json({
                 success: true,
                 message: "Logged in successfully.",
