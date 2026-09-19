@@ -41,39 +41,68 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
 
-  // 1. Auth Guard
+  // 1. Resilient Session & Auth Guard
   useEffect(() => {
-    if (!isLoggedIn) {
+    // Read stored token from localStorage or cookies
+    const storedToken =
+      typeof window !== 'undefined'
+        ? localStorage.getItem('access_token') ||
+          document.cookie
+            .split('; ')
+            .find((row) => row.startsWith('access_token='))
+            ?.split('=')[1]
+        : null;
+
+    // If no token exists at all and user is not logged in, redirect to login
+    if (!storedToken && !isLoggedIn) {
       toast.error('Please login to access your account');
       router.replace(`/login?redirect=${encodeURIComponent(pathname || '/account')}`);
-    } else {
-      setChecking(false);
+      return;
     }
-  }, [isLoggedIn, router, pathname]);
 
-  // 2. Fetch fresh user profile from live database
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    accountService.getProfile()
+    // Verify and synchronize with live database profile
+    accountService
+      .getProfile()
       .then((liveUser) => {
-        // Update user state if name or details updated
         if (liveUser) {
           const profileName = liveUser.profile
             ? `${liveUser.profile.firstName || ''} ${liveUser.profile.lastName || ''}`.trim()
             : liveUser.email.split('@')[0];
 
-          useAuthStore.getState().updateProfile({
+          const userObj = {
+            id: liveUser.id,
             name: profileName || liveUser.email,
             email: liveUser.email,
+            role: (liveUser.role as any) || 'customer',
             mobile: liveUser.profile?.phone || undefined,
             avatar: liveUser.profile?.avatarUrl || null,
-          });
+          };
+
+          if (storedToken) {
+            useAuthStore.getState().login(userObj, storedToken);
+          } else {
+            useAuthStore.getState().updateProfile(userObj);
+          }
         }
+        setChecking(false);
       })
-      .catch(() => {
-        // In case token expired or user removed
+      .catch((err: any) => {
+        console.error('Account session verification failed:', err);
+        // Only kick user to login if backend explicitly rejected with 401 Unauthorized
+        if (err?.status === 401 || err?.statusCode === 401) {
+          if (typeof window !== 'undefined') {
+            localStorage.removeItem('access_token');
+            document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';
+          }
+          useAuthStore.getState().logout();
+          toast.error('Session expired. Please log in again.');
+          router.replace(`/login?redirect=${encodeURIComponent(pathname || '/account')}`);
+        } else {
+          setChecking(false);
+        }
       });
-  }, [isLoggedIn]);
+  }, [pathname, router]);
+
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);

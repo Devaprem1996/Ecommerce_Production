@@ -65,6 +65,7 @@ export class AuthService {
   static async loginUser(email: string, passwordHash: string) {
     const user = await prisma.user.findUnique({
       where: { email },
+      include: { profile: true },
     });
 
     if (!user || !user.isActive) {
@@ -172,11 +173,11 @@ export class AuthService {
    */
   static generateTokens(payload: UserTokenPayload) {
     const accessToken = jwt.sign(payload, process.env.JWT_SECRET!, {
-      expiresIn: "15m",
+      expiresIn: "7d",
     });
 
     const refreshToken = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET!, {
-      expiresIn: "7d",
+      expiresIn: "30d",
     });
 
     return { accessToken, refreshToken };

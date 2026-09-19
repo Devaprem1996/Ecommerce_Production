@@ -244,12 +244,13 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
             {/* Account Icon (Desktop) */}
             <Link
-              href={isLoggedIn ? "/account" : "/login"}
-              className="hidden md:flex p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] items-center justify-center"
+              href="/account"
+              className="hidden md:flex p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] items-center justify-center cursor-pointer"
               aria-label="View Account"
             >
               <User className={`w-5 h-5 ${isLoggedIn ? 'text-primary-500' : ''}`} />
             </Link>
+
           </div>
         </div>
       </header>
