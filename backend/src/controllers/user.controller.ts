@@ -248,4 +248,36 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/v1/user/orders
+   */
+  static async createOrder(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const { addressId, shippingAddress, items, paymentMethod, couponCode } = req.body;
+      const order = await UserService.createOrder(userId, {
+        addressId,
+        shippingAddress,
+        items,
+        paymentMethod,
+        couponCode,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Order placed successfully.",
+        data: { order },
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
+

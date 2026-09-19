@@ -5,6 +5,7 @@ import {
   updateProfileSchema,
   createAddressSchema,
   updateAddressSchema,
+  createOrderSchema,
 } from "../validations/user.validation.js";
 
 const router = Router();
@@ -23,6 +24,11 @@ router.put(
 // Orders
 router.get("/orders", UserController.getOrders);
 router.get("/orders/:id", UserController.getOrderById);
+router.post(
+  "/orders",
+  validateRequest(createOrderSchema),
+  UserController.createOrder
+);
 router.post("/orders/:id/cancel", UserController.cancelOrder);
 
 // Addresses

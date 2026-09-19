@@ -1,6 +1,6 @@
 import prisma from "../config/db.js";
 import { ApiError } from "../exceptions/api-error.js";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus } from "@prisma/client";
 
 export class UserService {
   /**
@@ -362,4 +362,189 @@ export class UserService {
 
     return { message: "Default address updated successfully." };
   }
+
+  /**
+   * Create a new order for authenticated customer
+   */
+  static async createOrder(
+    userId: string,
+    data: {
+      addressId?: string;
+      shippingAddress?: {
+        name: string;
+        mobile: string;
+        addressLine1: string;
+        addressLine2?: string | null;
+        city: string;
+        state: string;
+        pincode: string;
+      };
+      items: Array<{
+        productId?: string;
+        variantId?: string;
+        productName?: string;
+        price?: number;
+        quantity?: number;
+      }>;
+      paymentMethod?: string;
+      couponCode?: string;
+    }
+  ) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    if (!data.items || data.items.length === 0) {
+      throw ApiError.badRequest("Cannot place order with an empty cart.");
+    }
+
+    return await prisma.$transaction(async (tx) => {
+      // 1. Resolve Address
+      let addressId = data.addressId;
+      if (!addressId && data.shippingAddress) {
+        const createdAddr = await tx.address.create({
+          data: {
+            userId,
+            fullName: data.shippingAddress.name,
+            phone: data.shippingAddress.mobile,
+            addressLine1: data.shippingAddress.addressLine1,
+            addressLine2: data.shippingAddress.addressLine2 || null,
+            city: data.shippingAddress.city,
+            state: data.shippingAddress.state,
+            postalCode: data.shippingAddress.pincode,
+            country: "India",
+            isDefault: false,
+          },
+        });
+        addressId = createdAddr.id;
+      }
+
+      if (!addressId) {
+        const defaultAddr = await tx.address.findFirst({
+          where: { userId, deletedAt: null },
+          orderBy: { isDefault: "desc" },
+        });
+        if (defaultAddr) {
+          addressId = defaultAddr.id;
+        } else {
+          throw ApiError.badRequest("Delivery address is required to place an order.");
+        }
+      }
+
+      // 2. Resolve Variants and Line Items
+      let subtotalSum = 0;
+      const orderItemsToCreate: Array<{
+        variantId: string;
+        productName: string;
+        sku: string;
+        quantity: number;
+        unitPrice: number;
+        discount: number;
+        tax: number;
+        subtotal: number;
+      }> = [];
+
+      for (const item of data.items) {
+        let variant = null;
+        if (item.variantId) {
+          variant = await tx.productVariant.findUnique({
+            where: { id: item.variantId },
+            include: { product: true },
+          });
+        }
+
+        if (!variant && item.productId) {
+          variant = await tx.productVariant.findFirst({
+            where: { productId: item.productId, deletedAt: null },
+            include: { product: true },
+          });
+        }
+
+        if (!variant) {
+          variant = await tx.productVariant.findFirst({
+            where: { deletedAt: null },
+            include: { product: true },
+          });
+        }
+
+        if (!variant) {
+          throw ApiError.badRequest("Unable to resolve catalog product variant.");
+        }
+
+        const unitPrice = item.price !== undefined ? Number(item.price) : Number(variant.price);
+        const quantity = Math.max(1, item.quantity || 1);
+        const lineSubtotal = unitPrice * quantity;
+        subtotalSum += lineSubtotal;
+
+        orderItemsToCreate.push({
+          variantId: variant.id,
+          productName: item.productName || variant.product.nameEn || variant.nameEn,
+          sku: variant.sku || `SKU-${variant.id.slice(0, 6).toUpperCase()}`,
+          quantity,
+          unitPrice,
+          discount: 0,
+          tax: 0,
+          subtotal: lineSubtotal,
+        });
+      }
+
+      const shippingCharge = subtotalSum >= 499 ? 0 : 50;
+      const grandTotal = subtotalSum + shippingCharge;
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      const orderStatus =
+        data.paymentMethod === "cod"
+          ? OrderStatus.CONFIRMED
+          : OrderStatus.CONFIRMED;
+
+      // 3. Create Order
+      const order = await tx.order.create({
+        data: {
+          userId,
+          addressId,
+          orderNumber,
+          subtotal: subtotalSum,
+          discount: 0,
+          tax: 0,
+          shippingCharge,
+          grandTotal,
+          status: orderStatus,
+          orderedAt: new Date(),
+          orderItems: {
+            create: orderItemsToCreate,
+          },
+          payments: {
+            create: [
+              {
+                provider: data.paymentMethod || "upi",
+                providerOrderId: `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                amount: grandTotal,
+                currency: "INR",
+                status:
+                  data.paymentMethod === "cod"
+                    ? PaymentStatus.PENDING
+                    : PaymentStatus.SUCCESSFUL,
+                paidAt: data.paymentMethod === "cod" ? null : new Date(),
+              },
+            ],
+          },
+        },
+        include: {
+          orderItems: {
+            include: {
+              variant: {
+                include: { product: true },
+              },
+            },
+          },
+          payments: true,
+          address: true,
+        },
+      });
+
+      return order;
+    });
+  }
 }
+

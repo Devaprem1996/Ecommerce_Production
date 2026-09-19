@@ -26,6 +26,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
+import { accountService, UserAddress } from '@/services/account.service';
 
 interface AddressData {
   name: string;
@@ -37,29 +38,6 @@ interface AddressData {
   state: string;
 }
 
-const mockSavedAddresses = [
-  {
-    id: 'addr-1',
-    name: 'Ganesh Prabhu',
-    mobile: '9876543210',
-    addressLine1: 'Flat 402, Green Meadows',
-    addressLine2: 'Kotturpuram',
-    pincode: '600085',
-    city: 'Chennai',
-    state: 'Tamil Nadu',
-  },
-  {
-    id: 'addr-2',
-    name: 'Ganesh Prabhu (Office)',
-    mobile: '9876543210',
-    addressLine1: 'Tidel Park, Module 502',
-    addressLine2: 'OMR Road, Taramani',
-    pincode: '600113',
-    city: 'Chennai',
-    state: 'Tamil Nadu',
-  }
-];
-
 export default function CheckoutPage() {
   const { t } = useTranslation();
   const router = useRouter();
@@ -67,6 +45,13 @@ export default function CheckoutPage() {
   // Stores
   const { items, getTotal, clearCart, getItemCount } = useCartStore();
   const { user, isAuthenticated } = useAuthStore();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.replace('/login?redirect=/checkout');
+    }
+  }, [isAuthenticated, router]);
 
   // Redirect if cart is empty (unless we are on order confirmation step)
   useEffect(() => {
@@ -79,8 +64,34 @@ export default function CheckoutPage() {
   const [activeStep, setActiveStep] = useState<'address' | 'payment' | 'confirm'>('address');
 
   // Address Step States
-  const [selectedAddressId, setSelectedAddressId] = useState<string>(mockSavedAddresses[0].id);
+  const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
+  const [selectedAddressId, setSelectedAddressId] = useState<string>('');
   const [useNewAddress, setUseNewAddress] = useState(false);
+  const [isLoadingAddresses, setIsLoadingAddresses] = useState(true);
+
+  // Load saved addresses from database for authenticated customer
+  useEffect(() => {
+    if (isAuthenticated) {
+      accountService
+        .getAddresses()
+        .then((addrs) => {
+          setSavedAddresses(addrs);
+          const defaultAddr = addrs.find((a) => a.isDefault) || addrs[0];
+          if (defaultAddr) {
+            setSelectedAddressId(defaultAddr.id);
+            setUseNewAddress(false);
+          } else {
+            setUseNewAddress(true);
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load saved addresses:", err);
+        })
+        .finally(() => {
+          setIsLoadingAddresses(false);
+        });
+    }
+  }, [isAuthenticated]);
   const [addressForm, setAddressForm] = useState<AddressData>({
     name: '',
     mobile: '',
@@ -229,78 +240,59 @@ export default function CheckoutPage() {
 
     setIsProcessingPayment(true);
 
-    // Simulate payment transaction
-    setTimeout(() => {
-      const mockOrderNo = 'YATHU-' + Math.floor(100000 + Math.random() * 900000);
-      
-      // Determine delivery estimate based on pincode
-      let days = 5;
-      if (useNewAddress) {
-        if (addressForm.pincode.startsWith('6')) days = 3;
-      } else {
-        const activeAddr = mockSavedAddresses.find(a => a.id === selectedAddressId);
-        if (activeAddr && activeAddr.pincode.startsWith('6')) days = 3;
-      }
-
-      // 1. Create the new order structure and save to localStorage
-      const itemsList = items.map((item) => ({
-        productId: item.product.id,
-        price: item.product.price,
-        quantity: item.quantity
-      }));
-
-      const activeAddr = useNewAddress 
-        ? addressForm 
-        : mockSavedAddresses.find(a => a.id === selectedAddressId);
-
-      const newOrder = {
-        id: mockOrderNo,
-        date: new Date().toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" }),
-        status: paymentMethod === 'cod' ? 'processing' : 'pending',
-        total: totalAmount,
-        items: itemsList,
-        shippingAddress: activeAddr ? {
-          name: activeAddr.name,
-          street: useNewAddress 
-            ? `${addressForm.addressLine1}${addressForm.addressLine2 ? ', ' + addressForm.addressLine2 : ''}`
-            : `${activeAddr.addressLine1}${activeAddr.addressLine2 ? ', ' + activeAddr.addressLine2 : ''}`,
-          city: activeAddr.city,
-          state: activeAddr.state,
-          pincode: activeAddr.pincode,
-          mobile: activeAddr.mobile
-        } : undefined,
-        paymentMethod: paymentMethod,
-        paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
-        trackingNumber: "TRK-" + Math.floor(10000000 + Math.random() * 90000000)
-      };
-
-      const existingOrdersStr = localStorage.getItem('user_orders');
-      const existingOrders = existingOrdersStr ? JSON.parse(existingOrdersStr) : [];
-      existingOrders.unshift(newOrder);
-      localStorage.setItem('user_orders', JSON.stringify(existingOrders));
-
-      setIsProcessingPayment(false);
-
-      // 2. Redirect based on payment channel simulation rules
-      if (paymentMethod === 'card' && cardCvv === '999') {
-        // Simulating failed card transaction
+    if (paymentMethod === 'card' && cardCvv === '999') {
+      setTimeout(() => {
+        setIsProcessingPayment(false);
         toast.error('Payment declined by payment gateway.');
-        router.push(`/checkout/failed?orderId=${mockOrderNo}&reason=Declined by issuing bank (CVV validation error)`);
-      } else if (paymentMethod === 'cod') {
-        // Cash on delivery goes straight to success
+        router.push(`/checkout/failed?orderId=TEMP-${Date.now()}&reason=Declined by issuing bank (CVV validation error)`);
+      }, 1200);
+      return;
+    }
+
+    const orderItems = items.map((item) => ({
+      productId: item.product.id,
+      productName: item.product.name,
+      price: item.product.price,
+      quantity: item.quantity,
+    }));
+
+    const activeAddr = useNewAddress
+      ? null
+      : savedAddresses.find((a) => a.id === selectedAddressId);
+
+    const orderPayload = {
+      addressId: activeAddr?.id,
+      shippingAddress: useNewAddress
+        ? {
+            name: addressForm.name,
+            mobile: addressForm.mobile,
+            addressLine1: addressForm.addressLine1,
+            addressLine2: addressForm.addressLine2 || null,
+            city: addressForm.city,
+            state: addressForm.state,
+            pincode: addressForm.pincode,
+          }
+        : undefined,
+      items: orderItems,
+      paymentMethod,
+    };
+
+    accountService
+      .createOrder(orderPayload)
+      .then((createdOrder) => {
+        setIsProcessingPayment(false);
+        clearCart();
+        const orderNo = createdOrder.orderNumber || createdOrder.id;
         toast.success('Order placed successfully!');
-        router.push(`/checkout/success?orderId=${mockOrderNo}`);
-      } else if (paymentMethod === 'card') {
-        // Standard card payment completes successfully
-        toast.success('Payment completed successfully!');
-        router.push(`/checkout/success?orderId=${mockOrderNo}`);
-      } else {
-        // UPI and Net Banking trigger the callback verification (pending screen)
-        toast.success('Authentication request sent to your app.');
-        router.push(`/checkout/pending?orderId=${mockOrderNo}`);
-      }
-    }, 2000);
+        router.push(`/checkout/success?orderId=${orderNo}`);
+      })
+      .catch((err: any) => {
+        setIsProcessingPayment(false);
+        console.error('Failed to place order:', err);
+        toast.error(err?.message || 'Failed to place order. Please try again.');
+      });
   };
+
 
   // Pre-formatted Whatsapp message
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
@@ -413,7 +405,7 @@ export default function CheckoutPage() {
                       </h3>
                       
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {mockSavedAddresses.map(addr => (
+                        {savedAddresses.map(addr => (
                           <div
                             key={addr.id}
                             onClick={() => { setSelectedAddressId(addr.id); setUseNewAddress(false); }}
@@ -423,17 +415,17 @@ export default function CheckoutPage() {
                                 : 'border-neutral-200 dark:border-neutral-800 bg-transparent hover:border-neutral-350'
                             }`}
                           >
-                            <h4 className="font-bold text-sm text-neutral-905 dark:text-white">
-                              {addr.name}
+                            <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                              {addr.fullName}
                             </h4>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-450 mt-1">
-                              {addr.addressLine1}, {addr.addressLine2}
+                            <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-1">
+                              {addr.addressLine1}{addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
                             </p>
-                            <p className="text-xs text-neutral-600 dark:text-neutral-450">
-                              {addr.city}, {addr.state} - <span className="font-bold">{addr.pincode}</span>
+                            <p className="text-xs text-neutral-600 dark:text-neutral-400">
+                              {addr.city}, {addr.state} - <span className="font-bold">{addr.postalCode}</span>
                             </p>
                             <p className="text-[10px] font-bold text-neutral-500 mt-2">
-                              Mobile: {addr.mobile}
+                              Mobile: {addr.phone}
                             </p>
                             {selectedAddressId === addr.id && !useNewAddress && (
                               <span className="absolute top-3 right-3 bg-primary-500 text-white rounded-full p-0.5">
@@ -443,6 +435,13 @@ export default function CheckoutPage() {
                           </div>
                         ))}
                       </div>
+
+                      {savedAddresses.length === 0 && !isLoadingAddresses && (
+                        <p className="text-xs text-neutral-500 italic">
+                          No saved delivery addresses found. Please enter your address details below.
+                        </p>
+                      )}
+
 
                       <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3">
                         <label className="flex items-center gap-2.5 text-xs font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest cursor-pointer select-none">

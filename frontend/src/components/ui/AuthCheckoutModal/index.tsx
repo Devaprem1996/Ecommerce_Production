@@ -675,16 +675,12 @@ export const AuthCheckoutModal: React.FC<AuthCheckoutModalProps> = ({
                 </div>
               )}
 
-              {/* Guest Checkout Option */}
-              <div className="mt-5 pt-4 border-t border-neutral-100 dark:border-neutral-800 text-center">
-                <button
-                  type="button"
-                  onClick={handleGuestCheckout}
-                  className="text-xs font-semibold text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 transition-colors cursor-pointer"
-                >
-                  Or <span className="underline font-bold">Continue to Checkout as Guest</span>
-                </button>
+              {/* Security reassurance */}
+              <div className="mt-5 pt-3.5 border-t border-neutral-100 dark:border-neutral-800 text-center flex items-center justify-center gap-2 text-[11px] font-semibold text-neutral-400">
+                <ShieldCheck className="w-4 h-4 text-primary-500 shrink-0" />
+                <span>Sign in securely to auto-fill delivery addresses and track orders</span>
               </div>
+
 
             </div>
           </motion.div>

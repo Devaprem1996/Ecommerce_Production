@@ -1,12 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, Lock } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
+import { useAuthStore } from '@/store/auth-store';
+import { AuthCheckoutModal } from '@/components/ui/AuthCheckoutModal';
 import { Button } from '@/components/ui/Button';
 
 export const MiniCart: React.FC = () => {
@@ -14,6 +16,9 @@ export const MiniCart: React.FC = () => {
   const currentLang = i18n.language;
   const router = useRouter();
   const pathname = usePathname();
+  const { isAuthenticated } = useAuthStore();
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   const {
     items,
     isMiniCartOpen,
@@ -46,6 +51,16 @@ export const MiniCart: React.FC = () => {
   const handleNavigate = (path: string) => {
     closeMiniCart();
     router.push(path);
+  };
+
+  const handleProceedToCheckout = () => {
+    if (items.length === 0) return;
+    if (!isAuthenticated) {
+      setIsAuthModalOpen(true);
+      return;
+    }
+    closeMiniCart();
+    router.push('/checkout');
   };
 
   if (pathname?.startsWith('/admin')) {
@@ -231,8 +246,8 @@ export const MiniCart: React.FC = () => {
                   <Button
                     variant="cta"
                     size="lg"
-                    onClick={() => handleNavigate('/checkout')}
-                    className="w-full font-bold text-sm bg-gradient-to-r from-primary-500 to-primary-700 text-white shadow-md"
+                    onClick={handleProceedToCheckout}
+                    className="w-full font-bold text-sm bg-gradient-to-r from-primary-500 to-primary-700 text-white shadow-md cursor-pointer"
                     rightIcon={<ArrowRight className="w-4 h-4" />}
                   >
                     Proceed to Checkout
@@ -241,7 +256,7 @@ export const MiniCart: React.FC = () => {
                     variant="secondary"
                     size="md"
                     onClick={() => handleNavigate('/cart')}
-                    className="w-full font-bold text-xs border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800"
+                    className="w-full font-bold text-xs border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
                   >
                     {t('cart.view_bag', 'View Cart Page')}
                   </Button>
@@ -254,8 +269,19 @@ export const MiniCart: React.FC = () => {
               </div>
             )}
           </motion.div>
+
+          {/* Authentication Modal Portal */}
+          <AuthCheckoutModal
+            isOpen={isAuthModalOpen}
+            onClose={() => setIsAuthModalOpen(false)}
+            onSuccess={() => {
+              closeMiniCart();
+              router.push('/checkout');
+            }}
+          />
         </>
       )}
     </AnimatePresence>
   );
 };
+

@@ -193,6 +193,35 @@ class AccountService {
   async setDefaultAddress(addressId: string): Promise<void> {
     await apiClient.patch(`/user/addresses/${addressId}/default`);
   }
+
+  /**
+   * Place a new customer order
+   */
+  async createOrder(data: {
+    addressId?: string;
+    shippingAddress?: {
+      name: string;
+      mobile: string;
+      addressLine1: string;
+      addressLine2?: string | null;
+      city: string;
+      state: string;
+      pincode: string;
+    };
+    items: Array<{
+      productId?: string;
+      variantId?: string;
+      productName?: string;
+      price?: number;
+      quantity?: number;
+    }>;
+    paymentMethod?: string;
+    couponCode?: string;
+  }): Promise<CustomerOrder> {
+    const res = await apiClient.post<{ order: CustomerOrder }>("/user/orders", data);
+    return res.data!.order;
+  }
 }
 
 export const accountService = new AccountService();
+

@@ -40,3 +40,34 @@ export const updateAddressSchema = z.object({
     isDefault: z.boolean().optional(),
   }),
 });
+
+export const createOrderSchema = z.object({
+  body: z.object({
+    addressId: z.string().optional(),
+    shippingAddress: z
+      .object({
+        name: z.string().min(2),
+        mobile: z.string().min(10),
+        addressLine1: z.string().min(3),
+        addressLine2: z.string().optional().nullable(),
+        city: z.string().min(2),
+        state: z.string().min(2),
+        pincode: z.string().min(4),
+      })
+      .optional(),
+    items: z
+      .array(
+        z.object({
+          productId: z.string().optional(),
+          variantId: z.string().optional(),
+          productName: z.string().optional(),
+          price: z.number().nonnegative().optional(),
+          quantity: z.number().int().positive().default(1),
+        })
+      )
+      .min(1, "At least one item is required in the order"),
+    paymentMethod: z.string().default("upi"),
+    couponCode: z.string().optional(),
+  }),
+});
+
