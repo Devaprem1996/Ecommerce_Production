@@ -10,10 +10,11 @@ import { MobileMenu } from '../MobileMenu';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartStore } from '@/store/cartStore';
-import { Search, Heart, ShoppingBag, X, User } from 'lucide-react';
+import { Search, Heart, ShoppingBag, X, User, LogOut, ChevronDown } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useAuthStore } from '@/store/auth-store';
+import { SignOutModal } from '@/components/auth/SignOutModal';
 
 export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const { t } = useTranslation();
@@ -23,11 +24,32 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const userMenuRef = React.useRef<HTMLDivElement>(null);
 
   const cartCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const openMiniCart = useCartStore((state) => state.openMiniCart);
   const wishlistCount = useWishlist((state) => state.items.length);
-  const { isLoggedIn } = useAuthStore();
+  const { user, isLoggedIn } = useAuthStore();
+
+  // Close profile dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+    if (isUserMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isUserMenuOpen]);
+
+  // Close profile dropdown on route change
+  useEffect(() => {
+    setIsUserMenuOpen(false);
+  }, [pathname]);
 
   // Synchronize wishlist from live database when logged in
   useEffect(() => {
@@ -248,14 +270,131 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               )}
             </button>
 
-            {/* Account Icon (Desktop) */}
-            <Link
-              href="/account"
-              className="hidden md:flex p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] items-center justify-center cursor-pointer"
-              aria-label="View Account"
-            >
-              <User className={`w-5 h-5 ${isLoggedIn ? 'text-primary-500' : ''}`} />
-            </Link>
+            {/* Account Icon / Profile Pill (Desktop) */}
+            {isLoggedIn ? (
+              <div className="hidden md:flex items-center gap-1 relative" ref={userMenuRef}>
+                {/* Profile Pill Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className={clsx(
+                    "flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-full transition-all cursor-pointer border select-none focus:outline-none",
+                    isUserMenuOpen
+                      ? "bg-primary-50 dark:bg-primary-950/30 border-primary-300 dark:border-primary-700 text-primary-900 dark:text-primary-100"
+                      : !shouldRenderTransparent
+                        ? "bg-neutral-100/90 hover:bg-neutral-200/70 dark:bg-neutral-800 dark:hover:bg-neutral-750 text-neutral-850 dark:text-neutral-100 border-neutral-200 dark:border-neutral-750"
+                        : "bg-white/15 hover:bg-white/25 border-white/25 text-white"
+                  )}
+                  aria-expanded={isUserMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <div className="w-6 h-6 rounded-full bg-primary-600 text-white font-bold text-xs flex items-center justify-center shadow-xs">
+                    {(user?.name ? user.name.split(' ')[0] : user?.firstName || user?.email?.split('@')[0] || 'A').charAt(0).toUpperCase()}
+                  </div>
+                  <span className="text-xs font-bold max-w-[100px] truncate">
+                    {user?.name ? user.name.split(' ')[0] : user?.firstName || user?.email?.split('@')[0] || 'Account'}
+                  </span>
+                  <ChevronDown className={clsx("w-3.5 h-3.5 transition-transform duration-200", isUserMenuOpen && "rotate-180")} />
+                </button>
+
+                {/* Quick Sign Out Icon Button */}
+                <button
+                  type="button"
+                  onClick={() => setShowSignOutModal(true)}
+                  className={clsx(
+                    "p-2 rounded-full transition-colors focus:outline-none min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer",
+                    !shouldRenderTransparent
+                      ? "hover:bg-red-50 dark:hover:bg-red-950/20 text-neutral-500 hover:text-red-500"
+                      : "text-white/80 hover:text-red-300 hover:bg-white/15"
+                  )}
+                  title="Sign Out"
+                  aria-label="Sign Out"
+                >
+                  <LogOut className="w-4 h-4" />
+                </button>
+
+                {/* Profile Dropdown Menu */}
+                <AnimatePresence>
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 8, scale: 0.96 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: 8, scale: 0.96 }}
+                      transition={{ duration: 0.15 }}
+                      className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature shadow-2xl py-2 z-50 overflow-hidden text-neutral-900 dark:text-neutral-100"
+                    >
+                      {/* User Info Header */}
+                      <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-950/30">
+                        <p className="text-xs font-bold truncate text-neutral-900 dark:text-white">
+                          {user?.name || user?.email?.split('@')[0] || 'Member'}
+                        </p>
+                        <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mt-0.5 font-medium">
+                          {user?.email || user?.mobile || 'Verified Member'}
+                        </p>
+                      </div>
+
+                      {/* Menu Links */}
+                      <div className="py-1">
+                        <Link
+                          href="/account"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        >
+                          <User className="w-3.5 h-3.5" />
+                          <span>Dashboard</span>
+                        </Link>
+                        <Link
+                          href="/account/orders"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5" />
+                          <span>My Orders</span>
+                        </Link>
+                        <Link
+                          href="/account/wishlist"
+                          onClick={() => setIsUserMenuOpen(false)}
+                          className="flex items-center justify-between px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <Heart className="w-3.5 h-3.5" />
+                            <span>Wishlist</span>
+                          </div>
+                          {wishlistCount > 0 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
+                              {wishlistCount}
+                            </span>
+                          )}
+                        </Link>
+                      </div>
+
+                      {/* Sign Out Action in Dropdown */}
+                      <div className="border-t border-neutral-100 dark:border-neutral-800 pt-1 mt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsUserMenuOpen(false);
+                            setShowSignOutModal(true);
+                          }}
+                          className="w-full flex items-center gap-2.5 px-4 py-2 text-xs font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors cursor-pointer text-left"
+                        >
+                          <LogOut className="w-3.5 h-3.5" />
+                          <span>Sign Out</span>
+                        </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            ) : (
+              <Link
+                href="/login"
+                className="hidden md:flex p-2 rounded-full hover:bg-neutral-100/10 transition-colors focus:outline-none relative min-w-[36px] min-h-[36px] items-center justify-center cursor-pointer"
+                aria-label="View Account"
+              >
+                <User className="w-5 h-5" />
+              </Link>
+            )}
 
           </div>
         </div>
@@ -263,6 +402,9 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
       {/* Mobile menu drawer */}
       <MobileMenu isOpen={isMobileMenuOpen} onClose={() => setIsMobileMenuOpen(false)} />
+
+      {/* Sign Out Confirmation Modal */}
+      <SignOutModal isOpen={showSignOutModal} onClose={() => setShowSignOutModal(false)} />
     </>
   );
 };

@@ -7,10 +7,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MobileMenuProps } from './MobileMenu.types';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
-import { X, ChevronDown, User, Heart, ShoppingBag, Truck, Globe } from 'lucide-react';
+import { X, ChevronDown, User, Heart, ShoppingBag, Truck, Globe, LogOut } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useAuthStore } from '@/store/auth-store';
+import { SignOutModal } from '@/components/auth/SignOutModal';
 
 const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" {...props}>
@@ -35,6 +36,7 @@ const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
   const [shopExpanded, setShopExpanded] = useState(false);
+  const [showSignOutModal, setShowSignOutModal] = useState(false);
   const { user, isLoggedIn } = useAuthStore();
 
   const cartCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
@@ -60,7 +62,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   ];
 
   return (
-    <AnimatePresence>
+    <>
+      <AnimatePresence>
       {isOpen && (
         <>
           {/* Backdrop overlay */}
@@ -97,20 +100,31 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                   <User className="w-6 h-6" />
                 </div>
                 {isLoggedIn && user ? (
-                  <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none">
-                    <span className="text-sm text-primary-200 leading-tight font-medium">
-                      {t('nav.welcome', 'Welcome')},
-                    </span>
-                    <span className="text-base font-bold leading-tight hover:text-primary-205 transition-colors">
-                      {user.name}
-                    </span>
-                  </Link>
+                  <div className="flex items-center justify-between flex-1 min-w-0 pr-1">
+                    <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none min-w-0">
+                      <span className="text-xs text-primary-200 leading-tight font-medium">
+                        {t('nav.welcome', 'Welcome')},
+                      </span>
+                      <span className="text-base font-bold leading-tight hover:text-primary-100 transition-colors truncate">
+                        {user.name || 'Customer'}
+                      </span>
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowSignOutModal(true)}
+                      className="p-2 rounded-full bg-white/10 hover:bg-red-500/20 text-white hover:text-red-200 transition-colors cursor-pointer ml-2 flex items-center justify-center min-w-[36px] min-h-[36px]"
+                      title="Sign Out"
+                      aria-label="Sign Out"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
+                  </div>
                 ) : (
-                  <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none">
-                    <span className="text-sm text-primary-200 leading-tight font-medium">
+                  <Link href="/login" onClick={onClose} className="flex flex-col text-left focus:outline-none">
+                    <span className="text-xs text-primary-200 leading-tight font-medium">
                       {t('nav.welcome_guest', 'Welcome Guest')}
                     </span>
-                    <span className="text-base font-bold leading-tight hover:text-primary-205 transition-colors">
+                    <span className="text-base font-bold leading-tight hover:text-primary-100 transition-colors">
                       {t('nav.login_signup', 'Login / Signup')}
                     </span>
                   </Link>
@@ -239,6 +253,18 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                 </span>
               </button>
 
+              {/* Mobile Drawer Sign Out Button */}
+              {isLoggedIn && (
+                <button
+                  type="button"
+                  onClick={() => setShowSignOutModal(true)}
+                  className="flex items-center justify-center gap-2 w-full text-xs font-bold text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/40 rounded-card p-2.5 bg-red-50/60 dark:bg-red-950/20 hover:bg-red-100/60 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Sign Out</span>
+                </button>
+              )}
+
               {/* Social icons */}
               <div className="flex items-center justify-center gap-5 mt-2">
                 <span
@@ -268,6 +294,14 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
         </>
       )}
     </AnimatePresence>
+
+    {/* Sign Out Confirmation Modal */}
+    <SignOutModal
+      isOpen={showSignOutModal}
+      onClose={() => setShowSignOutModal(false)}
+      onSuccess={onClose}
+    />
+    </>
   );
 };
 

@@ -50,7 +50,11 @@ function LoginForm() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [isShaking, setIsShaking] = useState(false);
 
-  const redirectUrl = (searchParams ?? new URLSearchParams()).get('redirect') || '/account';
+  const rawRedirect = (searchParams ?? new URLSearchParams()).get('redirect');
+  // Default login redirect is Homepage ('/'). If redirect explicitly specifies a flow like '/checkout', honor that.
+  const redirectUrl = (!rawRedirect || rawRedirect === '/account' || rawRedirect === '/') 
+    ? '/' 
+    : rawRedirect;
 
   // Redirect if already logged in
   useEffect(() => {
@@ -110,7 +114,8 @@ function LoginForm() {
 
         // Save session in Zustand store
         login(res.data.user, res.data.accessToken);
-        toast.success(`Welcome back, ${res.data.user.email}!`);
+        const displayName = res.data.user.name || res.data.user.firstName || res.data.user.email?.split('@')[0] || 'Customer';
+        toast.success(`Welcome back, ${displayName}!`);
 
         setTimeout(() => {
           if (res.data.user.role?.toLowerCase() === 'admin') {
@@ -191,7 +196,8 @@ function LoginForm() {
           document.cookie = `access_token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
         login(data.user, data.accessToken);
-        toast.success('Successfully logged in!');
+        const displayName = data.user?.name || data.user?.firstName || data.user?.email?.split('@')[0] || 'Customer';
+        toast.success(`Welcome back, ${displayName}!`);
 
         setTimeout(() => {
           router.replace(redirectUrl);
