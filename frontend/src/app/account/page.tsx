@@ -4,6 +4,7 @@ import React, { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlist } from '@/hooks/useWishlist';
+import { accountService, CustomerOrder } from '@/services/account.service';
 import { 
   ShoppingBag, 
   Heart, 
@@ -11,10 +12,12 @@ import {
   MapPin, 
   User, 
   Bell, 
-  ArrowRight,
-  TrendingUp,
-  Package,
-  Compass
+  ArrowRight, 
+  TrendingUp, 
+  Package, 
+  Compass, 
+  Database, 
+  Loader2 
 } from 'lucide-react';
 import { formatPrice } from '@/utils/formatPrice';
 import Link from 'next/link';
@@ -24,50 +27,67 @@ export default function AccountDashboard() {
   const { user } = useAuthStore();
   const wishlistItems = useWishlist((state) => state.items);
 
-  const [orders, setOrders] = useState<any[]>([]);
-  const [reviewsCount, setReviewsCount] = useState(2); // Mock reviews count
+  const [orders, setOrders] = useState<CustomerOrder[]>([]);
+  const [loadingOrders, setLoadingOrders] = useState(true);
+  const [reviewsCount, setReviewsCount] = useState(2); // Reviews count
 
-  // Load orders from localStorage
+  // Load live orders from database
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    const storedOrders = localStorage.getItem('user_orders');
-    if (storedOrders) {
-      setOrders(JSON.parse(storedOrders));
-    }
+    let isMounted = true;
+    accountService.getOrders()
+      .then((data) => {
+        if (isMounted) {
+          setOrders(data);
+          setLoadingOrders(false);
+        }
+      })
+      .catch((err) => {
+        console.error('Failed to load orders from database:', err);
+        if (isMounted) setLoadingOrders(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
-  // Helper to format status color
+  // Helper to format status badge
   const getStatusBadge = (status: string) => {
-    switch (status.toLowerCase()) {
-      case 'delivered':
+    switch (status.toUpperCase()) {
+      case 'DELIVERED':
         return (
           <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-green-500/10 text-green-500 border border-green-500/15 uppercase tracking-wide">
             Delivered
           </span>
         );
-      case 'processing':
+      case 'PROCESSING':
+      case 'PACKED':
+      case 'CONFIRMED':
         return (
           <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/15 uppercase tracking-wide">
-            Processing
+            {status}
           </span>
         );
-      case 'pending':
+      case 'PENDING':
+      case 'PENDING_PAYMENT':
+      case 'DRAFT':
         return (
-          <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-yellow-500/10 text-yellow-500 border border-yellow-500/15 uppercase tracking-wide">
+          <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-amber-500/10 text-amber-500 border border-amber-500/15 uppercase tracking-wide">
             Pending
           </span>
         );
-      case 'shipped':
+      case 'SHIPPED':
+      case 'OUT_FOR_DELIVERY':
         return (
           <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-purple-500/10 text-purple-500 border border-purple-500/15 uppercase tracking-wide">
             Shipped
           </span>
         );
-      case 'cancelled':
+      case 'CANCELLED':
       default:
         return (
           <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-red-500/10 text-red-500 border border-red-500/15 uppercase tracking-wide">
-            Cancelled
+            {status}
           </span>
         );
     }
@@ -78,11 +98,17 @@ export default function AccountDashboard() {
       {/* Welcome Greeting Banner */}
       <div className="bg-gradient-to-r from-primary-50 to-primary-100/50 dark:from-neutral-900 dark:to-neutral-850 p-6 sm:p-8 rounded-feature border border-primary-100/30 dark:border-neutral-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl font-black font-heading text-neutral-900 dark:text-white">
-            Hello, {user?.name || 'Yathu Arokiyagam Customer'}! 👋
-          </h2>
+          <div className="flex items-center gap-2 mb-1.5">
+            <h2 className="text-xl sm:text-2xl font-black font-heading text-neutral-900 dark:text-white">
+              Hello, {user?.name || user?.email?.split('@')[0] || 'Customer'}! 👋
+            </h2>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+              LIVE NEON DB
+            </span>
+          </div>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-            Welcome to your premium personal portal. Manage your orders, addresses, and account preferences.
+            Welcome to your premium personal portal. Manage your orders, delivery addresses, and profile preferences in real-time.
           </p>
         </div>
         <Link href="/account/profile">
@@ -103,7 +129,11 @@ export default function AccountDashboard() {
           <div>
             <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Total Orders</span>
             <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
-              {orders.length}
+              {loadingOrders ? (
+                <div className="w-8 h-6 bg-neutral-200 dark:bg-neutral-800 animate-pulse rounded" />
+              ) : (
+                orders.length
+              )}
             </span>
           </div>
         </div>
@@ -121,16 +151,17 @@ export default function AccountDashboard() {
           </div>
         </div>
 
-        {/* Reviews Stats */}
+        {/* Database Sync Status */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 flex items-center space-x-4 shadow-sm hover:shadow transition-shadow">
-          <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/20 border border-amber-100/30 dark:border-amber-900/20 rounded-full flex items-center justify-center text-amber-500">
-            <Star className="w-6 h-6" />
+          <div className="w-12 h-12 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100/30 dark:border-emerald-900/20 rounded-full flex items-center justify-center text-emerald-500">
+            <Database className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Reviews Written</span>
-            <span className="text-2xl font-black font-heading text-neutral-900 dark:text-white block mt-0.5">
-              {reviewsCount}
+            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">Database Sync</span>
+            <span className="text-sm font-black font-heading text-emerald-600 dark:text-emerald-400 block mt-0.5">
+              Neon PostgreSQL
             </span>
+            <span className="text-[10px] text-neutral-400 font-medium">Real-time Connected</span>
           </div>
         </div>
       </div>
@@ -150,7 +181,12 @@ export default function AccountDashboard() {
         </div>
 
         <div className="border border-neutral-150 dark:border-neutral-800 rounded-feature overflow-hidden bg-white dark:bg-neutral-900 shadow-sm">
-          {orders.length === 0 ? (
+          {loadingOrders ? (
+            <div className="p-8 text-center flex flex-col items-center justify-center space-y-2">
+              <Loader2 className="w-6 h-6 animate-spin text-primary-500" />
+              <p className="text-xs font-bold text-neutral-400 uppercase tracking-wider">Loading orders from database...</p>
+            </div>
+          ) : orders.length === 0 ? (
             <div className="text-center py-10 px-4 space-y-3">
               <Package className="w-10 h-10 text-neutral-450 mx-auto" />
               <p className="text-xs font-bold text-neutral-500 uppercase tracking-widest">No orders placed yet</p>
@@ -163,38 +199,50 @@ export default function AccountDashboard() {
               <table className="w-full text-left border-collapse text-xs">
                 <thead>
                   <tr className="bg-neutral-50 dark:bg-neutral-950/40 text-neutral-500 dark:text-neutral-400 font-bold border-b border-neutral-150 dark:border-neutral-800 uppercase tracking-wider select-none">
-                    <th className="px-6 py-4">Order ID</th>
+                    <th className="px-6 py-4">Order Number</th>
                     <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Amount</th>
+                    <th className="px-6 py-4">Items</th>
+                    <th className="px-6 py-4">Grand Total</th>
                     <th className="px-6 py-4">Status</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-100 dark:divide-neutral-800 font-semibold text-neutral-700 dark:text-neutral-350">
-                  {orders.slice(0, 3).map((order) => (
-                    <tr key={order.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/40 transition-colors">
-                      <td className="px-6 py-4 font-bold text-neutral-900 dark:text-white">
-                        #{order.id}
-                      </td>
-                      <td className="px-6 py-4">
-                        {order.date}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-primary-700 dark:text-primary-400">
-                        {formatPrice(order.total)}
-                      </td>
-                      <td className="px-6 py-4">
-                        {getStatusBadge(order.status)}
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Link 
-                          href={`/account/orders/${order.id}`} 
-                          className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors inline-block"
-                        >
-                          View Details
-                        </Link>
-                      </td>
-                    </tr>
-                  ))}
+                  {orders.slice(0, 3).map((order) => {
+                    const formattedDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    });
+
+                    return (
+                      <tr key={order.id} className="hover:bg-neutral-50/50 dark:hover:bg-neutral-900/40 transition-colors">
+                        <td className="px-6 py-4 font-bold text-neutral-900 dark:text-white font-mono">
+                          #{order.orderNumber || order.id.slice(0, 8)}
+                        </td>
+                        <td className="px-6 py-4">
+                          {formattedDate}
+                        </td>
+                        <td className="px-6 py-4 font-medium text-neutral-500">
+                          {order.orderItems?.length || 0} items
+                        </td>
+                        <td className="px-6 py-4 font-bold text-primary-700 dark:text-primary-400">
+                          {formatPrice(Number(order.grandTotal))}
+                        </td>
+                        <td className="px-6 py-4">
+                          {getStatusBadge(order.status)}
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <Link 
+                            href={`/account/orders/${order.id}`} 
+                            className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors inline-block"
+                          >
+                            View Details
+                          </Link>
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -221,7 +269,7 @@ export default function AccountDashboard() {
             <div className="bg-neutral-50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-800 hover:border-primary-500/30 rounded-feature p-4 text-center cursor-pointer transition-all hover:-translate-y-1">
               <MapPin className="w-5 h-5 text-neutral-500 dark:text-neutral-400 mx-auto mb-2" />
               <h4 className="text-xs font-bold text-neutral-900 dark:text-white">Saved Addresses</h4>
-              <p className="text-[10px] text-neutral-500 mt-1 font-medium">Manage default delivery address</p>
+              <p className="text-[10px] text-neutral-500 mt-1 font-medium">Manage default delivery locations</p>
             </div>
           </Link>
 

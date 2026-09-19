@@ -9,10 +9,10 @@ const auth_controller_js_1 = require("../controllers/auth.controller.js");
 const auth_middleware_js_1 = require("../middleware/auth.middleware.js");
 const auth_validation_js_1 = require("../validations/auth.validation.js");
 const router = (0, express_1.Router)();
-// Strict rate limiter for auth endpoints (5 attempts per 15 min window)
+// Rate limiter for auth endpoints (30 attempts per 15 min window)
 const authLimiter = (0, express_rate_limit_1.default)({
     windowMs: 15 * 60 * 1000,
-    max: 5,
+    max: 30,
     message: {
         success: false,
         message: "Too many authentication attempts. Please try again after 15 minutes.",

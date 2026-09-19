@@ -6,30 +6,19 @@ import {
   Plus, 
   Trash2, 
   Edit3, 
-  Check, 
-  AlertCircle,
-  X,
-  Home,
-  Briefcase
+  X, 
+  Loader2 
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
-
-interface Address {
-  id: string;
-  name: string;
-  mobile: string;
-  street: string;
-  city: string;
-  state: string;
-  pincode: string;
-  isDefault: boolean;
-}
+import { accountService, UserAddress } from '@/services/account.service';
 
 export default function AddressesPage() {
-  const [addresses, setAddresses] = useState<Address[]>([]);
+  const [addresses, setAddresses] = useState<UserAddress[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
+  const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
 
   // Form Fields
   const [name, setName] = useState('');
@@ -39,12 +28,17 @@ export default function AddressesPage() {
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
 
-  // Load Addresses
-  const loadAddresses = () => {
-    if (typeof window === 'undefined') return;
-    const stored = localStorage.getItem('user_addresses');
-    if (stored) {
-      setAddresses(JSON.parse(stored));
+  // Load Addresses from live Neon DB
+  const loadAddresses = async () => {
+    try {
+      setLoading(true);
+      const data = await accountService.getAddresses();
+      setAddresses(data);
+    } catch (err: any) {
+      console.error('Failed to load addresses:', err);
+      toast.error('Failed to load addresses from server.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -54,8 +48,8 @@ export default function AddressesPage() {
 
   // Open Drawer for Add Address
   const handleAddClick = () => {
-    if (addresses.length >= 5) {
-      toast.error('Maximum limit of 5 saved addresses reached. Please delete an address to add a new one.');
+    if (addresses.length >= 10) {
+      toast.error('Maximum limit of 10 saved addresses reached. Please remove an address to add a new one.');
       return;
     }
     setEditingAddress(null);
@@ -69,47 +63,47 @@ export default function AddressesPage() {
   };
 
   // Open Drawer for Edit Address
-  const handleEditClick = (address: Address) => {
+  const handleEditClick = (address: UserAddress) => {
     setEditingAddress(address);
-    setName(address.name);
-    setMobile(address.mobile);
-    setStreet(address.street);
+    setName(address.fullName);
+    setMobile(address.phone);
+    setStreet(address.addressLine1);
     setCity(address.city);
     setState(address.state);
-    setPincode(address.pincode);
+    setPincode(address.postalCode);
     setShowDrawer(true);
   };
 
-  // Delete Address
-  const handleDeleteAddress = (id: string) => {
-    const updated = addresses.filter(addr => addr.id !== id);
-    // If the deleted address was default, set the first remaining address as default
-    if (addresses.find(addr => addr.id === id)?.isDefault && updated.length > 0) {
-      updated[0].isDefault = true;
+  // Delete Address from live Neon DB
+  const handleDeleteAddress = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this address?')) return;
+    try {
+      await accountService.deleteAddress(id);
+      toast.success('Address deleted successfully.');
+      await loadAddresses();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to delete address.');
     }
-    localStorage.setItem('user_addresses', JSON.stringify(updated));
-    setAddresses(updated);
-    toast.success('Address deleted successfully.');
   };
 
-  // Set Address as Default
-  const handleSetDefault = (id: string) => {
-    const updated = addresses.map(addr => ({
-      ...addr,
-      isDefault: addr.id === id
-    }));
-    localStorage.setItem('user_addresses', JSON.stringify(updated));
-    setAddresses(updated);
-    toast.success('Default address updated.');
+  // Set Address as Default in live Neon DB
+  const handleSetDefault = async (id: string) => {
+    try {
+      await accountService.setDefaultAddress(id);
+      toast.success('Default delivery address updated.');
+      await loadAddresses();
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to set default address.');
+    }
   };
 
   // Handle Form Submit
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if (name.trim().length < 3) {
-      toast.error('Name must be at least 3 characters.');
+    if (name.trim().length < 2) {
+      toast.error('Name must be at least 2 characters.');
       return;
     }
     if (!/^\d{10}$/.test(mobile)) {
@@ -120,57 +114,55 @@ export default function AddressesPage() {
       toast.error('Street address must be at least 5 characters.');
       return;
     }
-    if (city.trim().length < 3) {
-      toast.error('City must be at least 3 characters.');
+    if (city.trim().length < 2) {
+      toast.error('City must be at least 2 characters.');
       return;
     }
-    if (state.trim().length < 3) {
-      toast.error('State must be at least 3 characters.');
+    if (state.trim().length < 2) {
+      toast.error('State must be at least 2 characters.');
       return;
     }
-    if (!/^\d{6}$/.test(pincode)) {
-      toast.error('Pincode must be exactly 6 digits.');
+    if (!/^\d{4,10}$/.test(pincode)) {
+      toast.error('Please enter a valid postal code.');
       return;
     }
 
-    let updatedAddresses: Address[] = [];
+    setSaving(true);
 
-    if (editingAddress) {
-      // Edit mode
-      updatedAddresses = addresses.map(addr => {
-        if (addr.id === editingAddress.id) {
-          return {
-            ...addr,
-            name,
-            mobile,
-            street,
-            city,
-            state,
-            pincode
-          };
-        }
-        return addr;
-      });
-      toast.success('Address updated successfully.');
-    } else {
-      // Add mode
-      const newAddress: Address = {
-        id: `addr-${Date.now()}`,
-        name,
-        mobile,
-        street,
-        city,
-        state,
-        pincode,
-        isDefault: addresses.length === 0 // Default if it's the first address
-      };
-      updatedAddresses = [...addresses, newAddress];
-      toast.success('New address added successfully.');
+    try {
+      if (editingAddress) {
+        // Edit mode
+        await accountService.updateAddress(editingAddress.id, {
+          fullName: name.trim(),
+          phone: mobile.trim(),
+          addressLine1: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          postalCode: pincode.trim(),
+        });
+        toast.success('Address updated successfully in database.');
+      } else {
+        // Add mode
+        await accountService.createAddress({
+          fullName: name.trim(),
+          phone: mobile.trim(),
+          addressLine1: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          postalCode: pincode.trim(),
+          country: 'India',
+          isDefault: addresses.length === 0,
+        });
+        toast.success('New address added to database.');
+      }
+
+      await loadAddresses();
+      setShowDrawer(false);
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to save address.');
+    } finally {
+      setSaving(false);
     }
-
-    localStorage.setItem('user_addresses', JSON.stringify(updatedAddresses));
-    setAddresses(updatedAddresses);
-    setShowDrawer(false);
   };
 
   return (
@@ -182,13 +174,13 @@ export default function AddressesPage() {
             Saved Addresses
           </h2>
           <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-            Manage your delivery locations. (Max 5 addresses)
+            Manage your delivery locations stored in the Neon database. (Max 10 addresses)
           </p>
         </div>
 
         <button
           onClick={handleAddClick}
-          disabled={addresses.length >= 5}
+          disabled={addresses.length >= 10 || loading}
           className="flex items-center justify-center space-x-1.5 px-4 py-2 bg-primary-500 hover:bg-primary-600 disabled:bg-neutral-250 disabled:text-neutral-500 border-none text-xs font-bold text-white rounded-card cursor-pointer transition-colors shadow-sm select-none"
         >
           <Plus className="w-4 h-4" />
@@ -197,7 +189,14 @@ export default function AddressesPage() {
       </div>
 
       {/* Addresses Grid */}
-      {addresses.length === 0 ? (
+      {loading ? (
+        <div className="text-center py-16 px-4 bg-neutral-50/50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature flex flex-col items-center justify-center space-y-3">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-500" />
+          <p className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
+            Loading saved addresses from database...
+          </p>
+        </div>
+      ) : addresses.length === 0 ? (
         <div className="text-center py-16 px-4 bg-neutral-50/50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature space-y-4">
           <div className="w-14 h-14 bg-neutral-200/50 dark:bg-neutral-800 rounded-full flex items-center justify-center text-neutral-450 mx-auto">
             <MapPin className="w-6 h-6" />
@@ -205,9 +204,15 @@ export default function AddressesPage() {
           <div className="space-y-1">
             <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">No Addresses Saved</h3>
             <p className="text-xs text-neutral-500 dark:text-neutral-450 max-w-xs mx-auto">
-              Please add a shipping address to facilitate speedier checkouts.
+              Please add a delivery address to facilitate faster checkout.
             </p>
           </div>
+          <button
+            onClick={handleAddClick}
+            className="px-5 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs rounded-card border-none cursor-pointer shadow-sm"
+          >
+            Add Address Now
+          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -224,7 +229,7 @@ export default function AddressesPage() {
               <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <h4 className="text-sm font-bold text-neutral-900 dark:text-white truncate">
-                    {addr.name}
+                    {addr.fullName}
                   </h4>
                   {addr.isDefault && (
                     <span className="px-2 py-0.5 text-[10px] font-bold rounded bg-primary-500/10 text-primary-500 border border-primary-500/15 uppercase tracking-wider select-none">
@@ -234,13 +239,14 @@ export default function AddressesPage() {
                 </div>
                 
                 <p className="text-xs text-neutral-600 dark:text-neutral-350 font-semibold leading-relaxed">
-                  {addr.street}
+                  {addr.addressLine1}
+                  {addr.addressLine2 ? `, ${addr.addressLine2}` : ''}
                 </p>
                 <p className="text-xs text-neutral-600 dark:text-neutral-350 font-semibold">
-                  {addr.city}, {addr.state} - <span className="font-bold">{addr.pincode}</span>
+                  {addr.city}, {addr.state} - <span className="font-bold">{addr.postalCode}</span>
                 </p>
                 <p className="text-[11px] text-neutral-500 font-medium pt-1">
-                  Mobile: {addr.mobile}
+                  Mobile: +91-{addr.phone}
                 </p>
               </div>
 
@@ -285,7 +291,7 @@ export default function AddressesPage() {
         {showDrawer && (
           <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
             {/* Click outside to close */}
-            <div className="absolute inset-0" onClick={() => setShowDrawer(false)} />
+            <div className="absolute inset-0" onClick={() => !saving && setShowDrawer(false)} />
             
             <motion.div
               initial={{ x: '100%' }}
@@ -302,7 +308,8 @@ export default function AddressesPage() {
                   </h3>
                   <button 
                     onClick={() => setShowDrawer(false)}
-                    className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer"
+                    disabled={saving}
+                    className="p-1.5 rounded-full hover:bg-neutral-100 dark:hover:bg-neutral-800 text-neutral-500 cursor-pointer disabled:opacity-50"
                   >
                     <X className="w-5 h-5" />
                   </button>
@@ -313,7 +320,7 @@ export default function AddressesPage() {
                   {/* Name field */}
                   <div>
                     <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                      Contact Name
+                      Contact Name *
                     </label>
                     <input
                       type="text"
@@ -328,7 +335,7 @@ export default function AddressesPage() {
                   {/* Mobile field */}
                   <div>
                     <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                      Mobile Number
+                      10-Digit Mobile Number *
                     </label>
                     <input
                       type="tel"
@@ -336,7 +343,7 @@ export default function AddressesPage() {
                       maxLength={10}
                       value={mobile}
                       onChange={(e) => setMobile(e.target.value.replace(/\D/g, ''))}
-                      placeholder="10-digit mobile number"
+                      placeholder="e.g. 9876543210"
                       className="w-full text-xs font-semibold px-3.5 py-2.5 bg-neutral-50 border border-neutral-250 rounded-card focus:outline-none focus:border-primary-500 focus:bg-white dark:bg-neutral-950 dark:border-neutral-800 dark:focus:bg-neutral-950 dark:focus:border-primary-500"
                     />
                   </div>
@@ -344,14 +351,14 @@ export default function AddressesPage() {
                   {/* Street field */}
                   <div>
                     <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                      Street Address
+                      Street Address *
                     </label>
                     <textarea
                       required
                       rows={3}
                       value={street}
                       onChange={(e) => setStreet(e.target.value)}
-                      placeholder="House No, Apartment Name, Street Area"
+                      placeholder="Door No, Building, Street, Area"
                       className="w-full text-xs font-semibold px-3.5 py-2.5 bg-neutral-50 border border-neutral-250 rounded-card focus:outline-none focus:border-primary-500 focus:bg-white dark:bg-neutral-950 dark:border-neutral-800 dark:focus:bg-neutral-950 dark:focus:border-primary-500 resize-none"
                     />
                   </div>
@@ -360,7 +367,7 @@ export default function AddressesPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                        City
+                        City *
                       </label>
                       <input
                         type="text"
@@ -373,7 +380,7 @@ export default function AddressesPage() {
                     </div>
                     <div>
                       <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                        State
+                        State *
                       </label>
                       <input
                         type="text"
@@ -389,7 +396,7 @@ export default function AddressesPage() {
                   {/* Pincode field */}
                   <div>
                     <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                      Pincode
+                      Postal Pincode *
                     </label>
                     <input
                       type="text"
@@ -409,16 +416,19 @@ export default function AddressesPage() {
                 <button
                   type="button"
                   onClick={() => setShowDrawer(false)}
-                  className="flex-1 py-2.5 border border-neutral-300 dark:border-neutral-700 bg-transparent text-xs font-bold text-neutral-700 dark:text-neutral-300 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer"
+                  disabled={saving}
+                  className="flex-1 py-2.5 border border-neutral-300 dark:border-neutral-700 bg-transparent text-xs font-bold text-neutral-700 dark:text-neutral-300 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer disabled:opacity-50"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   form="address-form"
-                  className="flex-1 py-2.5 bg-primary-500 hover:bg-primary-600 border-none text-xs font-bold text-white rounded-card cursor-pointer"
+                  disabled={saving}
+                  className="flex-1 py-2.5 bg-primary-500 hover:bg-primary-600 border-none text-xs font-bold text-white rounded-card cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50"
                 >
-                  Save Address
+                  {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                  <span>{saving ? 'Saving...' : 'Save Address'}</span>
                 </button>
               </div>
 

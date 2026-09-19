@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { useWishlist } from '@/hooks/useWishlist';
+import { accountService } from '@/services/account.service';
+import { apiClient } from '@/services/api-client';
 import {
   LayoutDashboard,
   ShoppingBag,
@@ -49,98 +51,29 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
     }
   }, [isLoggedIn, router, pathname]);
 
-  // 2. Initialize Mock LocalStorage Data (Orders, Addresses, Notifications)
+  // 2. Fetch fresh user profile from live database
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (!isLoggedIn) return;
+    accountService.getProfile()
+      .then((liveUser) => {
+        // Update user state if name or details updated
+        if (liveUser) {
+          const profileName = liveUser.profile
+            ? `${liveUser.profile.firstName || ''} ${liveUser.profile.lastName || ''}`.trim()
+            : liveUser.email.split('@')[0];
 
-    // Default Addresses
-    if (!localStorage.getItem('user_addresses')) {
-      const defaultAddresses = [
-        {
-          id: 'addr-1',
-          name: 'John Doe',
-          mobile: '9876543210',
-          street: '12, Green Meadow Avenue, Alwarpet',
-          city: 'Chennai',
-          state: 'Tamil Nadu',
-          pincode: '600018',
-          isDefault: true
-        },
-        {
-          id: 'addr-2',
-          name: 'John Doe (Office)',
-          mobile: '9876543211',
-          street: 'Tidel Park, 3rd Floor, C-Block, OMR',
-          city: 'Chennai',
-          state: 'Tamil Nadu',
-          pincode: '600113',
-          isDefault: false
+          useAuthStore.getState().updateProfile({
+            name: profileName || liveUser.email,
+            email: liveUser.email,
+            mobile: liveUser.profile?.phone || undefined,
+            avatar: liveUser.profile?.avatarUrl || null,
+          });
         }
-      ];
-      localStorage.setItem('user_addresses', JSON.stringify(defaultAddresses));
-    }
-
-    // Default Orders
-    if (!localStorage.getItem('user_orders')) {
-      const defaultOrders = [
-        {
-          id: 'YATHU-78901',
-          date: '2026-06-25',
-          items: [
-            { productId: 'prod-1', quantity: 2, price: 60 },
-            { productId: 'prod-4', quantity: 1, price: 80 }
-          ],
-          total: 200,
-          status: 'delivered',
-          paymentMethod: 'online',
-          paymentStatus: 'paid',
-          trackingNumber: 'YATHU-TRK-78901',
-          courier: 'Delhivery'
-        },
-        {
-          id: 'YATHU-98319',
-          date: '2026-06-30',
-          items: [
-            { productId: 'prod-2', quantity: 1, price: 350 },
-            { productId: 'prod-7', quantity: 2, price: 240 }
-          ],
-          total: 830,
-          status: 'processing',
-          paymentMethod: 'cod',
-          paymentStatus: 'pending',
-          trackingNumber: 'YATHU-TRK-98319',
-          courier: 'Shadowfax'
-        },
-        {
-          id: 'YATHU-45612',
-          date: '2026-07-01',
-          items: [
-            { productId: 'prod-6', quantity: 1, price: 90 }
-          ],
-          total: 90,
-          status: 'pending',
-          paymentMethod: 'online',
-          paymentStatus: 'pending',
-          trackingNumber: 'YATHU-TRK-45612',
-          courier: 'Ecom Express'
-        }
-      ];
-      localStorage.setItem('user_orders', JSON.stringify(defaultOrders));
-    }
-
-    // Default Notifications
-    if (!localStorage.getItem('user_notifications')) {
-      const defaultNotifications = {
-        orderSms: true,
-        orderEmail: true,
-        orderWhatsapp: true,
-        promotions: false,
-        alerts: true,
-        newsletter: false
-      };
-      localStorage.setItem('user_notifications', JSON.stringify(defaultNotifications));
-    }
-  }, []);
+      })
+      .catch(() => {
+        // In case token expired or user removed
+      });
+  }, [isLoggedIn]);
 
   const handleLogoutClick = () => {
     setShowLogoutModal(true);
@@ -149,25 +82,19 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const handleConfirmLogout = async () => {
     setLogoutLoading(true);
     try {
-      const response = await fetch('/api/auth/logout', {
-        method: 'POST'
-      });
-
-      if (response.ok) {
-        logout(); // Clear Zustand state
-        toast.success("You've been logged out successfully");
-        router.replace('/');
-      } else {
-        toast.error('Logout failed on server. Clearing local session anyway.');
-        logout();
-        router.replace('/');
-      }
-    } catch (err) {
-      logout();
-      router.replace('/');
+      await apiClient.post('/auth/logout');
+    } catch {
+      // Continue client cleanup even if network fails
     } finally {
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('admin_access_token');
+      }
+      logout();
+      toast.success("You've been logged out successfully");
       setLogoutLoading(false);
       setShowLogoutModal(false);
+      router.replace('/');
     }
   };
 

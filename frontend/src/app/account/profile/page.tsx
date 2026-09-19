@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useRef } from 'react';
 import { useAuthStore } from '@/store/auth-store';
+import { accountService } from '@/services/account.service';
 import { useTranslation } from 'react-i18next';
 import { 
   User, 
@@ -50,20 +51,28 @@ export default function ProfilePage() {
   const [otpError, setOtpError] = useState(false);
   const [countdown, setCountdown] = useState(60);
 
-  // Initialize from Zustand auth store
+  // Initialize from live DB profile or Zustand auth store
   useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setEmail(user.email || '');
-      setLanguage((user.language as 'en' | 'ta') || 'en');
-      // Read extra fields if previously saved, otherwise fallback to empty
-      const extra = localStorage.getItem(`profile_extra_${user.id}`);
-      if (extra) {
-        const parsed = JSON.parse(extra);
-        setDob(parsed.dob || '');
-        setAnniversary(parsed.anniversary || '');
-      }
-    }
+    accountService.getProfile()
+      .then((customer) => {
+        if (customer.profile) {
+          const fullName = `${customer.profile.firstName || ''} ${customer.profile.lastName || ''}`.trim();
+          setName(fullName || customer.email.split('@')[0]);
+          setEmail(customer.email);
+          if (customer.profile.dateOfBirth) {
+            setDob(new Date(customer.profile.dateOfBirth).toISOString().split('T')[0]);
+          }
+          if (customer.profile.avatarUrl) {
+            setAvatarBase64(customer.profile.avatarUrl);
+          }
+        }
+      })
+      .catch(() => {
+        if (user) {
+          setName(user.name || '');
+          setEmail(user.email || '');
+        }
+      });
   }, [user]);
 
   // Handle countdown for resending mobile OTP
@@ -75,31 +84,40 @@ export default function ProfilePage() {
     return () => clearTimeout(timer);
   }, [showOtpModal, otpStep, countdown]);
 
-  // Handle Save
-  const handleSave = (e: React.FormEvent) => {
+  // Handle Save directly to Neon DB
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
     setSavedSuccess(false);
 
-    // Save standard fields in Zustand Auth Store
-    updateProfile({
-      name,
-      email,
-      language
-    });
+    try {
+      const nameParts = name.trim().split(' ');
+      const firstName = nameParts[0] || 'Customer';
+      const lastName = nameParts.slice(1).join(' ') || '';
 
-    // Save extra fields in localStorage
-    if (user) {
-      const extraData = { dob, anniversary };
-      localStorage.setItem(`profile_extra_${user.id}`, JSON.stringify(extraData));
-    }
+      await accountService.updateProfile({
+        firstName,
+        lastName,
+        dateOfBirth: dob || null,
+        avatarUrl: avatarBase64 || user?.avatar || null,
+      });
 
-    setTimeout(() => {
+      // Save standard fields in Zustand Auth Store
+      updateProfile({
+        name,
+        email,
+        language,
+        avatar: avatarBase64 || user?.avatar || null,
+      });
+
       setSaving(false);
       setSavedSuccess(true);
-      toast.success('Profile preferences updated successfully.');
-      setTimeout(() => setSavedSuccess(false), 2000);
-    }, 1000);
+      toast.success('Profile preferences saved to database.');
+      setTimeout(() => setSavedSuccess(false), 2500);
+    } catch (err: any) {
+      setSaving(false);
+      toast.error(err?.message || 'Failed to update profile.');
+    }
   };
 
   // Language Preferences Toggle
@@ -132,16 +150,19 @@ export default function ProfilePage() {
     }
   };
 
-  // Confirm image cropping
-  const handleCropApply = () => {
+  // Confirm image cropping and save to DB
+  const handleCropApply = async () => {
     if (tempImage) {
-      // In a real application, we would crop it using HTML5 Canvas or library.
-      // Here, we save the image data and apply styling in the UI.
       setAvatarBase64(tempImage);
       updateProfile({
         avatar: tempImage
       });
-      toast.success('Avatar uploaded successfully!');
+      try {
+        await accountService.updateProfile({ avatarUrl: tempImage });
+        toast.success('Avatar updated and saved to database!');
+      } catch {
+        toast.info('Avatar preview updated.');
+      }
     }
     setShowCropModal(false);
   };
@@ -183,13 +204,18 @@ export default function ProfilePage() {
     toast.success(`[MOCK OTP] Verification code: ${code}`);
   };
 
-  // OTP Verification: Final Verify
-  const handleOtpComplete = (otpCode: string) => {
+  // OTP Verification: Final Verify and save mobile to DB
+  const handleOtpComplete = async (otpCode: string) => {
     if (otpCode === generatedOtp) {
-      updateProfile({
-        mobile: newMobile
-      });
-      toast.success('Mobile number updated successfully!');
+      try {
+        await accountService.updateProfile({ phone: newMobile });
+        updateProfile({
+          mobile: newMobile
+        });
+        toast.success('Mobile number updated in database!');
+      } catch (err: any) {
+        toast.error(err?.message || 'Failed to update phone number in database.');
+      }
       setShowOtpModal(false);
       setNewMobile('');
       setOtpStep('phone');

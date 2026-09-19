@@ -16,6 +16,7 @@ const cms_routes_js_1 = __importDefault(require("./routes/cms.routes.js"));
 const payment_routes_js_1 = __importDefault(require("./routes/payment.routes.js"));
 const shipping_routes_js_1 = __importDefault(require("./routes/shipping.routes.js"));
 const admin_routes_js_1 = __importDefault(require("./routes/admin.routes.js"));
+const user_routes_js_1 = __importDefault(require("./routes/user.routes.js"));
 const app = (0, express_1.default)();
 // Trust proxy header from local Next.js proxy
 app.set("trust proxy", 1);
@@ -79,6 +80,8 @@ app.use("/api/v1/payments", payment_routes_js_1.default);
 app.use("/api/v1/shipping", shipping_routes_js_1.default);
 // Admin Dashboard & Overview API routes
 app.use("/api/v1/admin", admin_routes_js_1.default);
+// Customer User Account API routes
+app.use("/api/v1/user", user_routes_js_1.default);
 // Health check endpoint
 app.get("/api/v1/health", async (req, res, next) => {
     try {
