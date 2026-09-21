@@ -56,14 +56,22 @@ function LoginForm() {
     ? '/' 
     : rawRedirect;
 
-  // Redirect if already logged in
+  // Redirect if already logged in with a valid token
   useEffect(() => {
-    if (isLoggedIn) {
-      if (role === 'admin') {
-        router.replace('/admin');
-      } else {
-        router.replace(redirectUrl);
+    if (typeof window === 'undefined') return;
+
+    const token = localStorage.getItem('access_token') || (window as any).__accessToken;
+    if (!token) {
+      // Stale auth state in localStorage without a real token: clean it up
+      if (isLoggedIn) {
+        useAuthStore.getState().logout();
       }
+      return;
+    }
+
+    // Only redirect if genuinely logged in as a customer
+    if (isLoggedIn && role === 'customer') {
+      router.replace(redirectUrl);
     }
   }, [isLoggedIn, role, redirectUrl, router]);
 
@@ -150,26 +158,28 @@ function LoginForm() {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile })
+      const res = await apiClient.post('/auth/otp/send', {
+        phone: mobile,
+        purpose: 'LOGIN',
       });
 
-      const data = await res.json();
       setIsLoading(false);
 
-      if (res.ok && data.success) {
+      if (res.success) {
         setStep(2);
-        setTimer(data.resendAfterSeconds || 30);
-        toast.success(t('otp.otp_sent', { mobile: mobile.replace(/(\d{5})(\d{5})/, '$1-$2') }) || `OTP sent to ${mobile}`);
+        setTimer((res as any).resendAfterSeconds || 30);
+        if ((res as any).devOtp) {
+          toast.info(`Test OTP: ${(res as any).devOtp}`);
+        } else {
+          toast.success(t('otp.otp_sent', { mobile: mobile.replace(/(\d{5})(\d{5})/, '$1-$2') }) || `OTP sent to +91 ${mobile}`);
+        }
       } else {
-        setError(data.message || t('otp.network_error') || 'Failed to send OTP.');
+        setError(res.message || 'Failed to send OTP.');
         triggerShake();
       }
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false);
-      setError('Network error. Please try again.');
+      setError(err?.message || 'Failed to send OTP. Please try again.');
       triggerShake();
     }
   };
@@ -180,35 +190,34 @@ function LoginForm() {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/verify-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ otp: otpCode })
+      const res = await apiClient.post('/auth/otp/verify', {
+        phone: mobile,
+        otp: otpCode,
+        purpose: 'LOGIN',
       });
 
-      const data = await res.json();
       setIsLoading(false);
 
-      if (res.ok && data.success) {
+      if (res.success && res.data?.accessToken) {
         setIsSuccess(true);
-        if (typeof window !== 'undefined' && data.accessToken) {
-          localStorage.setItem('access_token', data.accessToken);
-          document.cookie = `access_token=${data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('access_token', res.data.accessToken);
+          document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
-        login(data.user, data.accessToken);
-        const displayName = data.user?.name || data.user?.firstName || data.user?.email?.split('@')[0] || 'Customer';
+        login(res.data.user, res.data.accessToken);
+        const displayName = res.data.user?.name || res.data.user?.firstName || res.data.user?.email?.split('@')[0] || `Customer ${mobile.slice(-4)}`;
         toast.success(`Welcome back, ${displayName}!`);
 
         setTimeout(() => {
           router.replace(redirectUrl);
         }, 800);
       } else {
-        setError(data.message || 'Invalid OTP code entered.');
+        setError(res.message || 'Invalid OTP code entered.');
         triggerShake();
       }
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false);
-      setError('Failed to verify OTP.');
+      setError(err?.message || 'Failed to verify OTP.');
       triggerShake();
     }
   };
@@ -224,26 +233,28 @@ function LoginForm() {
     setError(null);
 
     try {
-      const res = await fetch('/api/auth/send-otp', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mobile })
+      const res = await apiClient.post('/auth/otp/send', {
+        phone: mobile,
+        purpose: 'LOGIN',
       });
 
-      const data = await res.json();
       setIsLoading(false);
 
-      if (res.ok && data.success) {
+      if (res.success) {
         setTimer(30);
         setResendAttempts((prev) => prev + 1);
-        toast.success(`OTP re-sent to ${mobile}`);
+        if ((res as any).devOtp) {
+          toast.info(`Test OTP: ${(res as any).devOtp}`);
+        } else {
+          toast.success(`OTP re-sent to +91 ${mobile}`);
+        }
       } else {
-        setError(data.message || 'Network error.');
+        setError(res.message || 'Failed to resend OTP.');
         triggerShake();
       }
-    } catch (err) {
+    } catch (err: any) {
       setIsLoading(false);
-      setError('Network error.');
+      setError(err?.message || 'Failed to resend OTP.');
       triggerShake();
     }
   };

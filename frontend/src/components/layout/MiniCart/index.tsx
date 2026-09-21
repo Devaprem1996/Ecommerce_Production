@@ -55,10 +55,6 @@ export const MiniCart: React.FC = () => {
 
   const handleProceedToCheckout = () => {
     if (items.length === 0) return;
-    if (!isAuthenticated) {
-      setIsAuthModalOpen(true);
-      return;
-    }
     closeMiniCart();
     router.push('/checkout');
   };

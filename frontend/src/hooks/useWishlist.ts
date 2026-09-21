@@ -28,30 +28,31 @@ export const useWishlist = create<WishlistState>()(
 
         set({ items: nextItems });
 
-        // If user is authenticated, sync mutation with live Neon PostgreSQL database
-        const isAuth =
-          typeof window !== 'undefined' &&
-          (Boolean(localStorage.getItem('access_token')) ||
-           Boolean((window as any).__accessToken) ||
-           document.cookie.includes('access_token=') ||
-           useAuthStore.getState().isLoggedIn);
+        // If user is authenticated with a valid session, sync mutation with database
+        const authState = useAuthStore.getState();
+        const token =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('access_token') || (window as any).__accessToken
+            : null;
+        const isAuth = Boolean(authState.isLoggedIn && token);
 
         if (isAuth) {
-          accountService.toggleWishlist(product.id).catch((err) => {
-            console.error('Failed to sync wishlist change with database:', err);
+          accountService.toggleWishlist(product.id).catch((err: any) => {
+            if (err?.status !== 401 && err?.statusCode !== 401) {
+              console.warn('Failed to sync wishlist change with database:', err?.message || err);
+            }
           });
         }
       },
       hasItem: (productId) => get().items.some((item) => item.id === productId),
       syncWithDb: async () => {
-        const isAuth =
-          typeof window !== 'undefined' &&
-          (Boolean(localStorage.getItem('access_token')) ||
-           Boolean((window as any).__accessToken) ||
-           document.cookie.includes('access_token=') ||
-           useAuthStore.getState().isLoggedIn);
+        const authState = useAuthStore.getState();
+        const token =
+          typeof window !== 'undefined'
+            ? localStorage.getItem('access_token') || (window as any).__accessToken
+            : null;
 
-        if (!isAuth) {
+        if (!authState.isLoggedIn || !token) {
           return;
         }
 
@@ -82,8 +83,18 @@ export const useWishlist = create<WishlistState>()(
           } else {
             set({ isLoading: false });
           }
-        } catch (err) {
-          console.error('Failed to sync wishlist from database:', err);
+        } catch (err: any) {
+          // If unauthenticated or token expired, gracefully fallback to local storage
+          const isAuthError =
+            err?.status === 401 ||
+            err?.statusCode === 401 ||
+            err?.message?.toLowerCase()?.includes('unauthorized') ||
+            err?.message?.toLowerCase()?.includes('session expired') ||
+            err?.message?.toLowerCase()?.includes('jwt');
+
+          if (!isAuthError) {
+            console.warn('Could not sync wishlist from database:', err?.message || err);
+          }
           set({ isLoading: false });
         }
       },

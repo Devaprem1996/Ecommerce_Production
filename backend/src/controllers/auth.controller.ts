@@ -52,7 +52,7 @@ export class AuthController {
       
       const { accessToken, refreshToken } = AuthService.generateTokens({
         userId: user.id,
-        email: user.email,
+        email: user.email || "",
         role: user.role,
       });
 
@@ -60,7 +60,7 @@ export class AuthController {
       res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
 
       const userProfile = (user as any).profile;
-      let profileName = user.email.split('@')[0];
+      let profileName = (user.email || "Customer").split('@')[0];
       if (userProfile) {
         const fn = userProfile.firstName || '';
         const ln = userProfile.lastName || '';
@@ -96,7 +96,7 @@ export class AuthController {
 
       const { accessToken, refreshToken } = AuthService.generateTokens({
         userId: user.id,
-        email: user.email,
+        email: user.email || "",
         role: user.role,
       });
 
@@ -142,7 +142,7 @@ export class AuthController {
       // Generate new rotated double token set
       const { accessToken, refreshToken: newRefreshToken } = AuthService.generateTokens({
         userId: user.id,
-        email: user.email,
+        email: user.email || "",
         role: user.role,
       });
 

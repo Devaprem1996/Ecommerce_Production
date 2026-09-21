@@ -349,5 +349,25 @@ class UserController {
             next(error);
         }
     }
+    /**
+     * POST /api/v1/user/orders/track-by-otp
+     * Public endpoint for guest order tracking via phone OTP
+     */
+    static async trackOrdersByOtp(req, res, next) {
+        try {
+            const { phone, otp } = req.body;
+            const orders = await user_service_js_1.UserService.trackOrdersByOtp(phone, otp);
+            return res.status(200).json({
+                success: true,
+                message: `Retrieved ${orders.length} order(s).`,
+                data: { orders },
+                timestamp: new Date().toISOString(),
+                requestId: req.headers["x-request-id"],
+            });
+        }
+        catch (error) {
+            next(error);
+        }
+    }
 }
 exports.UserController = UserController;

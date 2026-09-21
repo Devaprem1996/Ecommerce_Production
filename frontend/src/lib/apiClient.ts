@@ -4,6 +4,20 @@ interface RequestOptions extends RequestInit {
   params?: Record<string, string>;
 }
 
+export class ApiError extends Error {
+  status: number;
+  statusCode: number;
+  data: any;
+
+  constructor(message: string, status: number, data?: any) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.statusCode = status;
+    this.data = data;
+  }
+}
+
 class ApiClient {
   private baseURL: string;
   private isRefreshing = false;
@@ -46,23 +60,20 @@ class ApiClient {
     }
 
     const headers = new Headers(options.headers || {});
-    
-    // Set JSON headers by default unless uploading files
-    if (options.body && !(options.body instanceof FormData) && !headers.has('Content-Type')) {
+    if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
       headers.set('Content-Type', 'application/json');
     }
 
-    // Attach Bearer Access Token if present in Zustand memory
+    // Attach Bearer token from client-side Zustand store or localStorage
     let token = useAuthStore.getState().token;
     if (!token && typeof window !== 'undefined') {
-      token = (window as any).__accessToken;
+      token = localStorage.getItem('access_token');
     }
-
-    if (token) {
+    if (token && !headers.has('Authorization')) {
       headers.set('Authorization', `Bearer ${token}`);
     }
 
-    const finalOptions = {
+    const finalOptions: RequestInit = {
       ...options,
       headers,
     };
@@ -94,13 +105,20 @@ class ApiClient {
             this.isRefreshing = false;
             this.onRefreshed(newToken);
           } else {
-            // Refresh failed: log out and redirect to appropriate login page
+            // Refresh failed: log out
             this.isRefreshing = false;
-            const userRole = useAuthStore.getState().role;
             useAuthStore.getState().logout();
-            const redirectPath = userRole === 'admin' ? '/admin/login' : '/login';
-            window.location.href = `${redirectPath}?redirect=${encodeURIComponent(window.location.pathname)}`;
-            throw new Error('Session expired');
+
+            // Only redirect if currently on a protected route that requires authentication
+            if (typeof window !== 'undefined') {
+              const currentPath = window.location.pathname;
+              if (currentPath.startsWith('/account')) {
+                window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+              } else if (currentPath.startsWith('/admin') && currentPath !== '/admin/login') {
+                window.location.href = `/admin/login?redirect=${encodeURIComponent(currentPath)}`;
+              }
+            }
+            throw new ApiError('Session expired', 401);
           }
         } catch (err) {
           this.isRefreshing = false;
@@ -127,7 +145,7 @@ class ApiClient {
     const res = await this.request(path, { ...options, method: 'GET' });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      throw new ApiError(errData.message || 'API request failed', res.status, errData);
     }
     return res.json();
   }
@@ -140,7 +158,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      throw new ApiError(errData.message || 'API request failed', res.status, errData);
     }
     return res.json();
   }
@@ -153,7 +171,7 @@ class ApiClient {
     });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      throw new ApiError(errData.message || 'API request failed', res.status, errData);
     }
     return res.json();
   }
@@ -162,7 +180,7 @@ class ApiClient {
     const res = await this.request(path, { ...options, method: 'DELETE' });
     if (!res.ok) {
       const errData = await res.json().catch(() => ({}));
-      throw new Error(errData.message || 'API request failed');
+      throw new ApiError(errData.message || 'API request failed', res.status, errData);
     }
     return res.json();
   }

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -9,8 +9,6 @@ import {
   Search, 
   MapPin, 
   Truck, 
-  Calendar, 
-  Phone, 
   Check, 
   Loader2,
   Package,
@@ -18,18 +16,18 @@ import {
   Home,
   XCircle,
   RotateCcw,
-  ShoppingBag, 
-  ExternalLink,
+  Smartphone,
   ChevronDown,
-  FileText,
-  MessageSquare,
-  AlertTriangle
+  AlertTriangle,
+  ShieldCheck,
+  RefreshCw,
+  Clock
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/auth-store';
-import { mockProducts } from '@/constants/mockData';
-import { formatPrice } from '@/utils/formatPrice';
+import { apiClient } from '@/services/api-client';
+import { accountService, CustomerOrder } from '@/services/account.service';
 
 interface OrderItem {
   productId: string;
@@ -58,10 +56,11 @@ interface TrackingData {
   estDeliveryTamil: string;
   carrierName: string;
   trackingNo: string;
-  currentStep: number; // 0: Placed, 1: Confirmed, 2: Packed, 3: Shipped, 4: Out for Delivery, 5: Delivered
+  currentStep: number;
   steps: TrackingStep[];
   address: string;
   items: OrderItem[];
+  grandTotal: number;
 }
 
 export default function TrackOrderPage() {
@@ -69,119 +68,90 @@ export default function TrackOrderPage() {
   const currentLang = i18n.language;
   const { isLoggedIn, user } = useAuthStore();
 
-  const [orderIdInput, setOrderIdInput] = useState('');
-  const [phoneInput, setPhoneInput] = useState('');
+  // Guest Phone OTP States
+  const [mobileInput, setMobileInput] = useState('');
+  const [otpInput, setOtpInput] = useState('');
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(30);
   const [isSearching, setIsSearching] = useState(false);
-  const [trackingResult, setTrackingResult] = useState<TrackingData | null>(null);
-  
-  // User orders for logged-in dropdown selection
-  const [userOrders, setUserOrders] = useState<any[]>([]);
+
+  // Result States
+  const [fetchedOrders, setFetchedOrders] = useState<any[]>([]);
+  const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
+  const [activeTracking, setActiveTracking] = useState<TrackingData | null>(null);
+
+  // Logged-in Customer orders
+  const [userOrders, setUserOrders] = useState<CustomerOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = useState<string>('');
 
-  // Load orders on component mount
+  // OTP Countdown timer
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedOrders = localStorage.getItem('user_orders');
-      if (storedOrders) {
-        const parsed = JSON.parse(storedOrders);
-        setUserOrders(parsed);
-        if (parsed.length > 0) {
-          // Default to select first order
-          setSelectedOrderId(parsed[0].id);
-        }
-      }
+    let interval: NodeJS.Timeout;
+    if (isOtpSent && otpTimer > 0) {
+      interval = setInterval(() => setOtpTimer((t) => t - 1), 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isOtpSent, otpTimer]);
+
+  // Load orders for logged-in user from backend database
+  useEffect(() => {
+    if (isLoggedIn) {
+      accountService
+        .getOrders()
+        .then((orders) => {
+          setUserOrders(orders);
+          if (orders.length > 0) {
+            const firstId = orders[0].id || orders[0].orderNumber;
+            setSelectedOrderId(firstId);
+            setActiveTracking(formatOrderToTrackingData(orders[0]));
+          }
+        })
+        .catch((err) => {
+          console.error("Failed to load customer orders:", err);
+        });
     }
   }, [isLoggedIn]);
 
-  // Load tracking information for selected order if logged-in
-  const handleSelectOrderTrack = (orderId: string) => {
-    if (!orderId) return;
-    setIsSearching(true);
-    setTrackingResult(null);
+  // Transform backend order object into visual timeline TrackingData
+  const formatOrderToTrackingData = (order: any): TrackingData => {
+    const rawStatus = (order.status || 'CONFIRMED').toUpperCase();
+    let currentStep = 1;
+    let statusLabel = 'Confirmed';
 
-    setTimeout(() => {
-      setIsSearching(false);
-      const tracking = generateTrackingResult(orderId, user?.mobile || '9876543210');
-      setTrackingResult(tracking);
-      toast.success(currentLang === 'ta' ? 'விவரங்கள் பெறப்பட்டன!' : 'Tracking details retrieved!');
-    }, 800);
-  };
-
-  // Generate tracking result based on order history or default mock
-  const generateTrackingResult = (orderId: string, phone: string): TrackingData => {
-    // Check if order exists in localStorage
-    const storedOrders = typeof window !== 'undefined' ? localStorage.getItem('user_orders') : null;
-    let matchingOrder: any = null;
-    if (storedOrders) {
-      const parsed = JSON.parse(storedOrders);
-      matchingOrder = parsed.find((o: any) => o.id === orderId || o.id === `#${orderId}` || `#${o.id}` === orderId);
+    if (rawStatus === 'PENDING_PAYMENT' || rawStatus === 'DRAFT') {
+      currentStep = 0;
+      statusLabel = 'Placed';
+    } else if (rawStatus === 'PAYMENT_VERIFIED' || rawStatus === 'CONFIRMED') {
+      currentStep = 1;
+      statusLabel = 'Confirmed';
+    } else if (rawStatus === 'PACKED') {
+      currentStep = 2;
+      statusLabel = 'Packed';
+    } else if (rawStatus === 'SHIPPED') {
+      currentStep = 3;
+      statusLabel = 'Shipped';
+    } else if (rawStatus === 'OUT_FOR_DELIVERY') {
+      currentStep = 4;
+      statusLabel = 'Out for Delivery';
+    } else if (rawStatus === 'DELIVERED') {
+      currentStep = 5;
+      statusLabel = 'Delivered';
+    } else if (rawStatus === 'CANCELLED') {
+      currentStep = -1;
+      statusLabel = 'Cancelled';
+    } else if (rawStatus === 'RETURNED') {
+      currentStep = -2;
+      statusLabel = 'Returned';
     }
 
-    // Default dates/items
-    let status = 'Shipped';
-    let currentStep = 3;
-    let orderDate = '12 Jan 2025';
-    let total = 698;
-    let address = 'John D, 123 Anna Nagar, Chennai - 600040';
-    let items: OrderItem[] = [
-      { productId: 'p1', name: 'Organic Red Rice', price: 299, quantity: 1, unit: '1kg', image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=200&auto=format&fit=crop' },
-      { productId: 'p2', name: 'Cold Pressed Sesame Oil', price: 399, quantity: 1, unit: '500ml', image: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?q=80&w=200&auto=format&fit=crop' }
-    ];
-
-    if (matchingOrder) {
-      status = matchingOrder.status;
-      orderDate = matchingOrder.date || 'Today';
-      total = matchingOrder.total;
-      address = matchingOrder.shippingAddress || '123 Anna Nagar, Chennai - 600040';
-      
-      // Map matching order status to step numbers
-      const statusLower = status.toLowerCase();
-      if (statusLower === 'pending') {
-        currentStep = 0;
-      } else if (statusLower === 'processing') {
-        currentStep = 2; // Packed & Ready
-      } else if (statusLower === 'shipped') {
-        currentStep = 3;
-      } else if (statusLower === 'delivered') {
-        currentStep = 5;
-      } else if (statusLower === 'cancelled') {
-        currentStep = -1; // Cancelled code
-      } else if (statusLower === 'returned') {
-        currentStep = -2; // Returned code
-      }
-
-      // Map matching items
-      items = matchingOrder.items.map((item: any) => {
-        const prod = mockProducts.find(p => p.id === item.productId);
-        return {
-          productId: item.productId,
-          name: prod?.name || item.name || 'Organic Product',
-          price: item.price,
-          quantity: item.quantity,
-          unit: prod?.unit || '1 unit',
-          image: prod?.images[0] || 'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=200&auto=format&fit=crop'
-        };
-      });
-    } else {
-      // Custom states based on query terms (e.g. DEL for delivered)
-      const cleanId = orderId.toUpperCase();
-      if (cleanId.includes('DEL')) {
-        currentStep = 5;
-        status = 'Delivered';
-      } else if (cleanId.includes('CAN')) {
-        currentStep = -1;
-        status = 'Cancelled';
-      } else if (cleanId.includes('RET')) {
-        currentStep = -2;
-        status = 'Returned';
-      } else if (cleanId.includes('PEN')) {
-        currentStep = 0;
-        status = 'Pending';
-      } else if (cleanId.includes('PRO')) {
-        currentStep = 2;
-        status = 'Processing';
-      }
-    }
+    const orderDate = order.orderedAt || order.createdAt
+      ? new Date(order.orderedAt || order.createdAt).toLocaleDateString('en-IN', {
+          day: 'numeric',
+          month: 'short',
+          year: 'numeric',
+        })
+      : 'Recently';
 
     const steps: TrackingStep[] = [
       {
@@ -189,107 +159,183 @@ export default function TrackOrderPage() {
         titleTamil: 'ஆர்டர் செய்யப்பட்டது',
         desc: 'Your order was received successfully',
         descTamil: 'உங்கள் ஆர்டர் வெற்றிகரமாக பெறப்பட்டது',
-        time: `${orderDate}, 10:30 AM`,
-        timeTamil: `${orderDate}, முற்பகல் 10:30`,
+        time: `${orderDate}`,
+        timeTamil: `${orderDate}`,
         status: 'placed',
       },
       {
         title: 'Order Confirmed',
         titleTamil: 'ஆர்டர் உறுதி செய்யப்பட்டது',
-        desc: 'Payment confirmed, preparing your order',
-        descTamil: 'பணம் உறுதி செய்யப்பட்டது, தயாரிப்பு தயாராகிறது',
-        time: `${orderDate}, 11:00 AM`,
-        timeTamil: `${orderDate}, முற்பகல் 11:00`,
+        desc: 'Order verified & sent to organic fulfillment center',
+        descTamil: 'ஆர்டர் சரிபார்க்கப்பட்டு அனுப்ப தயாராகிறது',
+        time: `${orderDate}`,
+        timeTamil: `${orderDate}`,
         status: 'confirmed',
       },
       {
-        title: 'Packed & Ready',
+        title: 'Packed & Quality Checked',
         titleTamil: 'பேக் செய்யப்பட்டு தயாராக உள்ளது',
-        desc: 'Your items are packed and lab-tested',
-        descTamil: 'பொருட்கள் பேக் செய்யப்பட்டு ஆய்வு செய்யப்பட்டது',
-        time: '13 Jan, 02:00 PM',
-        timeTamil: '13 ஜனவரி, பிற்பகல் 02:00',
+        desc: 'Items carefully packed in eco-friendly packaging',
+        descTamil: 'பொருட்கள் ஆய்வு செய்யப்பட்டு பேக் செய்யப்பட்டுள்ளது',
+        time: 'Within 24 Hours',
+        timeTamil: '24 மணி நேரத்திற்குள்',
         status: 'packed',
       },
       {
         title: 'Shipped',
         titleTamil: 'அனுப்பப்பட்டது',
-        desc: 'In transit via courier partner Delhivery',
-        descTamil: 'கூரியர் நிறுவனம் டெல்லிவரி மூலம் அனுப்பப்பட்டது',
-        time: '14 Jan, 09:00 AM',
-        timeTamil: '14 ஜனவரி, முற்பகல் 09:00',
+        desc: `In transit via courier partner ${order.carrierName || 'Delhivery'}`,
+        descTamil: `கூரியர் நிறுவனம் ${order.carrierName || 'Delhivery'} மூலம் அனுப்பப்பட்டது`,
+        time: 'In transit',
+        timeTamil: 'வழியில் உள்ளது',
         status: 'shipped',
       },
       {
         title: 'Out for Delivery',
         titleTamil: 'டெலிவரிக்கு வெளியேறியது',
-        desc: 'Courier agent will contact you shortly',
-        descTamil: 'டெலிவரி முகவர் உங்களை விரைவில் தொடர்பு கொள்வார்',
-        time: 'Expected: 15 Jan',
-        timeTamil: 'எதிர்பார்ப்பு: 15 ஜனவரி',
+        desc: 'Courier associate will contact you on delivery day',
+        descTamil: 'டெலிவரி முகவர் உங்களை தொடர்பு கொள்வார்',
+        time: 'Expected Soon',
+        timeTamil: 'விரைவில் எதிர்பார்க்கப்படுகிறது',
         status: 'out_for_delivery',
       },
       {
         title: 'Delivered',
         titleTamil: 'டெலிவரி செய்யப்பட்டது',
-        desc: 'Parcel handed over to customer',
+        desc: 'Parcel safely delivered to your doorstep',
         descTamil: 'பார்சல் வாடிக்கையாளரிடம் ஒப்படைக்கப்பட்டது',
-        time: '15 Jan, 04:30 PM',
-        timeTamil: '15 ஜனவரி, பிற்பகல் 04:30',
+        time: 'Delivered',
+        timeTamil: 'டெலிவரி செய்யப்பட்டது',
         status: 'delivered',
-      }
+      },
     ];
 
+    const rawItems = order.items || order.orderItems || [];
+    const items: OrderItem[] = rawItems.map((item: any) => ({
+      productId: item.id || item.productId || 'p1',
+      name: item.name || item.productName || 'Organic Product',
+      price: Number(item.price || item.unitPrice || 0),
+      quantity: Number(item.quantity || 1),
+      unit: item.sku || '1 pack',
+      image:
+        item.image ||
+        item.variant?.product?.thumbnailUrl ||
+        'https://images.unsplash.com/photo-1586201375761-83865001e31c?q=80&w=200&auto=format&fit=crop',
+    }));
+
+    let formattedAddress = 'Delivery Address';
+    if (order.deliveryAddress) {
+      formattedAddress = order.deliveryAddress;
+    } else if (order.address) {
+      formattedAddress = `${order.address.fullName}, ${order.address.addressLine1}, ${order.address.city} - ${order.address.postalCode}`;
+    }
+
     return {
-      orderId: orderId.startsWith('#') ? orderId : `#${orderId}`,
-      phone,
-      status,
-      estDelivery: '15 Jan 2025',
-      estDeliveryTamil: '15 ஜனவரி 2025',
-      carrierName: 'Delhivery',
-      trackingNo: 'DEL-9876543210',
+      orderId: order.orderNumber || order.id,
+      phone: order.address?.phone || '',
+      status: statusLabel,
+      estDelivery: '3-5 Business Days',
+      estDeliveryTamil: '3-5 வேலை நாட்கள்',
+      carrierName: order.carrierName || 'Delhivery',
+      trackingNo: order.trackingNumber || `DEL-${(order.orderNumber || '0000').replace(/\D/g, '')}`,
       currentStep,
       steps,
-      address,
-      items
+      address: formattedAddress,
+      items,
+      grandTotal: Number(order.grandTotal || 0),
     };
   };
 
-  const handleTrackSubmit = (e: React.FormEvent) => {
+  // 1. Send OTP to Guest Mobile Number
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!orderIdInput.trim()) {
-      toast.warning('Please enter an Order ID.');
+    const cleanMobile = mobileInput.replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+      toast.warning('Please enter a valid 10-digit Indian mobile number.');
       return;
     }
-    if (!phoneInput.match(/^\d{10}$/)) {
-      toast.warning('Please enter a valid 10-digit mobile number.');
+
+    setIsOtpSending(true);
+    try {
+      const res = await apiClient.post('/auth/otp/send', {
+        phone: cleanMobile,
+        purpose: 'ORDER_TRACKING',
+      });
+
+      if (res.success) {
+        setIsOtpSent(true);
+        setOtpTimer(30);
+        if ((res as any).devOtp) {
+          toast.info(`Test OTP: ${(res as any).devOtp}`);
+        } else {
+          toast.success(`OTP sent to +91 ${cleanMobile}`);
+        }
+      } else {
+        toast.error(res.message || 'Failed to send OTP.');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to send verification SMS.');
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  // 2. Verify OTP and Fetch Orders for this Mobile Number
+  const handleVerifyOtpAndTrack = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanMobile = mobileInput.replace(/\D/g, '').slice(-10);
+    if (otpInput.length !== 6) {
+      toast.warning('Please enter the 6-digit OTP code.');
       return;
     }
 
     setIsSearching(true);
-    setTrackingResult(null);
+    try {
+      const res = await apiClient.post('/user/orders/track-by-otp', {
+        phone: cleanMobile,
+        otp: otpInput,
+      });
 
-    // Simulate lookup API
-    setTimeout(() => {
-      setIsSearching(false);
-      // For demo, if order id is wrong (e.g. less than 5 characters or random) let's give error state if desired,
-      // but otherwise match.
-      if (orderIdInput.toLowerCase() === 'error') {
-        toast.error('Unable to fetch. Please try again');
-        return;
+      if (res.success && res.data?.orders) {
+        const orders = res.data.orders;
+        setFetchedOrders(orders);
+
+        if (orders.length === 0) {
+          toast.info(`No orders found associated with +91 ${cleanMobile}.`);
+          setActiveTracking(null);
+        } else {
+          toast.success(`Found ${orders.length} order(s)!`);
+          setSelectedOrderIndex(0);
+          setActiveTracking(formatOrderToTrackingData(orders[0]));
+        }
+      } else {
+        toast.error(res.message || 'Failed to retrieve orders.');
       }
-      
-      const tracking = generateTrackingResult(orderIdInput.trim().toUpperCase(), phoneInput);
-      setTrackingResult(tracking);
-      toast.success(currentLang === 'ta' ? 'ஆர்டர் கண்டறியப்பட்டது!' : 'Order details located successfully!');
-    }, 1000);
+    } catch (err: any) {
+      toast.error(err?.message || 'Invalid OTP code. Please try again.');
+    } finally {
+      setIsSearching(false);
+    }
   };
 
-  // Helper to get status color and icon
+  // Switch between orders if multiple orders exist
+  const handleSelectOrderTab = (index: number) => {
+    setSelectedOrderIndex(index);
+    setActiveTracking(formatOrderToTrackingData(fetchedOrders[index]));
+  };
+
+  // Logged-in order selection
+  const handleSelectLoggedInOrder = (orderId: string) => {
+    setSelectedOrderId(orderId);
+    const found = userOrders.find((o) => (o.orderNumber || o.id) === orderId);
+    if (found) {
+      setActiveTracking(formatOrderToTrackingData(found));
+    }
+  };
+
+  // Timeline Styling
   const getTimelineStepStyle = (idx: number, currentStep: number) => {
-    // Handle cancelled/returned orders specially
-    if (currentStep === -1) { // Cancelled
+    if (currentStep === -1) {
       return {
         color: 'text-red-500',
         borderColor: 'border-red-200 dark:border-red-900',
@@ -297,10 +343,9 @@ export default function TrackOrderPage() {
         completed: false,
         active: idx === 0,
         pending: idx > 0,
-        lineColor: 'bg-neutral-200 dark:bg-neutral-800'
       };
     }
-    if (currentStep === -2) { // Returned
+    if (currentStep === -2) {
       return {
         color: 'text-purple-500',
         borderColor: 'border-purple-200 dark:border-purple-900',
@@ -308,7 +353,6 @@ export default function TrackOrderPage() {
         completed: false,
         active: idx === 0,
         pending: idx > 0,
-        lineColor: 'bg-neutral-200 dark:bg-neutral-800'
       };
     }
 
@@ -318,44 +362,23 @@ export default function TrackOrderPage() {
 
     let color = 'text-neutral-400';
     let bg = 'bg-neutral-100 dark:bg-neutral-800';
-    let borderColor = 'border-neutral-200 dark:border-neutral-700';
-    let lineColor = 'bg-neutral-200 dark:bg-neutral-800';
+    let borderColor = 'border-neutral-200 dark:border-neutral-800';
 
     if (isCompleted) {
       color = 'text-primary-600 dark:text-primary-400';
-      bg = 'bg-primary-500';
-      borderColor = 'border-primary-100 dark:border-primary-900';
-      lineColor = 'bg-primary-500';
+      bg = 'bg-primary-500 text-white';
+      borderColor = 'border-primary-500';
     } else if (isActive) {
-      if (idx === 4) { // Out for delivery (Orange)
-        color = 'text-orange-500';
-        bg = 'bg-orange-500';
-        borderColor = 'border-orange-200 dark:border-orange-900';
-      } else if (idx === 3) { // Shipped (Blue)
-        color = 'text-blue-500';
-        bg = 'bg-blue-500';
-        borderColor = 'border-blue-200 dark:border-blue-900';
-      } else { // Others (Green/Primary)
-        color = 'text-primary-600 dark:text-primary-400';
-        bg = 'bg-primary-500';
-        borderColor = 'border-primary-100 dark:border-primary-900';
-      }
+      color = 'text-primary-600 dark:text-primary-400 font-bold';
+      bg = 'bg-primary-500 text-white animate-pulse';
+      borderColor = 'border-primary-500 ring-4 ring-primary-500/20';
     }
 
-    return {
-      color,
-      bg,
-      borderColor,
-      lineColor,
-      completed: isCompleted,
-      active: isActive,
-      pending: isPending
-    };
+    return { color, bg, borderColor, completed: isCompleted, active: isActive, pending: isPending };
   };
 
   const getTimelineIcon = (status: string, style: any) => {
-    const iconClass = `w-4.5 h-4.5 ${style.active || style.completed ? 'text-white' : 'text-neutral-450 dark:text-neutral-500'}`;
-    
+    const iconClass = `w-4 h-4 ${style.active || style.completed ? 'text-white' : 'text-neutral-400'}`;
     switch (status) {
       case 'placed':
         return <ClipboardList className={iconClass} />;
@@ -376,7 +399,6 @@ export default function TrackOrderPage() {
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-20 transition-colors duration-normal">
-      
       {/* Breadcrumbs */}
       <div className="w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-3">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -386,38 +408,37 @@ export default function TrackOrderPage() {
             </Link>
             <ChevronRight className="w-3.5 h-3.5" />
             <span className="text-primary-500 select-none">
-              {t('track.title', 'Track Order')}
+              {t('track.title', 'Track Orders')}
             </span>
           </nav>
         </div>
       </div>
 
       {/* Header Banner */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-12 text-center">
+      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-10 text-center">
         <div className="max-w-3xl mx-auto px-4 space-y-3">
-          <div className="inline-flex p-3 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full mb-2">
-            <Truck className="w-8 h-8" />
+          <div className="inline-flex p-3 bg-primary-500/10 text-primary-600 dark:text-primary-400 rounded-full mb-1">
+            <Truck className="w-7 h-7" />
           </div>
-          <h1 className="text-3xl sm:text-4xl font-black font-heading text-neutral-900 dark:text-white tracking-tight">
-            {t('track.title', 'Track Your Order')}
+          <h1 className="text-2.5xl sm:text-3.5xl font-black font-heading text-neutral-900 dark:text-white tracking-tight">
+            Track Your Orders
           </h1>
-          <p className="text-xs sm:text-sm font-semibold text-neutral-500 dark:text-neutral-400 max-w-md mx-auto leading-relaxed">
-            {t('track.subtitle', 'Check the status of your shipment in real-time by entering order details.')}
+          <p className="text-xs sm:text-sm font-semibold text-neutral-500 dark:text-neutral-400 max-w-lg mx-auto leading-relaxed">
+            Enter your mobile number to view shipment status, delivery timeline, and courier details via secure SMS OTP.
           </p>
         </div>
       </div>
 
-      <div className="max-w-3xl mx-auto px-4 pt-10 space-y-8">
-        
-        {/* LOGGED IN USER INTERFACE */}
+      <div className="max-w-3xl mx-auto px-4 pt-8 space-y-6">
+        {/* LOGGED-IN CUSTOMER VIEW */}
         {isLoggedIn ? (
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-6">
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-7 shadow-sm space-y-4">
             <div>
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
-                {t('track.logged_in_title', 'Select Order to Track')}
+                Select Order to Track
               </h3>
-              <p className="text-xs text-neutral-500 mt-1">
-                You are logged in as <span className="font-bold text-primary-500">{user?.name || user?.email}</span>. Click below to view and track your orders.
+              <p className="text-xs text-neutral-500 mt-0.5">
+                Logged in as <span className="font-bold text-primary-500">{user?.name || user?.email}</span>
               </p>
             </div>
 
@@ -425,272 +446,294 @@ export default function TrackOrderPage() {
               <div className="p-6 text-center border border-dashed border-neutral-200 dark:border-neutral-800 rounded-card space-y-3">
                 <AlertTriangle className="w-8 h-8 text-neutral-400 mx-auto" />
                 <p className="text-xs text-neutral-500">
-                  {t('track.no_orders', 'No recent orders found in your history.')}
+                  No orders found in your account history yet.
                 </p>
                 <Link href="/shop" className="inline-block">
                   <Button variant="primary" size="sm" className="font-bold text-[11px]">
-                    {t('search_page.browse_all', 'Browse Products')}
+                    Browse Products
                   </Button>
                 </Link>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-end">
-                <div className="flex-1 space-y-1.5">
-                  <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block">
-                    Choose Order
-                  </label>
-                  <div className="relative">
-                    <select
-                      value={selectedOrderId}
-                      onChange={(e) => setSelectedOrderId(e.target.value)}
-                      className="appearance-none w-full text-xs font-bold px-4 py-3 border border-neutral-200 dark:border-neutral-750 bg-transparent rounded-card text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
-                    >
-                      {userOrders.map((o) => (
-                        <option key={o.id} value={o.id}>
-                          Order #{o.id} — {o.date} (₹{o.total})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className="w-4 h-4 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
-                  </div>
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block">
+                  Your Recent Orders
+                </label>
+                <div className="relative">
+                  <select
+                    value={selectedOrderId}
+                    onChange={(e) => handleSelectLoggedInOrder(e.target.value)}
+                    className="appearance-none w-full text-xs font-bold px-4 py-3 border border-neutral-200 dark:border-neutral-750 bg-transparent rounded-card text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer"
+                  >
+                    {userOrders.map((o) => (
+                      <option key={o.id} value={o.orderNumber || o.id}>
+                        Order #{o.orderNumber || o.id} — ₹{o.grandTotal} ({o.status})
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-neutral-500 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
                 </div>
-
-                <Button
-                  onClick={() => handleSelectOrderTrack(selectedOrderId)}
-                  variant="primary"
-                  className="font-bold text-xs py-3 px-6 whitespace-nowrap"
-                  disabled={isSearching || !selectedOrderId}
-                  leftIcon={isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                >
-                  {isSearching ? t('track.searching', 'Locating...') : t('track.button', 'Track Order')}
-                </Button>
               </div>
             )}
           </div>
         ) : (
-          /* GUEST USER INTERFACE */
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-6">
-            <div className="border-b border-neutral-50 dark:border-neutral-850 pb-3">
-              <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
-                {t('track.guest_title', 'Enter Order Details')}
-              </h3>
-              <p className="text-xs text-neutral-500 mt-1">
-                Enter your order credentials to trace shipping details without logging in.
-              </p>
+          /* GUEST / UNREGISTERED CUSTOMER OTP FORM */
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-5">
+            <div className="border-b border-neutral-100 dark:border-neutral-800 pb-3 flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-primary-500" />
+                  Guest Order Tracking
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Verify your phone with SMS OTP to track your orders securely without logging in.
+                </p>
+              </div>
+              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-full">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                Safe & Private
+              </span>
             </div>
 
-            <form onSubmit={handleTrackSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-5 items-end">
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-450 uppercase tracking-widest block">
-                  {t('track.order_id', 'Order ID')} *
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={orderIdInput}
-                  onChange={(e) => setOrderIdInput(e.target.value)}
-                  placeholder="e.g. ORD-2025-00123"
-                  className="w-full text-xs font-semibold px-4 py-3 border border-neutral-250 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:border-primary-500 transition-colors"
-                />
-              </div>
+            {/* Step 1: Request OTP */}
+            {!isOtpSent ? (
+              <form onSubmit={handleSendOtp} className="space-y-4">
+                <div className="space-y-1.5">
+                  <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                    Mobile Number *
+                  </label>
+                  <div className="flex gap-2.5">
+                    <div className="flex items-center px-3 border border-neutral-250 dark:border-neutral-700 rounded-card bg-neutral-50 dark:bg-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-400">
+                      +91
+                    </div>
+                    <input
+                      type="tel"
+                      required
+                      value={mobileInput}
+                      onChange={(e) => setMobileInput(e.target.value.replace(/\D/g, ''))}
+                      placeholder="10-digit mobile used while buying"
+                      maxLength={10}
+                      className="flex-1 text-xs font-semibold px-4 py-3 border border-neutral-250 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    />
+                  </div>
+                </div>
 
-              <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-neutral-600 dark:text-neutral-450 uppercase tracking-widest block">
-                  {t('contact.form_phone', 'Mobile Number')} *
-                </label>
-                <input
-                  type="tel"
-                  required
-                  value={phoneInput}
-                  onChange={(e) => setPhoneInput(e.target.value)}
-                  placeholder="Number used while ordering"
-                  className="w-full text-xs font-semibold px-4 py-3 border border-neutral-250 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:border-primary-500 transition-colors"
-                />
-              </div>
-
-              <div className="sm:col-span-2 pt-2">
                 <Button
                   type="submit"
                   variant="primary"
-                  disabled={isSearching}
+                  disabled={isOtpSending || mobileInput.length !== 10}
+                  className="w-full font-bold text-xs py-3"
+                  leftIcon={isOtpSending ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+                >
+                  {isOtpSending ? 'Sending SMS OTP...' : 'Send SMS Verification Code 📲'}
+                </Button>
+              </form>
+            ) : (
+              /* Step 2: Verify OTP */
+              <form onSubmit={handleVerifyOtpAndTrack} className="space-y-4 animate-in fade-in duration-200">
+                <div className="flex items-center justify-between bg-primary-500/5 p-3 rounded-card border border-primary-500/20">
+                  <span className="text-xs font-semibold text-neutral-700 dark:text-neutral-300">
+                    OTP sent to: <strong>+91 {mobileInput}</strong>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsOtpSent(false);
+                      setOtpInput('');
+                    }}
+                    className="text-[11px] font-bold text-primary-600 dark:text-primary-400 hover:underline"
+                  >
+                    Change Number
+                  </button>
+                </div>
+
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                      Enter 6-Digit OTP Code *
+                    </label>
+                    <button
+                      type="button"
+                      disabled={otpTimer > 0 || isOtpSending}
+                      onClick={handleSendOtp}
+                      className="text-[11px] font-bold text-primary-500 disabled:text-neutral-400 hover:underline flex items-center gap-1"
+                    >
+                      <Clock className="w-3 h-3" />
+                      {otpTimer > 0 ? `Resend in ${otpTimer}s` : 'Resend Code'}
+                    </button>
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    maxLength={6}
+                    value={otpInput}
+                    onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="Enter 6-digit code (e.g. 123456)"
+                    className="w-full text-center text-base font-bold tracking-widest px-4 py-3 border border-primary-400 dark:border-primary-800 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+
+                <Button
+                  type="submit"
+                  variant="primary"
+                  disabled={isSearching || otpInput.length !== 6}
                   className="w-full font-bold text-xs py-3"
                   leftIcon={isSearching ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
                 >
-                  {isSearching ? t('track.searching', 'Locating details...') : t('track.button', 'Track My Order 🔍')}
+                  {isSearching ? 'Verifying & Loading Orders...' : 'Verify & Track Orders 🔍'}
                 </Button>
-              </div>
-            </form>
+              </form>
+            )}
 
-            <div className="flex flex-col items-center justify-center pt-4 border-t border-neutral-100 dark:border-neutral-850">
-              <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">
-                — Already have an account? —
-              </span>
-              <Link href="/login" className="mt-2 text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors">
-                Login to see all your orders
+            <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 text-center">
+              <Link href="/login" className="text-xs font-bold text-neutral-500 hover:text-primary-500 transition-colors">
+                Already have a registered account? Sign In &rarr;
               </Link>
             </div>
           </div>
         )}
 
-        {/* TIMELINE DISPLAY */}
-        <AnimatePresence mode="wait">
-          {isSearching && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="flex flex-col items-center justify-center py-16 bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature shadow-sm"
-            >
-              <Loader2 className="w-9 h-9 animate-spin text-primary-500 mb-3" />
-              <p className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest animate-pulse">
-                Retrieving tracking information...
-              </p>
-            </motion.div>
-          )}
+        {/* ORDER SELECTOR TABS (If guest has multiple orders) */}
+        {!isLoggedIn && fetchedOrders.length > 1 && (
+          <div className="space-y-2">
+            <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider block">
+              Found {fetchedOrders.length} orders for +91 {mobileInput}:
+            </span>
+            <div className="flex gap-2 overflow-x-auto pb-1">
+              {fetchedOrders.map((o, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleSelectOrderTab(idx)}
+                  className={`px-3.5 py-2 rounded-card text-xs font-bold whitespace-nowrap transition-all ${
+                    selectedOrderIndex === idx
+                      ? 'bg-primary-600 text-white shadow-sm'
+                      : 'bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:border-primary-500'
+                  }`}
+                >
+                  Order #{o.orderNumber || o.id} (₹{o.grandTotal})
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-          {trackingResult && !isSearching && (
+        {/* TIMELINE DASHBOARD */}
+        <AnimatePresence mode="wait">
+          {activeTracking && !isSearching && (
             <motion.div
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
               className="space-y-6"
             >
-              {/* Order Status Timeline Dashboard Card */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-md space-y-8">
-                
-                {/* Meta details header */}
+              {/* Order Status Timeline Card */}
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-8">
+                {/* Meta Details Header */}
                 <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-5">
                   <div className="space-y-1">
-                    <h3 className="text-base font-black text-neutral-900 dark:text-white">
-                      Order {trackingResult.orderId}
-                    </h3>
-                    <p className="text-[11px] font-bold text-neutral-500">
-                      Placed on: <span className="text-neutral-850 dark:text-neutral-300">{trackingResult.steps[0].time.split(',')[0]}</span>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-base font-black text-neutral-900 dark:text-white">
+                        Order #{activeTracking.orderId}
+                      </h3>
+                      <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-primary-500/10 text-primary-600 dark:text-primary-400">
+                        {activeTracking.status}
+                      </span>
+                    </div>
+                    <p className="text-[11px] font-semibold text-neutral-500">
+                      Placed on: <span className="text-neutral-800 dark:text-neutral-200 font-bold">{activeTracking.steps[0].time}</span>
                     </p>
                   </div>
 
-                  <div className="bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/15 rounded-card px-4 py-2.5 text-right">
+                  <div className="bg-primary-500/5 dark:bg-primary-500/10 border border-primary-500/20 rounded-card px-4 py-2.5 text-right">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block">Expected Delivery</span>
                     <span className="text-xs sm:text-sm font-black text-primary-600 dark:text-primary-400">
-                      {currentLang === 'ta' ? trackingResult.estDeliveryTamil : trackingResult.estDelivery}
+                      {currentLang === 'ta' ? activeTracking.estDeliveryTamil : activeTracking.estDelivery}
                     </span>
                   </div>
                 </div>
 
-                {/* Cancelled / Returned Special Messages */}
-                {trackingResult.currentStep === -1 && (
+                {/* Cancelled / Returned Notices */}
+                {activeTracking.currentStep === -1 && (
                   <div className="p-4 bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-900/50 rounded-card flex items-center gap-3 text-red-800 dark:text-red-400">
                     <XCircle className="w-5 h-5 flex-shrink-0" />
                     <div>
                       <h4 className="text-xs font-bold uppercase tracking-wider">This Order Was Cancelled</h4>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">We processed a refund or cancelled this order at your request.</p>
-                    </div>
-                  </div>
-                )}
-                {trackingResult.currentStep === -2 && (
-                  <div className="p-4 bg-purple-50 dark:bg-purple-950/20 border border-purple-200 dark:border-purple-900/50 rounded-card flex items-center gap-3 text-purple-800 dark:text-purple-400">
-                    <RotateCcw className="w-5 h-5 flex-shrink-0" />
-                    <div>
-                      <h4 className="text-xs font-bold uppercase tracking-wider">This Order Was Returned</h4>
-                      <p className="text-[11px] text-neutral-500 mt-0.5">The items were returned and the return status is closed.</p>
+                      <p className="text-[11px] text-neutral-500 mt-0.5">This order has been cancelled.</p>
                     </div>
                   </div>
                 )}
 
-                {/* Custom status timeline track */}
+                {/* Vertical Timeline Track */}
                 <div className="relative pl-10 space-y-8 select-none">
-                  
-                  {/* Vertical Track lines */}
-                  {trackingResult.currentStep >= 0 && (
-                    <div className="absolute left-[17px] top-3.5 bottom-3.5 w-1 bg-neutral-200 dark:bg-neutral-850 rounded-full">
-                      {/* Completed track progress overlay */}
-                      <div 
-                        className="w-full bg-primary-500 rounded-full transition-all duration-slow" 
-                        style={{ 
-                          height: `${(Math.min(trackingResult.currentStep, 5) / 5) * 100}%` 
+                  {/* Progress Line */}
+                  {activeTracking.currentStep >= 0 && (
+                    <div className="absolute left-[17px] top-3.5 bottom-3.5 w-1 bg-neutral-200 dark:bg-neutral-800 rounded-full">
+                      <div
+                        className="w-full bg-primary-500 rounded-full transition-all duration-slow"
+                        style={{
+                          height: `${(Math.min(activeTracking.currentStep, 5) / 5) * 100}%`,
                         }}
                       />
                     </div>
                   )}
 
-                  {/* Render steps */}
-                  {trackingResult.steps.map((step, idx) => {
-                    const style = getTimelineStepStyle(idx, trackingResult.currentStep);
-                    
+                  {activeTracking.steps.map((step, idx) => {
+                    const style = getTimelineStepStyle(idx, activeTracking.currentStep);
                     return (
                       <div key={idx} className="relative flex flex-col sm:flex-row sm:items-start justify-between gap-4">
-                        
-                        {/* Dot container */}
+                        {/* Circle Indicator */}
                         <div className="absolute -left-[35px] top-0 flex items-center justify-center">
                           <div className={`w-8 h-8 rounded-full flex items-center justify-center border-4 border-white dark:border-neutral-900 shadow-sm transition-all duration-normal ${style.bg} ${style.borderColor}`}>
                             {getTimelineIcon(step.status, style)}
                           </div>
                         </div>
 
-                        {/* Title & Desc details */}
+                        {/* Step Description */}
                         <div className="space-y-1">
                           <h4 className={`text-sm font-bold leading-tight ${style.color}`}>
                             {currentLang === 'ta' ? step.titleTamil : step.title}
                           </h4>
-                          <p className={`text-xs font-semibold leading-relaxed ${
-                            style.active 
-                              ? 'text-neutral-805 dark:text-neutral-200' 
-                              : style.completed 
-                              ? 'text-neutral-505 dark:text-neutral-400' 
-                              : 'text-neutral-400'
-                          }`}>
+                          <p className={`text-xs font-semibold leading-relaxed ${style.active ? 'text-neutral-900 dark:text-white' : style.completed ? 'text-neutral-600 dark:text-neutral-400' : 'text-neutral-400'}`}>
                             {currentLang === 'ta' ? step.descTamil : step.desc}
                           </p>
 
-                          {/* Courier tracking helper */}
-                          {step.status === 'shipped' && idx <= trackingResult.currentStep && trackingResult.currentStep >= 3 && (
-                            <div className="mt-3 flex flex-wrap items-center gap-3">
-                              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                Courier: {trackingResult.carrierName}
+                          {step.status === 'shipped' && idx <= activeTracking.currentStep && activeTracking.currentStep >= 3 && (
+                            <div className="mt-2.5 flex flex-wrap items-center gap-2">
+                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
+                                Courier: {activeTracking.carrierName}
                               </span>
-                              <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                Tracking: {trackingResult.trackingNo}
+                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
+                                Tracking: {activeTracking.trackingNo}
                               </span>
-                              <a
-                                href="https://www.delhivery.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-xs font-bold text-primary-500 hover:text-primary-600 inline-flex items-center gap-1 cursor-pointer"
-                              >
-                                {t('track.courier_link', 'Track on Courier Site')}
-                                <ExternalLink className="w-3.5 h-3.5" />
-                              </a>
                             </div>
                           )}
                         </div>
 
-                        {/* Timestamp */}
+                        {/* Timestamp badge */}
                         <div className="sm:text-right whitespace-nowrap self-start">
-                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-card ${
-                            style.active 
-                              ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold' 
-                              : style.completed 
-                              ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500' 
-                              : 'text-neutral-400/50'
-                          }`}>
+                          <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-card ${style.active ? 'bg-primary-500/10 text-primary-600 dark:text-primary-400 font-bold' : style.completed ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500' : 'text-neutral-400/50'}`}>
                             {currentLang === 'ta' ? step.timeTamil : step.time}
                           </span>
                         </div>
-
                       </div>
                     );
                   })}
                 </div>
               </div>
 
-              {/* Items In This Order Card */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-5">
-                <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider border-b border-neutral-50 dark:border-neutral-850 pb-3">
-                  {t('track.items_title', 'Items In This Order')}
-                </h3>
-                
+              {/* Items Card */}
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                    Ordered Products ({activeTracking.items.length})
+                  </h3>
+                  <span className="text-xs font-black text-primary-600 dark:text-primary-400">
+                    Total: ₹{activeTracking.grandTotal}
+                  </span>
+                </div>
+
                 <div className="divide-y divide-neutral-100 dark:divide-neutral-800">
-                  {trackingResult.items.map((item, idx) => (
+                  {activeTracking.items.map((item, idx) => (
                     <div key={idx} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
                       <div className="flex items-center gap-3.5">
                         <div className="relative w-12 h-12 bg-neutral-50 dark:bg-neutral-800 border border-neutral-100 dark:border-neutral-800 rounded overflow-hidden flex-shrink-0">
@@ -704,8 +747,8 @@ export default function TrackOrderPage() {
                           <h4 className="text-xs font-bold text-neutral-900 dark:text-white">
                             {item.name}
                           </h4>
-                          <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-450 block mt-0.5">
-                            ₹{item.price} per {item.unit} &bull; Qty: {item.quantity}
+                          <span className="text-[10px] font-semibold text-neutral-500 dark:text-neutral-400 block mt-0.5">
+                            ₹{item.price} &bull; Qty: {item.quantity}
                           </span>
                         </div>
                       </div>
@@ -717,55 +760,28 @@ export default function TrackOrderPage() {
                 </div>
               </div>
 
-              {/* Delivery Address and Actions Card */}
-              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-6">
-                <div>
-                  <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider border-b border-neutral-50 dark:border-neutral-850 pb-3 flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-primary-500" />
-                    {t('track.delivery_address', 'Delivery Address')}
-                  </h3>
-                  <p className="text-xs text-neutral-600 dark:text-neutral-350 mt-3 font-medium leading-relaxed">
-                    {trackingResult.address}
-                  </p>
-                </div>
+              {/* Delivery Address Card */}
+              <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-8 shadow-sm space-y-3">
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider border-b border-neutral-100 dark:border-neutral-800 pb-2 flex items-center gap-2">
+                  <MapPin className="w-4 h-4 text-primary-500" />
+                  Shipping Destination
+                </h3>
+                <p className="text-xs text-neutral-600 dark:text-neutral-300 font-medium leading-relaxed">
+                  {activeTracking.address}
+                </p>
 
-                <div className="flex flex-wrap items-center gap-3.5 pt-4 border-t border-neutral-100 dark:border-neutral-850">
-                  <Link 
-                    href={`/account/orders/${trackingResult.orderId.replace('#', '')}/invoice`}
-                    className="flex-1 min-w-[140px]"
-                  >
-                    <Button
-                      variant="secondary"
-                      size="md"
-                      className="w-full font-bold text-xs py-2.5 border border-neutral-200 dark:border-neutral-750"
-                      leftIcon={<FileText className="w-4 h-4 text-primary-500" />}
-                    >
-                      {t('track.download_invoice', 'Download Invoice 📄')}
-                    </Button>
-                  </Link>
-
-                  <Link 
-                    href="/contact"
-                    className="flex-1 min-w-[140px]"
-                  >
-                    <Button
-                      variant="primary"
-                      size="md"
-                      className="w-full font-bold text-xs py-2.5"
-                      leftIcon={<MessageSquare className="w-4 h-4" />}
-                    >
-                      {t('contact.title', 'Need Help? 💬')}
-                    </Button>
-                  </Link>
-                </div>
+                {/* Privacy Badge for Guest Mode */}
+                {!isLoggedIn && (
+                  <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 text-[11px] text-neutral-400">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
+                    <span>Viewing in guest read-only tracking mode. Your profile remains protected.</span>
+                  </div>
+                )}
               </div>
-
             </motion.div>
           )}
         </AnimatePresence>
-
       </div>
-
     </div>
   );
 }

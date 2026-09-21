@@ -74,6 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const navLinks = [
     { label: t('nav.home', 'Home'), path: '/' },
     { label: t('nav.shop', 'Shop'), path: '/shop' },
+    { label: t('nav.track_order', 'Track Order'), path: '/track-order' },
     { label: t('footer.about', 'About'), path: '/about' },
     { label: t('nav.faq', 'FAQs'), path: '/faq' },
     { label: t('nav.contact', 'Contact'), path: '/contact' },

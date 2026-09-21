@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 require("dotenv/config");
+const node_dns_1 = __importDefault(require("node:dns"));
+node_dns_1.default.setDefaultResultOrder("ipv4first");
 const app_js_1 = __importDefault(require("./app.js"));
 const index_js_1 = __importDefault(require("./logger/index.js"));
 const PORT = process.env.PORT || 8080;

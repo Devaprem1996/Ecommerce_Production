@@ -51,13 +51,13 @@ class AuthController {
             const user = await auth_service_js_1.AuthService.loginUser(email, password);
             const { accessToken, refreshToken } = auth_service_js_1.AuthService.generateTokens({
                 userId: user.id,
-                email: user.email,
+                email: user.email || "",
                 role: user.role,
             });
             // Write refresh token into secure httpOnly cookie
             res.cookie(COOKIE_NAME, refreshToken, getCookieOptions());
             const userProfile = user.profile;
-            let profileName = user.email.split('@')[0];
+            let profileName = (user.email || "Customer").split('@')[0];
             if (userProfile) {
                 const fn = userProfile.firstName || '';
                 const ln = userProfile.lastName || '';
@@ -90,7 +90,7 @@ class AuthController {
             const user = await auth_service_js_1.AuthService.loginWithGoogle(idToken);
             const { accessToken, refreshToken } = auth_service_js_1.AuthService.generateTokens({
                 userId: user.id,
-                email: user.email,
+                email: user.email || "",
                 role: user.role,
             });
             // Write refresh token into secure httpOnly cookie
@@ -130,7 +130,7 @@ class AuthController {
             // Generate new rotated double token set
             const { accessToken, refreshToken: newRefreshToken } = auth_service_js_1.AuthService.generateTokens({
                 userId: user.id,
-                email: user.email,
+                email: user.email || "",
                 role: user.role,
             });
             // Write new refresh token into cookie

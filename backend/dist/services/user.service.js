@@ -4,9 +4,13 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
+const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const db_js_1 = __importDefault(require("../config/db.js"));
 const api_error_js_1 = require("../exceptions/api-error.js");
 const client_1 = require("@prisma/client");
+const sms_service_js_1 = require("./sms.service.js");
+const email_service_js_1 = require("./email.service.js");
+const index_js_1 = __importDefault(require("../logger/index.js"));
 class UserService {
     /**
      * Get user profile and active addresses
@@ -301,7 +305,7 @@ class UserService {
         if (!data.items || data.items.length === 0) {
             throw api_error_js_1.ApiError.badRequest("Cannot place order with an empty cart.");
         }
-        return await db_js_1.default.$transaction(async (tx) => {
+        const createdOrder = await db_js_1.default.$transaction(async (tx) => {
             // 1. Resolve Address
             let addressId = data.addressId;
             if (!addressId && data.shippingAddress) {
@@ -425,6 +429,19 @@ class UserService {
             });
             return order;
         });
+        // Asynchronously dispatch notifications (SMS and Email)
+        const phoneToNotify = createdOrder.address?.phone || user?.phone;
+        if (phoneToNotify) {
+            sms_service_js_1.SmsService.sendOrderConfirmation({
+                phone: phoneToNotify,
+                orderNumber: createdOrder.orderNumber,
+                grandTotal: Number(createdOrder.grandTotal),
+            }).catch((err) => index_js_1.default.error("Failed to send order SMS:", err));
+        }
+        if (user?.email && !user.email.endsWith(".local")) {
+            email_service_js_1.EmailService.sendOrderConfirmation(user.email, createdOrder.orderNumber, Number(createdOrder.grandTotal), createdOrder.address?.fullName || "Customer").catch((err) => index_js_1.default.error("Failed to send order email:", err));
+        }
+        return createdOrder;
     }
     /**
      * Get all wishlist products for the user
@@ -537,6 +554,90 @@ class UserService {
             });
             return { inWishlist: true, message: "Added to wishlist" };
         }
+    }
+    /**
+     * Track orders for guest or unauthenticated user using Phone + OTP verification
+     */
+    static async trackOrdersByOtp(phone, otp) {
+        const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+        // 1. Verify OTP in database
+        const otpRecord = await db_js_1.default.otpVerification.findFirst({
+            where: {
+                phone: cleanPhone,
+                purpose: "ORDER_TRACKING",
+                isVerified: false,
+                expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: "desc" },
+        });
+        if (!otpRecord) {
+            throw api_error_js_1.ApiError.badRequest("Verification code expired or not found. Please request a new OTP.");
+        }
+        const isValid = await bcryptjs_1.default.compare(otp, otpRecord.otpHash);
+        if (!isValid) {
+            await db_js_1.default.otpVerification.update({
+                where: { id: otpRecord.id },
+                data: { attempts: { increment: 1 } },
+            });
+            throw api_error_js_1.ApiError.badRequest("Incorrect OTP code. Please check and try again.");
+        }
+        // Mark as verified
+        await db_js_1.default.otpVerification.update({
+            where: { id: otpRecord.id },
+            data: { isVerified: true },
+        });
+        // 2. Find all orders associated with this phone (via User.phone OR Address.phone)
+        const matchingUsers = await db_js_1.default.user.findMany({
+            where: { phone: cleanPhone },
+            select: { id: true },
+        });
+        const userIds = matchingUsers.map((u) => u.id);
+        const orders = await db_js_1.default.order.findMany({
+            where: {
+                OR: [
+                    ...(userIds.length > 0 ? [{ userId: { in: userIds } }] : []),
+                    { address: { phone: cleanPhone } },
+                ],
+            },
+            include: {
+                orderItems: {
+                    include: {
+                        variant: {
+                            include: { product: true },
+                        },
+                    },
+                },
+                address: true,
+                payments: true,
+            },
+            orderBy: { createdAt: "desc" },
+        });
+        // 3. Return sanitized order tracking data (Read-only, no sensitive profile data)
+        return orders.map((o) => ({
+            id: o.id,
+            orderNumber: o.orderNumber,
+            status: o.status,
+            orderedAt: o.orderedAt || o.createdAt,
+            subtotal: Number(o.subtotal),
+            shippingCharge: Number(o.shippingCharge),
+            grandTotal: Number(o.grandTotal),
+            deliveryAddress: o.address
+                ? `${o.address.fullName}, ${o.address.addressLine1}, ${o.address.city} - ${o.address.postalCode}`
+                : null,
+            shippingCity: o.address?.city,
+            carrierName: "Delhivery",
+            trackingNumber: `DEL-${o.orderNumber.replace(/\D/g, "")}`,
+            items: o.orderItems.map((item) => ({
+                id: item.id,
+                name: item.productName,
+                sku: item.sku,
+                quantity: item.quantity,
+                price: Number(item.unitPrice),
+                image: item.variant?.product?.thumbnailUrl || null,
+            })),
+            paymentMethod: o.payments?.[0]?.provider || "upi",
+            paymentStatus: o.payments?.[0]?.status || "PENDING",
+        }));
     }
 }
 exports.UserService = UserService;

@@ -1,5 +1,7 @@
 import prisma from "../config/db.js";
 import { OrderStatus, DiscountType } from "@prisma/client";
+import { SmsService } from "./sms.service.js";
+import logger from "../logger/index.js";
 
 export interface DashboardKpiItem {
   value: number | string;
@@ -396,11 +398,37 @@ export class AdminService {
    */
   static async updateOrderStatus(id: string, status: string) {
     const upperStatus = status.toUpperCase() as OrderStatus;
-    return prisma.order.update({
+    const order = await prisma.order.update({
       where: { id },
       data: { status: upperStatus },
-      include: { orderItems: true, user: { include: { profile: true } } },
+      include: {
+        orderItems: true,
+        user: { include: { profile: true } },
+        address: true,
+      },
     });
+
+    // Automatically send status update SMS to customer
+    const customerPhone = order.address?.phone || order.user?.phone;
+    if (customerPhone) {
+      if (upperStatus === OrderStatus.DELIVERED) {
+        SmsService.sendOrderDelivered({
+          phone: customerPhone,
+          orderNumber: order.orderNumber,
+        }).catch((err) => logger.error("Failed to send delivery SMS:", err));
+      } else if (
+        upperStatus === OrderStatus.PAYMENT_VERIFIED ||
+        upperStatus === OrderStatus.CONFIRMED
+      ) {
+        SmsService.sendPaymentConfirmed({
+          phone: customerPhone,
+          orderNumber: order.orderNumber,
+          amount: Number(order.grandTotal),
+        }).catch((err) => logger.error("Failed to send payment confirmation SMS:", err));
+      }
+    }
+
+    return order;
   }
 
   /**

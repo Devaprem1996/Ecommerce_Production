@@ -1,6 +1,10 @@
+import bcrypt from "bcryptjs";
 import prisma from "../config/db.js";
 import { ApiError } from "../exceptions/api-error.js";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { SmsService } from "./sms.service.js";
+import { EmailService } from "./email.service.js";
+import logger from "../logger/index.js";
 
 export class UserService {
   /**
@@ -399,7 +403,7 @@ export class UserService {
       throw ApiError.badRequest("Cannot place order with an empty cart.");
     }
 
-    return await prisma.$transaction(async (tx) => {
+    const createdOrder = await prisma.$transaction(async (tx) => {
       // 1. Resolve Address
       let addressId = data.addressId;
       if (!addressId && data.shippingAddress) {
@@ -545,6 +549,27 @@ export class UserService {
 
       return order;
     });
+
+    // Asynchronously dispatch notifications (SMS and Email)
+    const phoneToNotify = (createdOrder as any).address?.phone || user?.phone;
+    if (phoneToNotify) {
+      SmsService.sendOrderConfirmation({
+        phone: phoneToNotify,
+        orderNumber: createdOrder.orderNumber,
+        grandTotal: Number(createdOrder.grandTotal),
+      }).catch((err) => logger.error("Failed to send order SMS:", err));
+    }
+
+    if (user?.email && !user.email.endsWith(".local")) {
+      EmailService.sendOrderConfirmation(
+        user.email,
+        createdOrder.orderNumber,
+        Number(createdOrder.grandTotal),
+        (createdOrder as any).address?.fullName || "Customer"
+      ).catch((err) => logger.error("Failed to send order email:", err));
+    }
+
+    return createdOrder;
   }
 
   /**
@@ -669,6 +694,98 @@ export class UserService {
       });
       return { inWishlist: true, message: "Added to wishlist" };
     }
+  }
+
+  /**
+   * Track orders for guest or unauthenticated user using Phone + OTP verification
+   */
+  static async trackOrdersByOtp(phone: string, otp: string) {
+    const cleanPhone = phone.replace(/\D/g, "").slice(-10);
+
+    // 1. Verify OTP in database
+    const otpRecord = await prisma.otpVerification.findFirst({
+      where: {
+        phone: cleanPhone,
+        purpose: "ORDER_TRACKING",
+        isVerified: false,
+        expiresAt: { gt: new Date() },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    if (!otpRecord) {
+      throw ApiError.badRequest("Verification code expired or not found. Please request a new OTP.");
+    }
+
+    const isValid = await bcrypt.compare(otp, otpRecord.otpHash);
+    if (!isValid) {
+      await prisma.otpVerification.update({
+        where: { id: otpRecord.id },
+        data: { attempts: { increment: 1 } },
+      });
+      throw ApiError.badRequest("Incorrect OTP code. Please check and try again.");
+    }
+
+    // Mark as verified
+    await prisma.otpVerification.update({
+      where: { id: otpRecord.id },
+      data: { isVerified: true },
+    });
+
+    // 2. Find all orders associated with this phone (via User.phone OR Address.phone)
+    const matchingUsers = await prisma.user.findMany({
+      where: { phone: cleanPhone },
+      select: { id: true },
+    });
+    const userIds = matchingUsers.map((u) => u.id);
+
+    const orders = await prisma.order.findMany({
+      where: {
+        OR: [
+          ...(userIds.length > 0 ? [{ userId: { in: userIds } }] : []),
+          { address: { phone: cleanPhone } },
+        ],
+      },
+      include: {
+        orderItems: {
+          include: {
+            variant: {
+              include: { product: true },
+            },
+          },
+        },
+        address: true,
+        payments: true,
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    // 3. Return sanitized order tracking data (Read-only, no sensitive profile data)
+    return orders.map((o) => ({
+      id: o.id,
+      orderNumber: o.orderNumber,
+      status: o.status,
+      orderedAt: o.orderedAt || o.createdAt,
+      subtotal: Number(o.subtotal),
+      shippingCharge: Number(o.shippingCharge),
+      grandTotal: Number(o.grandTotal),
+      deliveryAddress: o.address
+        ? `${o.address.fullName}, ${o.address.addressLine1}, ${o.address.city} - ${o.address.postalCode}`
+        : null,
+      shippingCity: o.address?.city,
+      carrierName: "Delhivery",
+      trackingNumber: `DEL-${o.orderNumber.replace(/\D/g, "")}`,
+      items: o.orderItems.map((item) => ({
+        id: item.id,
+        name: item.productName,
+        sku: item.sku,
+        quantity: item.quantity,
+        price: Number(item.unitPrice),
+        image: item.variant?.product?.thumbnailUrl || null,
+      })),
+      paymentMethod: o.payments?.[0]?.provider || "upi",
+      paymentStatus: o.payments?.[0]?.status || "PENDING",
+    }));
   }
 }
 

@@ -46,8 +46,16 @@ export default function RegisterPage() {
   const [isShaking, setIsShaking] = useState(false);
   const [showConfetti, setShowConfetti] = useState(false);
 
-  // Redirect if already logged in
+  // Redirect if already logged in with a valid token
   useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const token = localStorage.getItem('access_token') || (window as any).__accessToken;
+    if (!token) {
+      if (isLoggedIn) {
+        useAuthStore.getState().logout();
+      }
+      return;
+    }
     if (isLoggedIn) {
       router.replace('/account');
     }

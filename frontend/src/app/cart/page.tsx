@@ -84,14 +84,6 @@ export default function CartPage() {
 
   // Proceed Checkout Actions
   const handleProceedCheckout = () => {
-    if (!isAuthenticated) {
-      setIsOtpModalOpen(true);
-    } else {
-      router.push('/checkout');
-    }
-  };
-
-  const handleLoginSuccess = () => {
     router.push('/checkout');
   };
 
@@ -429,7 +421,7 @@ export default function CartPage() {
       <AuthCheckoutModal
         isOpen={isOtpModalOpen}
         onClose={() => setIsOtpModalOpen(false)}
-        onSuccess={handleLoginSuccess}
+        onSuccess={() => router.push('/checkout')}
       />
 
     </div>

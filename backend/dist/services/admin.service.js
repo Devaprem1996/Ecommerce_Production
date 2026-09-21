@@ -6,6 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const db_js_1 = __importDefault(require("../config/db.js"));
 const client_1 = require("@prisma/client");
+const sms_service_js_1 = require("./sms.service.js");
+const index_js_1 = __importDefault(require("../logger/index.js"));
 class AdminService {
     /**
      * Calculate full real-time overview analytics for admin dashboard
@@ -312,11 +314,34 @@ class AdminService {
      */
     static async updateOrderStatus(id, status) {
         const upperStatus = status.toUpperCase();
-        return db_js_1.default.order.update({
+        const order = await db_js_1.default.order.update({
             where: { id },
             data: { status: upperStatus },
-            include: { orderItems: true, user: { include: { profile: true } } },
+            include: {
+                orderItems: true,
+                user: { include: { profile: true } },
+                address: true,
+            },
         });
+        // Automatically send status update SMS to customer
+        const customerPhone = order.address?.phone || order.user?.phone;
+        if (customerPhone) {
+            if (upperStatus === client_1.OrderStatus.DELIVERED) {
+                sms_service_js_1.SmsService.sendOrderDelivered({
+                    phone: customerPhone,
+                    orderNumber: order.orderNumber,
+                }).catch((err) => index_js_1.default.error("Failed to send delivery SMS:", err));
+            }
+            else if (upperStatus === client_1.OrderStatus.PAYMENT_VERIFIED ||
+                upperStatus === client_1.OrderStatus.CONFIRMED) {
+                sms_service_js_1.SmsService.sendPaymentConfirmed({
+                    phone: customerPhone,
+                    orderNumber: order.orderNumber,
+                    amount: Number(order.grandTotal),
+                }).catch((err) => index_js_1.default.error("Failed to send payment confirmation SMS:", err));
+            }
+        }
+        return order;
     }
     /**
      * List all promotional coupons

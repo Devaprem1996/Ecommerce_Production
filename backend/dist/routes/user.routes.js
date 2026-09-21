@@ -4,8 +4,11 @@ const express_1 = require("express");
 const user_controller_js_1 = require("../controllers/user.controller.js");
 const auth_middleware_js_1 = require("../middleware/auth.middleware.js");
 const user_validation_js_1 = require("../validations/user.validation.js");
+const otp_validation_js_1 = require("../validations/otp.validation.js");
 const router = (0, express_1.Router)();
-// All user routes require customer or admin authentication
+// Public Guest Order Tracking Route (No auth token required, uses SMS OTP verification)
+router.post("/orders/track-by-otp", (0, auth_middleware_js_1.validateRequest)(otp_validation_js_1.trackByOtpSchema), user_controller_js_1.UserController.trackOrdersByOtp);
+// All subsequent user routes require customer or admin authentication
 router.use(auth_middleware_js_1.requireAuth);
 // Profile
 router.get("/profile", user_controller_js_1.UserController.getProfile);

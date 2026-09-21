@@ -8,10 +8,18 @@ import {
   createOrderSchema,
   wishlistSchema,
 } from "../validations/user.validation.js";
+import { trackByOtpSchema } from "../validations/otp.validation.js";
 
 const router = Router();
 
-// All user routes require customer or admin authentication
+// Public Guest Order Tracking Route (No auth token required, uses SMS OTP verification)
+router.post(
+  "/orders/track-by-otp",
+  validateRequest(trackByOtpSchema),
+  UserController.trackOrdersByOtp
+);
+
+// All subsequent user routes require customer or admin authentication
 router.use(requireAuth);
 
 // Profile

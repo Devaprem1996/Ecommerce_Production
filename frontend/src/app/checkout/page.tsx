@@ -26,6 +26,7 @@ import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/auth-store';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
+import { apiClient } from '@/services/api-client';
 import { accountService, UserAddress } from '@/services/account.service';
 
 interface AddressData {
@@ -44,14 +45,96 @@ export default function CheckoutPage() {
 
   // Stores
   const { items, getTotal, clearCart, getItemCount } = useCartStore();
-  const { user, isAuthenticated } = useAuthStore();
+  const { user, isAuthenticated, login } = useAuthStore();
 
-  // Redirect to login if not authenticated
+  // Guest Phone OTP States
+  const [isOtpSending, setIsOtpSending] = useState(false);
+  const [isOtpSent, setIsOtpSent] = useState(false);
+  const [otpInput, setOtpInput] = useState('');
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
+  const [otpTimer, setOtpTimer] = useState(30);
+  const [otpError, setOtpError] = useState<string | null>(null);
+
+  // OTP Countdown Timer
   useEffect(() => {
-    if (!isAuthenticated) {
-      router.replace('/login?redirect=/checkout');
+    let interval: NodeJS.Timeout;
+    if (isOtpSent && otpTimer > 0) {
+      interval = setInterval(() => setOtpTimer((t) => t - 1), 1000);
     }
-  }, [isAuthenticated, router]);
+    return () => clearInterval(interval);
+  }, [isOtpSent, otpTimer]);
+
+  const handleSendCheckoutOtp = async () => {
+    const cleanMobile = addressForm.mobile.replace(/\D/g, '').slice(-10);
+    if (!/^[6-9]\d{9}$/.test(cleanMobile)) {
+      toast.warning('Please enter a valid 10-digit Indian mobile number.');
+      return;
+    }
+
+    setIsOtpSending(true);
+    setOtpError(null);
+    try {
+      const res = await apiClient.post('/auth/otp/send', {
+        phone: cleanMobile,
+        purpose: 'CHECKOUT',
+      });
+      if (res.success) {
+        setIsOtpSent(true);
+        setOtpTimer(30);
+        if ((res as any).devOtp) {
+          toast.info(`Test OTP: ${(res as any).devOtp}`);
+        } else {
+          toast.success(`OTP sent to +91 ${cleanMobile}`);
+        }
+      } else {
+        setOtpError(res.message || 'Failed to send OTP.');
+        toast.error(res.message || 'Failed to send OTP.');
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to send verification SMS.';
+      setOtpError(msg);
+      toast.error(msg);
+    } finally {
+      setIsOtpSending(false);
+    }
+  };
+
+  const handleVerifyCheckoutOtp = async () => {
+    if (otpInput.length !== 6) {
+      toast.warning('Please enter the complete 6-digit OTP code.');
+      return;
+    }
+
+    setIsVerifyingOtp(true);
+    setOtpError(null);
+    try {
+      const cleanMobile = addressForm.mobile.replace(/\D/g, '').slice(-10);
+      const res = await apiClient.post('/auth/otp/verify', {
+        phone: cleanMobile,
+        otp: otpInput,
+        purpose: 'CHECKOUT',
+        name: addressForm.name || 'Customer',
+      });
+
+      if (res.success && res.data?.accessToken) {
+        if (typeof window !== 'undefined') {
+          localStorage.setItem('access_token', res.data.accessToken);
+          document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+        }
+        login(res.data.user, res.data.accessToken);
+        toast.success('Mobile verified! Proceeding with checkout.');
+      } else {
+        setOtpError(res.message || 'Invalid verification code.');
+        toast.error(res.message || 'Invalid verification code.');
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Invalid verification code.';
+      setOtpError(msg);
+      toast.error(msg);
+    } finally {
+      setIsVerifyingOtp(false);
+    }
+  };
 
   // Redirect if cart is empty (unless we are on order confirmation step)
   useEffect(() => {
@@ -167,7 +250,7 @@ export default function CheckoutPage() {
 
   const handleAddressSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (useNewAddress) {
+    if (useNewAddress || !isAuthenticated) {
       const { name, mobile, addressLine1, pincode, city, state } = addressForm;
       if (!name || !mobile || !addressLine1 || !pincode || !city || !state) {
         toast.warning('Please fill in all required address fields.');
@@ -175,6 +258,13 @@ export default function CheckoutPage() {
       }
       if (pincodeError) {
         toast.warning('Please use a serviceable pincode.');
+        return;
+      }
+      if (!isAuthenticated) {
+        toast.warning('Please verify your mobile number with OTP to continue.');
+        if (!isOtpSent) {
+          handleSendCheckoutOtp();
+        }
         return;
       }
     }
@@ -479,16 +569,89 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="space-y-1">
-                          <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                            Mobile Number *
-                          </label>
-                          <input
-                            type="tel"
-                            required
-                            value={addressForm.mobile}
-                            onChange={(e) => setAddressForm({ ...addressForm, mobile: e.target.value.replace(/\D/g, '') })}
-                            className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                          />
+                          <div className="flex items-center justify-between">
+                            <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
+                              Mobile Number *
+                            </label>
+                            {isAuthenticated && (
+                              <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3" />
+                                Verified
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex gap-2">
+                            <input
+                              type="tel"
+                              required
+                              disabled={isAuthenticated && !useNewAddress}
+                              value={addressForm.mobile}
+                              onChange={(e) => {
+                                setAddressForm({ ...addressForm, mobile: e.target.value.replace(/\D/g, '') });
+                                if (isOtpSent) setIsOtpSent(false);
+                              }}
+                              placeholder="10-digit mobile number"
+                              maxLength={10}
+                              className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                            />
+                            {!isAuthenticated && (
+                              <button
+                                type="button"
+                                onClick={handleSendCheckoutOtp}
+                                disabled={isOtpSending || !/^[6-9]\d{9}$/.test(addressForm.mobile) || (isOtpSent && otpTimer > 0)}
+                                className="px-3 py-2 rounded-card bg-primary-600 hover:bg-primary-700 disabled:opacity-50 text-white text-xs font-bold whitespace-nowrap transition-colors flex items-center gap-1.5 shadow-sm"
+                              >
+                                {isOtpSending ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : isOtpSent && otpTimer > 0 ? (
+                                  `Resend (${otpTimer}s)`
+                                ) : isOtpSent ? (
+                                  'Resend OTP'
+                                ) : (
+                                  'Verify with OTP'
+                                )}
+                              </button>
+                            )}
+                          </div>
+
+                          {/* Inline OTP Verification Box for Guest Users */}
+                          {!isAuthenticated && isOtpSent && (
+                            <div className="mt-3 p-3.5 bg-neutral-50 dark:bg-neutral-800/60 border border-primary-200 dark:border-primary-900/50 rounded-card space-y-2.5 animate-in fade-in slide-in-from-top-2 duration-200">
+                              <div className="flex items-center justify-between">
+                                <p className="text-xs font-bold text-neutral-800 dark:text-neutral-200 flex items-center gap-1.5">
+                                  <Smartphone className="w-3.5 h-3.5 text-primary-500" />
+                                  Enter 6-Digit SMS Code
+                                </p>
+                                <span className="text-[10px] text-neutral-500">
+                                  Sent to +91 {addressForm.mobile}
+                                </span>
+                              </div>
+                              <div className="flex gap-2">
+                                <input
+                                  type="text"
+                                  maxLength={6}
+                                  value={otpInput}
+                                  onChange={(e) => setOtpInput(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                  placeholder="123456"
+                                  className="w-36 text-center text-sm font-bold tracking-widest px-3 py-1.5 border border-primary-300 dark:border-primary-800 rounded bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary-500"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleVerifyCheckoutOtp}
+                                  disabled={isVerifyingOtp || otpInput.length !== 6}
+                                  className="px-4 py-1.5 rounded bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white text-xs font-bold transition-colors flex items-center gap-1 shadow-sm"
+                                >
+                                  {isVerifyingOtp ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Confirm OTP'}
+                                </button>
+                              </div>
+                              {otpError && (
+                                <p className="text-[11px] font-semibold text-red-500 flex items-center gap-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  {otpError}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
 
                         <div className="space-y-1 md:col-span-2">

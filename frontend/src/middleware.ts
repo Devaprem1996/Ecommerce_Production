@@ -64,8 +64,8 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // 1. Customer Protected Routes (/account/*, /checkout)
-  if ((pathname ?? '').startsWith('/account') || pathname === '/checkout') {
+  // 1. Customer Protected Routes (/account/*)
+  if ((pathname ?? '').startsWith('/account')) {
     if (!isTokenValid) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
