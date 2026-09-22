@@ -26,8 +26,14 @@ const logger = winston.createLogger({
   ],
 });
 
-// If we are in development, also log to the console with colorized formats
-if (process.env.NODE_ENV !== "production") {
+// Always log to console so container environments (Docker, Fly.io) capture stdout/stderr
+if (process.env.NODE_ENV === "production") {
+  logger.add(
+    new winston.transports.Console({
+      format: logFormat,
+    })
+  );
+} else {
   logger.add(
     new winston.transports.Console({
       format: winston.format.combine(
