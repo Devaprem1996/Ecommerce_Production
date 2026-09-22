@@ -107,12 +107,15 @@ class AdminService {
   /**
    * Products Management
    */
-  async listProducts(params: { category?: string; search?: string; limit?: number; page?: number } = {}) {
+  async listProducts(params: { category?: string; search?: string; limit?: number; page?: number; includeInactive?: boolean } = {}) {
     const query = new URLSearchParams();
     if (params.category && params.category !== 'All') query.set('category', params.category);
     if (params.search) query.set('search', params.search);
     query.set('limit', String(params.limit || 100));
     if (params.page) query.set('page', String(params.page));
+    if (params.includeInactive !== false) {
+      query.set('includeInactive', 'true');
+    }
 
     const response = await apiClient.get(`/cms/products?${query.toString()}`);
     return response.data;

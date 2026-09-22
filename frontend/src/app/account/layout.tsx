@@ -34,7 +34,7 @@ const NAV_ITEMS = [
 export default function AccountLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { user, isLoggedIn, logout } = useAuthStore();
+  const { user, isLoggedIn, logout, role } = useAuthStore();
   const wishlistItems = useWishlist((state) => state.items);
 
   const [checking, setChecking] = useState(true);
@@ -52,6 +52,20 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
             .find((row) => row.startsWith('access_token='))
             ?.split('=')[1]
         : null;
+
+    // If authenticated as ADMIN, immediately route to /admin
+    const authStore = useAuthStore.getState();
+    const isAdmin =
+      role === 'admin' ||
+      user?.role?.toLowerCase() === 'admin' ||
+      authStore.role === 'admin' ||
+      authStore.user?.role?.toLowerCase() === 'admin' ||
+      (typeof window !== 'undefined' && localStorage.getItem('admin_logged_in') === 'true');
+
+    if (isAdmin) {
+      router.replace('/admin');
+      return;
+    }
 
     // If no token exists at all and user is not logged in, redirect to login
     if (!storedToken && !isLoggedIn) {
@@ -93,6 +107,11 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
         console.error('Account session verification failed:', err);
         // Only kick user to login if backend explicitly rejected with 401 Unauthorized
         if (err?.status === 401 || err?.statusCode === 401) {
+          const authState = useAuthStore.getState();
+          if (authState.role === 'admin' || authState.user?.role?.toLowerCase() === 'admin' || localStorage.getItem('admin_logged_in') === 'true') {
+            router.replace('/admin');
+            return;
+          }
           if (typeof window !== 'undefined') {
             localStorage.removeItem('access_token');
             document.cookie = 'access_token=; path=/; max-age=0; SameSite=Lax';

@@ -37,8 +37,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
   // Determine badge to show
   const isSoldOut = product.stock === 0;
   const isLowStock = product.stock > 0 && product.stock <= 5;
-  const hasDiscount = true; // For premium display, let's assume all have a discount or mock it
-  const originalPrice = product.price * 1.25;
+  const hasDiscount = Boolean(product.originalPrice && product.originalPrice > product.price);
+  const originalPrice = product.originalPrice || (product.price * 1.25);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();

@@ -56,7 +56,15 @@ export async function POST(request: NextRequest) {
             secure: isProduction,
             sameSite: 'lax',
             path: '/',
-            maxAge: 15 * 60,
+            maxAge: 7 * 24 * 60 * 60,
+          });
+
+          response.cookies.set('admin_access_token', token, {
+            httpOnly: false,
+            secure: isProduction,
+            sameSite: 'lax',
+            path: '/',
+            maxAge: 7 * 24 * 60 * 60,
           });
 
           return response;
@@ -91,9 +99,9 @@ export async function POST(request: NextRequest) {
       createdAt: new Date().toISOString(),
     };
 
-    // Sign Access Token (15 mins) and Refresh Token (24 hours) with shared secret
-    const accessToken = signToken(adminPayload, secret, 15);
-    const refreshToken = signToken(adminPayload, secret, 24 * 60);
+    // Sign Access Token (7 days) and Refresh Token (30 days) with shared secret
+    const accessToken = signToken(adminPayload, secret, 7 * 24 * 60);
+    const refreshToken = signToken(adminPayload, secret, 30 * 24 * 60);
 
     const isProduction = process.env.NODE_ENV === 'production';
     const response = NextResponse.json({
@@ -111,7 +119,15 @@ export async function POST(request: NextRequest) {
       secure: isProduction,
       sameSite: 'lax',
       path: '/',
-      maxAge: 15 * 60,
+      maxAge: 7 * 24 * 60 * 60,
+    });
+
+    response.cookies.set('admin_access_token', accessToken, {
+      httpOnly: false,
+      secure: isProduction,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 7 * 24 * 60 * 60,
     });
 
     response.cookies.set('refresh_token', refreshToken, {

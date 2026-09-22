@@ -61,10 +61,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       return;
     }
 
-    const isLoggedIn = localStorage.getItem('admin_logged_in');
-    if (isLoggedIn !== 'true') {
+    const adminLoggedIn = localStorage.getItem('admin_logged_in');
+    const authStore = useAuthStore.getState();
+    const isAdmin =
+      adminLoggedIn === 'true' ||
+      authStore.role === 'admin' ||
+      authStore.user?.role?.toLowerCase() === 'admin' ||
+      Boolean(localStorage.getItem('admin_access_token'));
+
+    if (!isAdmin) {
       router.replace('/admin/login');
     } else {
+      localStorage.setItem('admin_logged_in', 'true');
       setCheckingAuth(false);
     }
   }, [pathname, router, isGuestPath]);
@@ -82,6 +90,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
       console.error('Logout API failed:', err);
     }
     localStorage.removeItem('admin_logged_in');
+    localStorage.removeItem('admin_access_token');
+    localStorage.removeItem('access_token');
     logout();
     toast.success('Logged out successfully!');
     router.replace('/admin/login');

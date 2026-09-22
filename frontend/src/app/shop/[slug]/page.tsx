@@ -34,7 +34,7 @@ import { StarRating } from '@/components/ui/StarRating';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
-import { ProductType } from '@/types';
+import { ProductType, ProductVariantType } from '@/types';
 import { slugify } from '@/utils/slugify';
 import apiClient from '@/lib/apiClient';
 import { mapProductToFrontend } from '@/utils/apiMapper';
@@ -101,8 +101,24 @@ export default function ProductDetail({ params }: PageProps) {
 
   // Fetch products from API (fallback to mock data) so real DB products resolve
   const [dbProducts, setDbProducts] = useState<ProductType[]>([]);
+  const [singleProduct, setSingleProduct] = useState<ProductType | null>(null);
   const [isProductsLoaded, setIsProductsLoaded] = useState(false);
+
   useEffect(() => {
+    if (!slug) return;
+
+    // Fetch the single product directly by slug first for exact variants
+    apiClient.get(`/api/v1/cms/products/${slug}`)
+      .then((res) => {
+        const raw = res?.data?.product || res?.data?.data?.product;
+        if (raw) {
+          setSingleProduct(mapProductToFrontend(raw));
+        }
+      })
+      .catch(() => {
+        // Silently fallback to catalog list
+      });
+
     apiClient.get('/api/v1/cms/products', { params: { limit: '100' } })
       .then((res) => {
         if (res?.data?.products && Array.isArray(res.data.products)) {
@@ -117,14 +133,15 @@ export default function ProductDetail({ params }: PageProps) {
       .finally(() => {
         setIsProductsLoaded(true);
       });
-  }, []);
+  }, [slug]);
 
   // Retrieve Product
   const product = useMemo(() => {
     if (!slug) return null;
+    if (singleProduct) return singleProduct;
     const source = dbProducts.length > 0 ? dbProducts : mockProducts;
     return source.find((p) => slugify(p.name) === slug);
-  }, [slug, dbProducts]);
+  }, [slug, singleProduct, dbProducts]);
 
   // Redirect to 404 if product not found after slug is resolved
   useEffect(() => {
@@ -165,35 +182,44 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState<'description' | 'nutrition' | 'usage' | 'reviews'>('usage');
   
-  // Interactive Size/Weight options
-  const sizeOptions = useMemo(() => {
-    if (product.unit.toLowerCase().includes('kg') || product.unit.toLowerCase().includes('g')) {
-      return ['250g', '500g', '1kg'];
+  // Variants list: prioritize real variants if present, otherwise create fallback variant from product
+  const variants: ProductVariantType[] = useMemo(() => {
+    if (product.variants && product.variants.length > 0) {
+      return product.variants;
     }
-    if (product.unit.toLowerCase().includes('l') || product.unit.toLowerCase().includes('ml')) {
-      return ['250ml', '500ml', '1L'];
-    }
-    if (product.unit.toLowerCase().includes('item') || product.unit.toLowerCase().includes('pc')) {
-      return ['6 items', '12 items'];
-    }
-    return [product.unit];
+    return [
+      {
+        id: 'default',
+        name: product.unit || 'Standard Pack',
+        price: product.price,
+        originalPrice: product.originalPrice,
+        stock: product.stock,
+      },
+    ];
   }, [product]);
-  const [selectedSize, setSelectedSize] = useState(product.unit);
 
-  // Calculate price modifier based on selected size
-  const sizePriceModifier = useMemo(() => {
-    if (selectedSize === product.unit) return 1;
-    if (selectedSize === '250g' || selectedSize === '250ml') return 0.3;
-    if (selectedSize === '500g' || selectedSize === '500ml') return 0.55;
-    if (selectedSize === '1kg' || selectedSize === '1L') return 1.0;
-    if (selectedSize === '6 items') return 1.0;
-    if (selectedSize === '12 items') return 1.8;
-    return 1;
-  }, [selectedSize, product.unit]);
+  const [selectedVariant, setSelectedVariant] = useState<ProductVariantType>(() => {
+    return variants[0];
+  });
 
-  const activePrice = Math.round(product.price * sizePriceModifier);
-  const originalPrice = Math.round(activePrice * 1.25);
-  const discountPercent = 20;
+  // Keep selected variant in sync if variants change
+  useEffect(() => {
+    if (variants.length > 0) {
+      setSelectedVariant(variants[0]);
+    }
+  }, [variants]);
+
+  const activePrice = selectedVariant.price;
+  const originalPrice = selectedVariant.originalPrice;
+  const activeStock = selectedVariant.stock;
+  const activeUnit = selectedVariant.name;
+
+  const discountPercent = useMemo(() => {
+    if (originalPrice && originalPrice > activePrice) {
+      return Math.round(((originalPrice - activePrice) / originalPrice) * 100);
+    }
+    return 0;
+  }, [originalPrice, activePrice]);
 
   // Pincode Validator States
   const [pincode, setPincode] = useState('');
@@ -260,21 +286,34 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
   };
 
   const handleAddToCart = () => {
-    const modifiedProduct = {
+    if (activeStock <= 0) return;
+    const modifiedProduct: ProductType = {
       ...product,
+      id: selectedVariant.id !== 'default' ? `${product.id}__var__${selectedVariant.id}` : product.id,
+      name: variants.length > 1 ? `${product.name} (${selectedVariant.name})` : product.name,
       price: activePrice,
-      unit: selectedSize
+      originalPrice: originalPrice,
+      stock: activeStock,
+      unit: activeUnit,
+      selectedVariantId: selectedVariant.id !== 'default' ? selectedVariant.id : undefined,
     };
     addItem(modifiedProduct, quantity);
     const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
-    toast.cart(`${displayName} (${quantity})`);
+    const variantLabel = variants.length > 1 ? ` - ${selectedVariant.name}` : '';
+    toast.cart(`${displayName}${variantLabel} (${quantity})`);
   };
 
   const handleBuyNow = () => {
-    const modifiedProduct = {
+    if (activeStock <= 0) return;
+    const modifiedProduct: ProductType = {
       ...product,
+      id: selectedVariant.id !== 'default' ? `${product.id}__var__${selectedVariant.id}` : product.id,
+      name: variants.length > 1 ? `${product.name} (${selectedVariant.name})` : product.name,
       price: activePrice,
-      unit: selectedSize
+      originalPrice: originalPrice,
+      stock: activeStock,
+      unit: activeUnit,
+      selectedVariantId: selectedVariant.id !== 'default' ? selectedVariant.id : undefined,
     };
     addItem(modifiedProduct, quantity);
     router.push('/cart');
@@ -432,7 +471,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                 )}
               </div>
 
-              {product.stock === 0 && (
+              {activeStock === 0 && (
                 <div className="absolute inset-0 bg-black/45 backdrop-blur-[2px] flex items-center justify-center z-10">
                   <span className="text-white text-base font-bold uppercase tracking-widest bg-error px-5 py-2.5 rounded-badge shadow-lg">
                     {t('badge.sold-out', 'Sold Out')}
@@ -526,14 +565,21 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
               {/* Price display */}
               <div className="flex flex-col gap-0.5 bg-neutral-50 dark:bg-neutral-850/60 p-4 rounded-feature border border-neutral-100 dark:border-neutral-800">
                 <div className="flex items-baseline gap-2.5 flex-wrap">
-                  <span className="text-xs text-neutral-600 line-through">
-                    ₹{originalPrice}
-                  </span>
+                  {originalPrice && originalPrice > activePrice && (
+                    <span className="text-sm text-neutral-500 line-through font-medium">
+                      ₹{originalPrice}
+                    </span>
+                  )}
                   <span className="text-3xl font-black text-[#2D6A4F] dark:text-[#52B788] tracking-tight">
                     ₹{activePrice}
                   </span>
-                  <span className="text-[10px] font-bold text-white bg-error px-2 py-0.5 rounded-badge uppercase tracking-wider">
-                    {discountPercent}% OFF
+                  {discountPercent > 0 && (
+                    <span className="text-[10px] font-bold text-white bg-error px-2 py-0.5 rounded-badge uppercase tracking-wider">
+                      {discountPercent}% OFF
+                    </span>
+                  )}
+                  <span className="text-xs font-semibold text-neutral-500 ml-1">
+                    / {activeUnit}
                   </span>
                 </div>
                 <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-500 uppercase tracking-wider">
@@ -541,27 +587,64 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                 </span>
               </div>
 
-              {/* Weight Selector */}
-              <div className="space-y-2">
-                <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block">
-                  {t('product.uom', 'Select Size')}:
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {sizeOptions.map(opt => (
-                    <button
-                      key={opt}
-                      onClick={() => setSelectedSize(opt)}
-                      className={`text-xs sm:text-sm font-semibold px-4 py-2 rounded-badge transition-colors border cursor-pointer ${
-                        selectedSize === opt
-                          ? 'bg-primary-500 text-white border-primary-500 shadow-md ring-2 ring-primary-500/10'
-                          : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-850 dark:text-neutral-300 hover:border-neutral-400'
-                      }`}
-                    >
-                      {opt}
-                    </button>
-                  ))}
+              {/* Variant / Pack Size Selector */}
+              {variants.length > 1 && (
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest block">
+                      {t('product.uom', 'Select Pack Size')}:
+                    </span>
+                    {activeStock > 0 ? (
+                      activeStock <= 5 ? (
+                        <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                          Hurry! Only {activeStock} left
+                        </span>
+                      ) : (
+                        <span className="text-xs font-medium text-[#2D6A4F] dark:text-[#52B788]">
+                          ✓ In Stock ({activeStock})
+                        </span>
+                      )
+                    ) : (
+                      <span className="text-xs font-semibold text-red-500">
+                        Sold Out
+                      </span>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2.5">
+                    {variants.map(v => {
+                      const isSelected = selectedVariant.id === v.id;
+                      const isOutOfStock = v.stock === 0;
+                      return (
+                        <button
+                          key={v.id}
+                          type="button"
+                          disabled={isOutOfStock}
+                          onClick={() => {
+                            setSelectedVariant(v);
+                            setQuantity(1);
+                          }}
+                          className={`group flex items-center gap-2 text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-badge transition-all border cursor-pointer ${
+                            isSelected
+                              ? 'bg-primary-500 text-white border-primary-500 shadow-md ring-2 ring-primary-500/20'
+                              : isOutOfStock
+                              ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 border-neutral-200 dark:border-neutral-700 cursor-not-allowed opacity-60 line-through'
+                              : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-850 dark:text-neutral-300 hover:border-primary-500/50 hover:bg-neutral-50 dark:hover:bg-neutral-800'
+                          }`}
+                        >
+                          <span>{v.name}</span>
+                          <span className={`text-xs font-bold px-1.5 py-0.5 rounded transition-colors ${
+                            isSelected 
+                              ? 'bg-white/20 text-white' 
+                              : 'bg-neutral-100 dark:bg-neutral-750 text-neutral-700 dark:text-neutral-300 group-hover:bg-primary-500/10'
+                          }`}>
+                            ₹{v.price}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Pincode Validator - Hidden */}
               {/* <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature p-4 space-y-3 shadow-inner">
@@ -639,7 +722,7 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
               </div> */}
 
               {/* Quantity selector */}
-              {product.stock > 0 && (
+              {activeStock > 0 && (
                 <div className="flex items-center gap-4 py-2">
                   <span className="text-xs font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest select-none">
                     {t('product.quantity', 'Quantity')}:
@@ -656,18 +739,23 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                       {quantity}
                     </span>
                     <button
-                      onClick={() => setQuantity(q => Math.min(product.stock, q + 1))}
+                      onClick={() => setQuantity(q => Math.min(activeStock, q + 1))}
                       className="p-2.5 hover:text-primary-500 text-neutral-650 dark:text-neutral-450 transition-colors focus:outline-none cursor-pointer min-w-[40px] flex items-center justify-center"
                       aria-label="Increase quantity"
                     >
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
+                  {activeStock <= 5 && (
+                    <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">
+                      (Max {activeStock})
+                    </span>
+                  )}
                 </div>
               )}
 
               {/* Cart Buttons */}
-              {product.stock > 0 ? (
+              {activeStock > 0 ? (
                 <div className="flex flex-col sm:flex-row gap-3 pt-3">
                   <Button
                     variant="cta"

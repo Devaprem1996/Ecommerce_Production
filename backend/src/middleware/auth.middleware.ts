@@ -39,6 +39,31 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 /**
+ * Optional Authentication Guard Middleware
+ * Attaches verified JWT user payload to req.user if token is present, but does not block requests
+ */
+export function optionalAuth(req: Request, res: Response, next: NextFunction) {
+  let token: string | undefined;
+  const authHeader = req.headers.authorization;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.split(" ")[1];
+  } else if (req.cookies && (req.cookies.access_token || req.cookies.accessToken)) {
+    token = req.cookies.access_token || req.cookies.accessToken;
+  }
+
+  if (token) {
+    try {
+      const decoded = AuthService.verifyAccessToken(token);
+      req.user = decoded;
+    } catch {
+      // Ignore token verification errors for optional authentication
+    }
+  }
+
+  return next();
+}
+
+/**
  * Role Authorization Guard Middleware
  * Restricts route access to specified Roles
  */

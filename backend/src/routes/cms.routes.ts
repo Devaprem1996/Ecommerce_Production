@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { CmsController } from "../controllers/cms.controller.js";
-import { requireAuth, requireRole, validateRequest } from "../middleware/auth.middleware.js";
+import { requireAuth, requireRole, validateRequest, optionalAuth } from "../middleware/auth.middleware.js";
 import { upload } from "../middleware/upload.middleware.js";
 import {
   createCategorySchema,
@@ -24,9 +24,10 @@ router.get("/categories", CmsController.listCategories);
 // Category Details by Slug
 router.get("/categories/:slug", CmsController.getCategory);
 
-// Products Catalog List with filters
+// Products Catalog List with filters (optionalAuth extracts admin role when token is sent)
 router.get(
   "/products",
+  optionalAuth,
   validateRequest(listProductsQuerySchema),
   CmsController.listProducts
 );
@@ -82,8 +83,16 @@ router.post(
   CmsController.createProduct
 );
 
-// Update Product general settings
+// Update Product general settings (support both PATCH and PUT)
 router.patch(
+  "/products/:id",
+  requireAuth,
+  requireRole(["ADMIN"]),
+  validateRequest(updateProductSchema),
+  CmsController.updateProduct
+);
+
+router.put(
   "/products/:id",
   requireAuth,
   requireRole(["ADMIN"]),

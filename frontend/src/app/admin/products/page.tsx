@@ -156,7 +156,7 @@ export default function AdminProductsPage() {
         slug: p.slug,
         category: p.category?.nameEn || 'General',
         categorySlug: catSlug,
-        price: primaryVariant?.discountPrice || primaryVariant?.price || 0,
+        price: primaryVariant?.discountPrice ? Number(primaryVariant.discountPrice) : Number(primaryVariant?.price || 0),
         stock: totalStock,
         unit: primaryVariant?.nameEn || 'Unit',
         images: [resolvedImage],
@@ -413,7 +413,7 @@ export default function AdminProductsPage() {
               <option value={15}>15</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
-              <option value={0}>All (85)</option>
+              <option value={0}>All ({products.length})</option>
             </select>
           </div>
         </div>
@@ -532,12 +532,27 @@ export default function AdminProductsPage() {
 
                         {/* Status */}
                         <td className="p-4">
-                          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                            prod.stock > 0 && prod.isActive ? 'bg-success/10 text-success' : 'bg-red-500/10 text-red-500'
-                          }`}>
-                            {prod.stock > 0 && prod.isActive ? <CheckCircle2 className="w-3 h-3" /> : <XCircle className="w-3 h-3" />}
-                            {prod.stock > 0 && prod.isActive ? 'Active' : 'Out of Stock'}
-                          </span>
+                          {!prod.isActive ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-400 border border-neutral-500/20">
+                              <XCircle className="w-3 h-3 text-neutral-400" />
+                              Inactive
+                            </span>
+                          ) : prod.stock <= 0 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">
+                              <XCircle className="w-3 h-3 text-red-500" />
+                              Out of Stock
+                            </span>
+                          ) : prod.stock <= 10 ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                              <AlertTriangle className="w-3 h-3 text-amber-500" />
+                              Low Stock ({prod.stock})
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-success/10 text-success border border-success/20">
+                              <CheckCircle2 className="w-3 h-3 text-success" />
+                              Active
+                            </span>
+                          )}
                         </td>
 
                         {/* Actions */}
@@ -642,11 +657,23 @@ export default function AdminProductsPage() {
                       </div>
                     </div>
                     <div>
-                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        prod.stock > 0 && prod.isActive ? 'bg-success/10 text-success' : 'bg-red-500/10 text-red-500'
-                      }`}>
-                        {prod.stock > 0 && prod.isActive ? 'Active' : 'Out of Stock'}
-                      </span>
+                      {!prod.isActive ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-neutral-500/10 text-neutral-400 border border-neutral-500/20">
+                          Inactive
+                        </span>
+                      ) : prod.stock <= 0 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20">
+                          Out of Stock
+                        </span>
+                      ) : prod.stock <= 10 ? (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-amber-500/10 text-amber-500 border border-amber-500/20">
+                          Low Stock ({prod.stock})
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-success/10 text-success border border-success/20">
+                          Active
+                        </span>
+                      )}
                     </div>
                   </div>
 
@@ -798,9 +825,9 @@ export default function AdminProductsPage() {
                             <Camera className="w-3.5 h-3.5" />
                           </button>
                           <span className={`absolute top-2 right-2 px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider shadow-xs ${
-                            prod.stock > 0 && prod.isActive ? 'bg-success text-white' : 'bg-red-500 text-white'
+                            !prod.isActive ? 'bg-neutral-600 text-white' : prod.stock <= 0 ? 'bg-red-500 text-white' : prod.stock <= 10 ? 'bg-amber-500 text-white' : 'bg-success text-white'
                           }`}>
-                            {prod.stock > 0 && prod.isActive ? 'In Stock' : 'Out of Stock'}
+                            {!prod.isActive ? 'Inactive' : prod.stock <= 0 ? 'Out of Stock' : prod.stock <= 10 ? 'Low Stock' : 'In Stock'}
                           </span>
                         </div>
 

@@ -46,13 +46,16 @@ export const useWishlist = create<WishlistState>()(
       },
       hasItem: (productId) => get().items.some((item) => item.id === productId),
       syncWithDb: async () => {
+        if (get().isLoading) return;
+
         const authState = useAuthStore.getState();
         const token =
           typeof window !== 'undefined'
             ? localStorage.getItem('access_token') || (window as any).__accessToken
             : null;
 
-        if (!authState.isLoggedIn || !token) {
+        // Skip wishlist sync if not logged in, no token, or user is an admin
+        if (!authState.isLoggedIn || !token || authState.role === 'admin' || authState.user?.role?.toLowerCase() === 'admin') {
           return;
         }
 

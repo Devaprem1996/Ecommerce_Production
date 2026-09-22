@@ -25,8 +25,8 @@ export default function WishlistPage() {
   const [initialLoading, setInitialLoading] = React.useState(true);
 
   React.useEffect(() => {
-    syncWithDb().finally(() => setInitialLoading(false));
-  }, [syncWithDb]);
+    useWishlist.getState().syncWithDb().finally(() => setInitialLoading(false));
+  }, []);
 
   // Action: Move to Cart
   const handleMoveToCart = (product: any, e: React.MouseEvent) => {

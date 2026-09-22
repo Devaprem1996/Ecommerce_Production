@@ -258,7 +258,7 @@ class CmsService {
             include: {
                 category: true,
                 variants: {
-                    where: { deletedAt: null, isActive: true },
+                    where: { deletedAt: null },
                     include: {
                         inventory: true,
                     },
@@ -369,18 +369,38 @@ class CmsService {
             }
             // 2. If explicit variants array is passed, update them
             if (variants && variants.length > 0) {
+                const incomingIds = variants.map((v) => v.id).filter(Boolean);
+                // Soft-delete any existing variants that were removed in the UI
+                for (const existing of product.variants) {
+                    if (!incomingIds.includes(existing.id)) {
+                        await tx.productVariant.update({
+                            where: { id: existing.id },
+                            data: { deletedAt: new Date(), isActive: false },
+                        });
+                    }
+                }
+                // Update existing or create new variants
                 for (let i = 0; i < variants.length; i++) {
                     const v = variants[i];
-                    const existingVariant = product.variants[i];
+                    const existingVariant = v.id
+                        ? product.variants.find((pv) => pv.id === v.id)
+                        : undefined;
+                    let finalPrice = v.price;
+                    let finalDiscountPrice = v.discountPrice ?? null;
+                    if (finalDiscountPrice !== null && finalDiscountPrice >= finalPrice) {
+                        finalDiscountPrice = null;
+                    }
                     if (existingVariant) {
                         await tx.productVariant.update({
                             where: { id: existingVariant.id },
                             data: {
                                 nameEn: v.nameEn,
                                 nameTa: v.nameTa || v.nameEn,
-                                price: v.price,
-                                discountPrice: v.discountPrice,
+                                price: finalPrice,
+                                discountPrice: finalDiscountPrice,
                                 weight: v.weight,
+                                deletedAt: null,
+                                isActive: true,
                             },
                         });
                         if (v.availableQuantity !== undefined) {
@@ -409,9 +429,10 @@ class CmsService {
                                 nameEn: v.nameEn,
                                 nameTa: v.nameTa || v.nameEn,
                                 sku,
-                                price: v.price,
-                                discountPrice: v.discountPrice,
+                                price: finalPrice,
+                                discountPrice: finalDiscountPrice,
                                 weight: v.weight,
+                                isActive: true,
                             },
                         });
                         await tx.inventory.create({
@@ -424,15 +445,22 @@ class CmsService {
                     }
                 }
             }
-            else if (price !== undefined || stock !== undefined || unit !== undefined) {
+            else if (price !== undefined || stock !== undefined || unit !== undefined || originalPrice !== undefined) {
                 // 3. Update primary variant & inventory directly
                 const primaryVariant = product.variants[0];
                 if (primaryVariant) {
                     const variantUpdates = {};
-                    if (price !== undefined)
-                        variantUpdates.price = price;
-                    if (originalPrice !== undefined)
-                        variantUpdates.discountPrice = originalPrice > (price || Number(primaryVariant.price)) ? price : undefined;
+                    if (price !== undefined || originalPrice !== undefined) {
+                        const targetPrice = price !== undefined ? price : Number(primaryVariant.discountPrice || primaryVariant.price);
+                        if (originalPrice && originalPrice > targetPrice) {
+                            variantUpdates.price = originalPrice;
+                            variantUpdates.discountPrice = targetPrice;
+                        }
+                        else {
+                            variantUpdates.price = targetPrice;
+                            variantUpdates.discountPrice = null;
+                        }
+                    }
                     if (unit !== undefined) {
                         variantUpdates.nameEn = unit;
                         variantUpdates.nameTa = unit;

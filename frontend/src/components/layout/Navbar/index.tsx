@@ -10,7 +10,7 @@ import { MobileMenu } from '../MobileMenu';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { useCartStore } from '@/store/cartStore';
-import { Search, Heart, ShoppingBag, X, User, LogOut, ChevronDown } from 'lucide-react';
+import { Search, Heart, ShoppingBag, X, User, LogOut, ChevronDown, ShieldCheck, ClipboardList } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useAuthStore } from '@/store/auth-store';
@@ -31,7 +31,8 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const cartCount = useCartStore((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const openMiniCart = useCartStore((state) => state.openMiniCart);
   const wishlistCount = useWishlist((state) => state.items.length);
-  const { user, isLoggedIn } = useAuthStore();
+  const { user, isLoggedIn, role } = useAuthStore();
+  const isAdmin = role === 'admin' || user?.role?.toLowerCase() === 'admin';
 
   // Close profile dropdown on click outside
   useEffect(() => {
@@ -51,12 +52,12 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
     setIsUserMenuOpen(false);
   }, [pathname]);
 
-  // Synchronize wishlist from live database when logged in
+  // Synchronize wishlist from live database when logged in as customer
   useEffect(() => {
-    if (isLoggedIn) {
+    if (isLoggedIn && role === 'customer') {
       useWishlist.getState().syncWithDb();
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, role]);
 
   // Monitor scroll height
   useEffect(() => {
@@ -326,9 +327,16 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                     >
                       {/* User Info Header */}
                       <div className="px-4 py-3 border-b border-neutral-100 dark:border-neutral-800 bg-neutral-50/70 dark:bg-neutral-950/30">
-                        <p className="text-xs font-bold truncate text-neutral-900 dark:text-white">
-                          {user?.name || user?.email?.split('@')[0] || 'Member'}
-                        </p>
+                        <div className="flex items-center justify-between gap-1">
+                          <p className="text-xs font-bold truncate text-neutral-900 dark:text-white">
+                            {user?.name || user?.email?.split('@')[0] || 'Member'}
+                          </p>
+                          {isAdmin && (
+                            <span className="text-[9px] font-black uppercase px-1.5 py-0.5 rounded bg-primary-500/10 text-primary-600 dark:text-primary-400 border border-primary-500/20 shrink-0">
+                              Admin
+                            </span>
+                          )}
+                        </div>
                         <p className="text-[11px] text-neutral-500 dark:text-neutral-400 truncate mt-0.5 font-medium">
                           {user?.email || user?.mobile || 'Verified Member'}
                         </p>
@@ -336,37 +344,68 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
                       {/* Menu Links */}
                       <div className="py-1">
-                        <Link
-                          href="/account"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                        >
-                          <User className="w-3.5 h-3.5" />
-                          <span>Dashboard</span>
-                        </Link>
-                        <Link
-                          href="/account/orders"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                        >
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                          <span>My Orders</span>
-                        </Link>
-                        <Link
-                          href="/account/wishlist"
-                          onClick={() => setIsUserMenuOpen(false)}
-                          className="flex items-center justify-between px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Heart className="w-3.5 h-3.5" />
-                            <span>Wishlist</span>
-                          </div>
-                          {wishlistCount > 0 && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
-                              {wishlistCount}
-                            </span>
-                          )}
-                        </Link>
+                        {isAdmin ? (
+                          <>
+                            <Link
+                              href="/admin"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ShieldCheck className="w-3.5 h-3.5 text-primary-500" />
+                              <span>Admin Dashboard</span>
+                            </Link>
+                            <Link
+                              href="/admin/products"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>Manage Products</span>
+                            </Link>
+                            <Link
+                              href="/admin/orders"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ClipboardList className="w-3.5 h-3.5" />
+                              <span>Manage Orders</span>
+                            </Link>
+                          </>
+                        ) : (
+                          <>
+                            <Link
+                              href="/account"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <User className="w-3.5 h-3.5" />
+                              <span>Dashboard</span>
+                            </Link>
+                            <Link
+                              href="/account/orders"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center gap-2.5 px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>My Orders</span>
+                            </Link>
+                            <Link
+                              href="/account/wishlist"
+                              onClick={() => setIsUserMenuOpen(false)}
+                              className="flex items-center justify-between px-4 py-2 text-xs font-semibold text-neutral-700 dark:text-neutral-300 hover:bg-primary-50 dark:hover:bg-primary-950/20 hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+                            >
+                              <div className="flex items-center gap-2.5">
+                                <Heart className="w-3.5 h-3.5" />
+                                <span>Wishlist</span>
+                              </div>
+                              {wishlistCount > 0 && (
+                                <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
+                                  {wishlistCount}
+                                </span>
+                              )}
+                            </Link>
+                          </>
+                        )}
                       </div>
 
                       {/* Sign Out Action in Dropdown */}

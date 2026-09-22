@@ -49,9 +49,10 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  // Read access_token from cookies
+  // Read access_token or admin_access_token from cookies
   const accessTokenCookie = request.cookies.get('access_token');
-  const token = accessTokenCookie?.value;
+  const adminTokenCookie = request.cookies.get('admin_access_token');
+  const token = accessTokenCookie?.value || adminTokenCookie?.value;
 
   let user: any = null;
   let isTokenValid = false;
@@ -70,6 +71,10 @@ export function middleware(request: NextRequest) {
       const loginUrl = new URL('/login', request.url);
       loginUrl.searchParams.set('redirect', pathname);
       return NextResponse.redirect(loginUrl);
+    }
+    // If authenticated as ADMIN, redirect to /admin dashboard
+    if (user && user.role?.toLowerCase() === 'admin') {
+      return NextResponse.redirect(new URL('/admin', request.url));
     }
   }
 
@@ -95,6 +100,9 @@ export function middleware(request: NextRequest) {
     if (isTokenValid && user) {
       if (user.role?.toLowerCase() === 'customer') {
         return NextResponse.redirect(new URL('/account', request.url));
+      }
+      if (user.role?.toLowerCase() === 'admin') {
+        return NextResponse.redirect(new URL('/admin', request.url));
       }
     }
   }

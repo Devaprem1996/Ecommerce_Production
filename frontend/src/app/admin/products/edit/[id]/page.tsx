@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   ArrowLeft, 
   Upload, 
@@ -21,7 +22,10 @@ import {
   AlertCircle,
   Loader2,
   CloudUpload,
-  Check
+  Layers,
+  Percent,
+  CheckCircle2,
+  Boxes
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
@@ -29,20 +33,23 @@ import { useAdminCategories } from '@/hooks/useAdmin';
 import { adminService } from '@/services/admin.service';
 import { resolveProductImage } from '@/utils/apiMapper';
 
-// Form validation schema using Zod
+// Form validation schema for high-level product metadata
 const productFormSchema = z.object({
-  name: z.string().min(3, { message: 'English name must be at least 3 characters' }),
+  name: z.string().min(2, { message: 'Product name must be at least 2 characters' }),
   nameTamil: z.string().optional(),
   categoryId: z.string().min(1, { message: 'Category is required' }),
-  price: z.number().min(1, { message: 'Price must be greater than 0' }),
-  originalPrice: z.number().optional(),
-  unit: z.string().min(1, { message: 'UoM (e.g. 500g, 1L) is required' }),
-  stock: z.number().min(0, { message: 'Stock cannot be negative' }),
-  tags: z.string().optional(),
   status: z.enum(['active', 'inactive'])
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
+
+export interface ProductVariantItem {
+  id?: string;
+  name: string;
+  price: number;          // Exact selling price customer pays
+  originalPrice: number;  // Exact MRP / strikethrough price (optional)
+  stock: number;          // Exact inventory for this variant
+}
 
 interface EditProductPageProps {
   params: Promise<{ id: string }>;
@@ -50,14 +57,10 @@ interface EditProductPageProps {
 
 export default function EditProductPage({ params }: EditProductPageProps) {
   const router = useRouter();
-  const [productId, setProductId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const unwrappedParams = React.use(params);
+  const productId = unwrappedParams.id;
   const { data: categories = [] } = useAdminCategories();
-
-  useEffect(() => {
-    params.then((resolved) => {
-      setProductId(resolved.id);
-    });
-  }, [params]);
 
   const [loading, setLoading] = useState(false);
   const [productData, setProductData] = useState<any>(null);
@@ -70,6 +73,102 @@ export default function EditProductPage({ params }: EditProductPageProps) {
   const [images, setImages] = useState<string[]>([]);
   const [newImageUrl, setNewImageUrl] = useState('');
 
+  // Variants & Pricing state (Each variant has exact price, MRP, and stock)
+  const [variants, setVariants] = useState<ProductVariantItem[]>([]);
+
+  // TipTap Rich Text Editor Configuration
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '',
+  });
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormData>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: '',
+      nameTamil: '',
+      categoryId: '',
+      status: 'active'
+    }
+  });
+
+  const editorLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (!productId) return;
+
+    let isMounted = true;
+    setFetching(true);
+
+    adminService.getProduct(productId)
+      .then((prod) => {
+        if (!isMounted || !prod) return;
+        setProductData(prod);
+
+        // Resolve thumbnail images
+        const rawThumb = prod.thumbnailUrl;
+        const isDeadSeedUrl = rawThumb && rawThumb.includes('yathu-iyarkaiyagam');
+        const resolvedImage = isDeadSeedUrl ? resolveProductImage(prod.slug, prod.category?.slug) : rawThumb;
+        const initialImages = resolvedImage ? [resolvedImage] : (prod.images?.length ? prod.images : ['https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400']);
+        setImages(initialImages);
+
+        // Map database variants with their exact Selling Price, MRP, and Stock
+        const mappedVariants: ProductVariantItem[] = (prod.variants || []).map((v: any) => {
+          const hasDiscount = Boolean(v.discountPrice && Number(v.discountPrice) < Number(v.price));
+          const sellingPrice = hasDiscount ? Number(v.discountPrice) : Number(v.price || 0);
+          const originalPrice = hasDiscount ? Number(v.price) : 0;
+          const stock = v.inventory?.availableQuantity ?? 0;
+
+          return {
+            id: v.id,
+            name: v.nameEn || 'Standard Pack',
+            price: sellingPrice,
+            originalPrice: originalPrice,
+            stock: stock,
+          };
+        });
+
+        // Ensure at least 1 variant row is available
+        if (mappedVariants.length === 0) {
+          mappedVariants.push({
+            name: 'Standard Pack',
+            price: 0,
+            originalPrice: 0,
+            stock: 0,
+          });
+        }
+
+        setVariants(mappedVariants);
+
+        reset({
+          name: prod.nameEn || '',
+          nameTamil: prod.nameTa || '',
+          categoryId: prod.categoryId || prod.category?.id || '',
+          status: prod.isActive ? 'active' : 'inactive',
+        });
+      })
+      .catch((err) => {
+        console.error("Failed to load product:", err);
+        toast.error("Failed to load product details.");
+      })
+      .finally(() => {
+        if (isMounted) setFetching(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [productId, reset]);
+
+  // Synchronize editor content once when product data loads without resetting form inputs
+  useEffect(() => {
+    if (editor && productData?.descriptionEn && !editorLoadedRef.current) {
+      editor.commands.setContent(productData.descriptionEn);
+      editorLoadedRef.current = true;
+    }
+  }, [editor, productData]);
+
+  // Image Upload handler
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
       toast.error('Please select an image file (JPG, PNG, or WEBP).');
@@ -109,91 +208,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     }
   };
 
-  // Weight variants state
-  const [variants, setVariants] = useState<{ weight: string; price: number }[]>([]);
-  const [newVarWeight, setNewVarWeight] = useState('');
-  const [newVarPrice, setNewVarPrice] = useState(0);
-
-  // TipTap Rich Text Editor Configuration
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: '',
-  });
-
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: {
-      name: '',
-      nameTamil: '',
-      categoryId: '',
-      price: 0,
-      originalPrice: 0,
-      unit: '',
-      stock: 0,
-      tags: '',
-      status: 'active'
-    }
-  });
-
-  useEffect(() => {
-    if (!productId) return;
-
-    let isMounted = true;
-    setFetching(true);
-
-    adminService.getProduct(productId)
-      .then((prod) => {
-        if (!isMounted || !prod) return;
-        setProductData(prod);
-
-        const primaryVariant = prod.variants?.[0];
-        const rawThumb = prod.thumbnailUrl;
-        const isDeadSeedUrl = rawThumb && rawThumb.includes('yathu-iyarkaiyagam');
-        const resolvedImage = isDeadSeedUrl ? resolveProductImage(prod.slug, prod.category?.slug) : rawThumb;
-        const initialImages = resolvedImage ? [resolvedImage] : (prod.images?.length ? prod.images : ['https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400']);
-        setImages(initialImages);
-
-        const totalStock = prod.variants?.reduce(
-          (sum: number, v: any) => sum + (v.inventory?.availableQuantity ?? 0),
-          0
-        ) ?? 50;
-
-        if (prod.variants?.length > 1) {
-          setVariants(prod.variants.map((v: any) => ({
-            weight: v.nameEn,
-            price: Number(v.discountPrice || v.price),
-          })));
-        }
-
-        reset({
-          name: prod.nameEn,
-          nameTamil: prod.nameTa || '',
-          categoryId: prod.categoryId || prod.category?.id || '',
-          price: Number(primaryVariant?.discountPrice || primaryVariant?.price || 0),
-          originalPrice: Number(primaryVariant?.price || 0),
-          unit: primaryVariant?.nameEn || '500g',
-          stock: totalStock,
-          tags: 'organic, fresh',
-          status: prod.isActive ? 'active' : 'inactive',
-        });
-
-        if (editor && prod.descriptionEn) {
-          editor.commands.setContent(prod.descriptionEn);
-        }
-      })
-      .catch((err) => {
-        console.error("Failed to load product:", err);
-        toast.error("Failed to load product details.");
-      })
-      .finally(() => {
-        if (isMounted) setFetching(false);
-      });
-
-    return () => {
-      isMounted = false;
-    };
-  }, [productId, reset, editor]);
-
   const handleAddImage = () => {
     if (newImageUrl && newImageUrl.startsWith('http')) {
       setImages([...images, newImageUrl]);
@@ -208,27 +222,74 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Variant field update handlers
+  const handleVariantChange = (index: number, field: keyof ProductVariantItem, value: any) => {
+    setVariants((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        [field]: field === 'name' ? value : Math.max(0, Number(value) || 0),
+      };
+      return next;
+    });
+  };
+
   const handleAddVariant = () => {
-    if (!newVarWeight || newVarPrice <= 0) {
-      toast.warning('Provide variant weight and price.');
-      return;
-    }
-    setVariants([...variants, { weight: newVarWeight, price: newVarPrice }]);
-    setNewVarWeight('');
-    setNewVarPrice(0);
-    toast.success('Weight variant registered.');
+    setVariants((prev) => [
+      ...prev,
+      {
+        name: '',
+        price: 0,
+        originalPrice: 0,
+        stock: 10,
+      },
+    ]);
   };
 
   const handleRemoveVariant = (index: number) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
+    if (variants.length <= 1) {
+      toast.warning('A product must have at least one pack variant.');
+      return;
+    }
+    setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
+  // Save changes to database
   const onSubmit = async (data: ProductFormData) => {
     if (!productId) return;
+
+    // Validate that every variant has a title and a selling price > 0
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
+      if (!v.name.trim()) {
+        toast.error(`Variant #${i + 1} must have a pack size or title (e.g. "250g Pack").`);
+        return;
+      }
+      if (v.price <= 0) {
+        toast.error(`Variant "${v.name}" must have a selling price greater than 0.`);
+        return;
+      }
+    }
+
     setLoading(true);
     const descContent = editor ? editor.getHTML() : data.name;
 
     try {
+      // Format payload with exact variant prices and stocks
+      const formattedVariants = variants.map((v) => {
+        const isDiscounted = v.originalPrice > 0 && v.originalPrice > v.price;
+        return {
+          id: v.id,
+          nameEn: v.name.trim(),
+          nameTa: v.name.trim(),
+          price: isDiscounted ? Number(v.originalPrice) : Number(v.price),
+          discountPrice: isDiscounted ? Number(v.price) : null,
+          availableQuantity: Number(v.stock),
+        };
+      });
+
+      const primary = formattedVariants[0];
+
       const payload: any = {
         nameEn: data.name.trim(),
         nameTa: (data.nameTamil || data.name).trim(),
@@ -236,29 +297,25 @@ export default function EditProductPage({ params }: EditProductPageProps) {
         descriptionTa: descContent,
         thumbnailUrl: images[0] || undefined,
         isActive: data.status === 'active',
-        price: Number(data.price),
-        originalPrice: data.originalPrice ? Number(data.originalPrice) : undefined,
-        unit: data.unit,
-        stock: Number(data.stock),
+        categoryId: data.categoryId,
+        variants: formattedVariants,
+        // Legacy fields for backward compatibility
+        price: primary?.discountPrice || primary?.price || 0,
+        originalPrice: primary?.discountPrice ? primary?.price : null,
+        unit: variants[0]?.name || 'Pack',
+        stock: variants.reduce((sum, v) => sum + Number(v.stock || 0), 0),
       };
 
-      if (data.categoryId) {
-        payload.categoryId = data.categoryId;
-      }
-
-      if (variants.length > 0) {
-        payload.variants = variants.map((v) => ({
-          nameEn: v.weight,
-          nameTa: v.weight,
-          price: Number(v.price),
-          availableQuantity: Number(data.stock),
-        }));
-      }
-
       await adminService.updateProduct(productId, payload);
-      toast.success('Product updated successfully!');
+
+      // Invalidate queries so admin lists and storefront update instantly
+      await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      
+      toast.success('Product and all pack variants updated successfully!');
       router.push('/admin/products');
     } catch (err: any) {
+      console.error('Failed to update product:', err);
       toast.error(err.message || 'Failed to update product.');
     } finally {
       setLoading(false);
@@ -273,8 +330,13 @@ export default function EditProductPage({ params }: EditProductPageProps) {
     );
   }
 
+  // Live calculation helpers for summary card
+  const totalStockCount = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+  const minPrice = variants.length > 0 ? Math.min(...variants.map(v => v.price || 0)) : 0;
+  const maxPrice = variants.length > 0 ? Math.max(...variants.map(v => v.price || 0)) : 0;
+
   return (
-    <div className="space-y-8 font-sans pb-10 max-w-4xl">
+    <div className="space-y-8 font-sans pb-10 max-w-5xl">
       
       {/* Header breadcrumb */}
       <div className="flex items-center gap-3">
@@ -289,17 +351,18 @@ export default function EditProductPage({ params }: EditProductPageProps) {
             Edit Product: {productData?.nameEn || 'Loading...'}
           </h1>
           <p className="text-xs font-semibold text-neutral-500">
-            Update product details, pricing, and media.
+            Manage product details, media, and separate pack size variants.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Basic Details & Text Editor (8 cols) */}
+        {/* Left Column: Details, Media & Pack Variants (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
+          
+          {/* Section 1: Basic Specifications */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
-            
             <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2">
               Primary Specifications
             </h3>
@@ -338,11 +401,17 @@ export default function EditProductPage({ params }: EditProductPageProps) {
               <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
                 Product Description (Rich Text Editor)
               </label>
-              
               {editor && (
-                <div className="border border-neutral-200 dark:border-neutral-750 rounded-card overflow-hidden">
-                  {/* Rich Text Toolbar */}
-                  <div className="flex gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-750 flex-wrap">
+                <div className="border border-neutral-200 dark:border-neutral-700 rounded-card overflow-hidden bg-transparent">
+                  {/* Editor Mini Toolbar */}
+                  <div className="flex items-center gap-1 p-2 bg-neutral-100 dark:bg-neutral-850 border-b border-neutral-200 dark:border-neutral-700">
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                      className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('heading', { level: 3 }) ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
+                    >
+                      <Heading1 className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => editor.chain().focus().toggleBold().run()}
@@ -359,13 +428,6 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                     </button>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                      className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('heading', { level: 1 }) ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
-                    >
-                      <Heading1 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => editor.chain().focus().toggleBulletList().run()}
                       className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('bulletList') ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
                     >
@@ -378,10 +440,143 @@ export default function EditProductPage({ params }: EditProductPageProps) {
                 </div>
               )}
             </div>
-
           </div>
 
-          {/* Multiple Image upload UI with Cloudinary */}
+          {/* Section 2: PRODUCT VARIANTS & PACK SIZES (The Star Section) */}
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+              <div>
+                <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary-500" />
+                  Product Variants, Pricing & Stock
+                </h3>
+                <p className="text-[11px] text-neutral-500 font-medium mt-0.5">
+                  Save exact prices and stock separately for each pack size. Customers will choose from these options.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddVariant}
+                className="text-xs font-bold text-primary-600 dark:text-primary-400 border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 shrink-0 self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Pack Variant
+              </Button>
+            </div>
+
+            {/* Variants Table / Cards */}
+            <div className="space-y-3">
+              {variants.map((variant, idx) => {
+                const hasDiscount = variant.originalPrice > 0 && variant.originalPrice > variant.price;
+                const discountPercent = hasDiscount
+                  ? Math.round(((variant.originalPrice - variant.price) / variant.originalPrice) * 100)
+                  : 0;
+
+                return (
+                  <div 
+                    key={variant.id || `var-${idx}`} 
+                    className="p-4 rounded-card border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-850/40 space-y-3 transition-colors hover:border-primary-500/30"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary-500/10 text-primary-500 font-black text-[10px] flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                          {variant.name || `Variant #${idx + 1}`}
+                        </span>
+                        {hasDiscount && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            {discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
+
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariant(idx)}
+                          className="p-1 rounded text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          title="Delete variant"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+                      
+                      {/* Pack / Variant Title */}
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Pack Size / Title *
+                        </label>
+                        <input
+                          type="text"
+                          value={variant.name}
+                          onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
+                          placeholder="e.g. 250g Pack"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* Selling Price */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Selling Price (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={variant.price || ''}
+                          onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
+                          placeholder="e.g. 41"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* MRP / Strikethrough Price */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          MRP / Original (₹)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={variant.originalPrice || ''}
+                          onChange={(e) => handleVariantChange(idx, 'originalPrice', e.target.value)}
+                          placeholder="e.g. 50 (Optional)"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* Stock Quantity */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Stock (Units) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={variant.stock ?? ''}
+                          onChange={(e) => handleVariantChange(idx, 'stock', e.target.value)}
+                          placeholder="e.g. 50"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 3: Media & Gallery */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b pb-2">
               <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -518,12 +713,13 @@ export default function EditProductPage({ params }: EditProductPageProps) {
           </div>
         </div>
 
-        {/* Right Column: Pricing, Inventory, Tags (4 cols) */}
+        {/* Right Column: Category, Status & Summary Card (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
+          
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-5 sticky top-24">
             
             <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2">
-              Inventory & Cost
+              Publishing & Category
             </h3>
 
             {/* Category Dropdown */}
@@ -533,7 +729,7 @@ export default function EditProductPage({ params }: EditProductPageProps) {
               </label>
               <select
                 {...register('categoryId')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
               >
                 <option value="">-- Select Category --</option>
                 {categories.map((c: any) => (
@@ -545,93 +741,64 @@ export default function EditProductPage({ params }: EditProductPageProps) {
               )}
             </div>
 
-            {/* Price */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Price (INR) *
-              </label>
-              <input
-                type="number"
-                {...register('price', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              {errors.price && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.price.message}</span>
-              )}
-            </div>
-
-            {/* Original Price */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Original Price (for discount)
-              </label>
-              <input
-                type="number"
-                {...register('originalPrice', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-            </div>
-
-            {/* Unit */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Unit of Measure (UoM) *
-              </label>
-              <input
-                type="text"
-                {...register('unit')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              {errors.unit && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.unit.message}</span>
-              )}
-            </div>
-
-            {/* Stock Quantity */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Stock Quantity *
-              </label>
-              <input
-                type="number"
-                {...register('stock', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              {errors.stock && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.stock.message}</span>
-              )}
-            </div>
-
             {/* Status */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Status
+                Catalog Status
               </label>
               <select
                 {...register('status')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent focus:outline-none cursor-pointer text-neutral-900 dark:text-white"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">Active (Visible in Store)</option>
+                <option value="inactive">Inactive (Hidden from Customers)</option>
               </select>
             </div>
 
-          </div>
+            {/* Live Catalog Summary */}
+            <div className="p-3.5 rounded-card bg-neutral-50 dark:bg-neutral-850/60 border border-neutral-200/60 dark:border-neutral-800 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                <Boxes className="w-4 h-4 text-primary-500" />
+                <span>Catalog Overview</span>
+              </div>
+              
+              <div className="text-[11px] space-y-1 text-neutral-500 dark:text-neutral-400">
+                <div className="flex justify-between">
+                  <span>Pack Options:</span>
+                  <strong className="text-neutral-900 dark:text-white">{variants.length} variant{variants.length > 1 ? 's' : ''}</strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Price Range:</span>
+                  <strong className="text-neutral-900 dark:text-white">
+                    {minPrice === maxPrice ? `₹${minPrice}` : `₹${minPrice} - ₹${maxPrice}`}
+                  </strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Inventory:</span>
+                  <strong className="text-neutral-900 dark:text-white">{totalStockCount} units</strong>
+                </div>
+              </div>
+            </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={loading}
-            className="w-full py-3 text-xs font-bold"
-            isLoading={loading}
-          >
-            Commit Changes to DB
-          </Button>
+            {/* Commit Changes Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              className="w-full py-3 text-xs font-bold shadow-md cursor-pointer"
+              isLoading={loading}
+            >
+              Save Changes
+            </Button>
+
+            <p className="text-[10px] text-center text-neutral-400">
+              Changes apply instantly to live database & storefront.
+            </p>
+          </div>
 
         </div>
 
       </form>
-
     </div>
   );
 }

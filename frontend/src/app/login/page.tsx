@@ -28,7 +28,7 @@ function LoginForm() {
   const { t } = useTranslation();
   const router = useRouter();
   const searchParams = useSearchParams();
-  const { login, isLoggedIn, role } = useAuthStore();
+  const { login, isLoggedIn, role, user } = useAuthStore();
 
   // Mode: 'email' (Email + Password) or 'otp' (Mobile OTP)
   const [authMode, setAuthMode] = useState<'email' | 'otp'>('email');
@@ -60,7 +60,7 @@ function LoginForm() {
   useEffect(() => {
     if (typeof window === 'undefined') return;
 
-    const token = localStorage.getItem('access_token') || (window as any).__accessToken;
+    const token = localStorage.getItem('access_token') || localStorage.getItem('admin_access_token') || (window as any).__accessToken;
     if (!token) {
       // Stale auth state in localStorage without a real token: clean it up
       if (isLoggedIn) {
@@ -69,11 +69,13 @@ function LoginForm() {
       return;
     }
 
-    // Only redirect if genuinely logged in as a customer
-    if (isLoggedIn && role === 'customer') {
+    const isAdmin = role === 'admin' || user?.role?.toLowerCase() === 'admin';
+    if (isLoggedIn && isAdmin) {
+      router.replace('/admin');
+    } else if (isLoggedIn) {
       router.replace(redirectUrl);
     }
-  }, [isLoggedIn, role, redirectUrl, router]);
+  }, [isLoggedIn, role, user, redirectUrl, router]);
 
   // Countdown timer effect for OTP
   useEffect(() => {

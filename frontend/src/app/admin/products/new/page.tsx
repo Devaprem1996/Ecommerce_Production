@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
+import { useQueryClient } from '@tanstack/react-query';
 import { 
   ArrowLeft, 
   Upload, 
@@ -18,34 +19,38 @@ import {
   List, 
   Heading1, 
   Image as ImageIcon,
-  CheckCircle2,
   AlertCircle,
   Loader2,
   CloudUpload,
-  Check
+  Layers,
+  Boxes
 } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { useAdminCategories } from '@/hooks/useAdmin';
 import { adminService } from '@/services/admin.service';
 
-// Form validation schema using Zod
+// Form validation schema for product metadata
 const productFormSchema = z.object({
-  name: z.string().min(3, { message: 'English name must be at least 3 characters' }),
+  name: z.string().min(2, { message: 'Product name must be at least 2 characters' }),
   nameTamil: z.string().optional(),
   categoryId: z.string().min(1, { message: 'Category is required' }),
-  price: z.number().min(1, { message: 'Price must be greater than 0' }),
-  originalPrice: z.number().optional(),
-  unit: z.string().min(1, { message: 'UoM (e.g. 500g, 1L) is required' }),
-  stock: z.number().min(0, { message: 'Stock cannot be negative' }),
-  tags: z.string().optional(),
   status: z.enum(['active', 'inactive'])
 });
 
 type ProductFormData = z.infer<typeof productFormSchema>;
 
+export interface ProductVariantItem {
+  id?: string;
+  name: string;
+  price: number;          // Exact selling price customer pays
+  originalPrice: number;  // Exact MRP / strikethrough price (optional)
+  stock: number;          // Exact inventory for this variant
+}
+
 export default function NewProductPage() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const { data: categories = [] } = useAdminCategories();
   
@@ -57,6 +62,28 @@ export default function NewProductPage() {
     'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400'
   ]);
   const [newImageUrl, setNewImageUrl] = useState('');
+
+  // Default initial variants: 1 clean default pack
+  const [variants, setVariants] = useState<ProductVariantItem[]>([
+    { name: '500g Pack', price: 100, originalPrice: 120, stock: 50 },
+    { name: '1 Kg Pack', price: 190, originalPrice: 230, stock: 30 },
+  ]);
+
+  // TipTap Rich Text Editor Configuration
+  const editor = useEditor({
+    extensions: [StarterKit],
+    content: '<p>Organic, hand-picked, and chemically unprocessed farm produce.</p>',
+  });
+
+  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormData>({
+    resolver: zodResolver(productFormSchema),
+    defaultValues: {
+      name: '',
+      nameTamil: '',
+      categoryId: '',
+      status: 'active'
+    }
+  });
 
   const processImageFile = async (file: File) => {
     if (!file.type.startsWith('image/')) {
@@ -97,35 +124,6 @@ export default function NewProductPage() {
     }
   };
 
-  // Weight variants state
-  const [variants, setVariants] = useState<{ weight: string; price: number }[]>([
-    { weight: '250g', price: 90 },
-    { weight: '500g', price: 170 }
-  ]);
-  const [newVarWeight, setNewVarWeight] = useState('');
-  const [newVarPrice, setNewVarPrice] = useState(0);
-
-  // TipTap Rich Text Editor Configuration
-  const editor = useEditor({
-    extensions: [StarterKit],
-    content: '<p>Organic, hand-picked, and chemically unprocessed farm produce.</p>',
-  });
-
-  const { register, handleSubmit, formState: { errors } } = useForm<ProductFormData>({
-    resolver: zodResolver(productFormSchema),
-    defaultValues: {
-      name: '',
-      nameTamil: '',
-      categoryId: '',
-      price: 0,
-      originalPrice: 0,
-      unit: '500g',
-      stock: 50,
-      tags: 'organic, fresh',
-      status: 'active'
-    }
-  });
-
   const handleAddImage = () => {
     if (newImageUrl && newImageUrl.startsWith('http')) {
       setImages([...images, newImageUrl]);
@@ -140,75 +138,109 @@ export default function NewProductPage() {
     setImages(prev => prev.filter((_, i) => i !== index));
   };
 
+  // Variant field update handlers
+  const handleVariantChange = (index: number, field: keyof ProductVariantItem, value: any) => {
+    setVariants((prev) => {
+      const next = [...prev];
+      next[index] = {
+        ...next[index],
+        [field]: field === 'name' ? value : Math.max(0, Number(value) || 0),
+      };
+      return next;
+    });
+  };
+
   const handleAddVariant = () => {
-    if (!newVarWeight || newVarPrice <= 0) {
-      toast.warning('Provide variant weight and price.');
-      return;
-    }
-    setVariants([...variants, { weight: newVarWeight, price: newVarPrice }]);
-    setNewVarWeight('');
-    setNewVarPrice(0);
-    toast.success('Weight variant registered.');
+    setVariants((prev) => [
+      ...prev,
+      {
+        name: '',
+        price: 0,
+        originalPrice: 0,
+        stock: 10,
+      },
+    ]);
   };
 
   const handleRemoveVariant = (index: number) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
+    if (variants.length <= 1) {
+      toast.warning('A product must have at least one pack variant.');
+      return;
+    }
+    setVariants((prev) => prev.filter((_, i) => i !== index));
   };
 
   const onSubmit = async (data: ProductFormData) => {
+    // Validate variants
+    for (let i = 0; i < variants.length; i++) {
+      const v = variants[i];
+      if (!v.name.trim()) {
+        toast.error(`Variant #${i + 1} must have a pack size or title (e.g. "250g Pack").`);
+        return;
+      }
+      if (v.price <= 0) {
+        toast.error(`Variant "${v.name}" must have a selling price greater than 0.`);
+        return;
+      }
+    }
+
     setLoading(true);
     const descContent = editor ? editor.getHTML() : data.name;
 
     try {
-      // Determine target category ID
       const targetCategoryId = data.categoryId || categories[0]?.id;
       if (!targetCategoryId) {
         throw new Error('Please select a valid category.');
       }
 
-      // Format payload for backend CMS Service
       const skuPrefix = data.name.slice(0, 4).toUpperCase().replace(/[^A-Z]/g, 'PROD');
       const randomSuffix = Math.floor(1000 + Math.random() * 9000);
 
-      const payloadVariants = variants.length > 0 ? variants.map((v, i) => ({
-        nameEn: v.weight,
-        nameTa: v.weight,
-        sku: `${skuPrefix}-${v.weight.toUpperCase()}-${randomSuffix + i}`,
-        price: Number(v.price),
-        discountPrice: undefined,
-        availableQuantity: Number(data.stock),
-      })) : [{
-        nameEn: data.unit,
-        nameTa: data.unit,
-        sku: `${skuPrefix}-${randomSuffix}`,
-        price: Number(data.price),
-        discountPrice: data.originalPrice && data.originalPrice > data.price ? Number(data.price) : undefined,
-        availableQuantity: Number(data.stock),
-      }];
+      const payloadVariants = variants.map((v, i) => {
+        const isDiscounted = v.originalPrice > 0 && v.originalPrice > v.price;
+        return {
+          nameEn: v.name.trim(),
+          nameTa: v.name.trim(),
+          sku: `${skuPrefix}-${v.name.slice(0, 4).toUpperCase().replace(/[^A-Z0-9]/g, 'V')}-${randomSuffix + i}`,
+          price: isDiscounted ? Number(v.originalPrice) : Number(v.price),
+          discountPrice: isDiscounted ? Number(v.price) : undefined,
+          availableQuantity: Number(v.stock),
+        };
+      });
 
-      const payload = {
+      const payload: any = {
         categoryId: targetCategoryId,
         nameEn: data.name.trim(),
         nameTa: (data.nameTamil || data.name).trim(),
         brand: 'Yathu Arokiyagam',
         descriptionEn: descContent,
         descriptionTa: descContent,
-        thumbnailUrl: images[0] || '',
+        thumbnailUrl: images[0] || 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&q=80&w=400',
         variants: payloadVariants,
       };
 
       await adminService.createProduct(payload);
-      toast.success('Product published successfully!');
+
+      await queryClient.invalidateQueries({ queryKey: ["admin", "products"] });
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+
+      toast.success('Product and variants created successfully!');
       router.push('/admin/products');
     } catch (err: any) {
+      console.error('Failed to create product:', err);
       toast.error(err.message || 'Failed to create product.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Live calculation helpers for summary card
+  const totalStockCount = variants.reduce((sum, v) => sum + Number(v.stock || 0), 0);
+  const minPrice = variants.length > 0 ? Math.min(...variants.map(v => v.price || 0)) : 0;
+  const maxPrice = variants.length > 0 ? Math.max(...variants.map(v => v.price || 0)) : 0;
+
   return (
-    <div className="space-y-8 font-sans pb-10 max-w-4xl">
+    <div className="space-y-8 font-sans pb-10 max-w-5xl">
       
       {/* Header breadcrumb */}
       <div className="flex items-center gap-3">
@@ -220,20 +252,21 @@ export default function NewProductPage() {
         </button>
         <div>
           <h1 className="text-2xl sm:text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
-            Add Product
+            Create New Product
           </h1>
           <p className="text-xs font-semibold text-neutral-500">
-            Add a new organic product or variant to your store catalog.
+            Publish a new product with separate pack size variants, pricing, and stock.
           </p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         
-        {/* Left Column: Basic Details & Text Editor (8 cols) */}
+        {/* Left Column: Details, Media & Pack Variants (8 cols) */}
         <div className="lg:col-span-8 space-y-6">
+          
+          {/* Section 1: Basic Specifications */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
-            
             <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2">
               Primary Specifications
             </h3>
@@ -246,8 +279,8 @@ export default function NewProductPage() {
               <input
                 type="text"
                 {...register('name')}
-                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                placeholder="Organic Red Tomatoes"
+                placeholder="e.g. Organic Cold Pressed Groundnut Oil"
+                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
               {errors.name && (
                 <span className="text-[10px] font-bold text-red-500 flex items-center gap-1 mt-1">
@@ -264,8 +297,8 @@ export default function NewProductPage() {
               <input
                 type="text"
                 {...register('nameTamil')}
-                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                placeholder="இயற்கை தக்காளி"
+                placeholder="e.g. மரச்செக்கு கடலை எண்ணெய்"
+                className="w-full text-base md:text-xs font-semibold px-3.5 py-3 md:py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-905 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
               />
             </div>
 
@@ -274,16 +307,21 @@ export default function NewProductPage() {
               <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
                 Product Description (Rich Text Editor)
               </label>
-              
               {editor && (
-                <div className="border border-neutral-200 dark:border-neutral-750 rounded-card overflow-hidden">
-                  {/* Rich Text Toolbar */}
-                  <div className="flex gap-1.5 p-2 bg-neutral-50 dark:bg-neutral-950 border-b border-neutral-200 dark:border-neutral-750 flex-wrap">
+                <div className="border border-neutral-200 dark:border-neutral-700 rounded-card overflow-hidden bg-transparent">
+                  {/* Editor Mini Toolbar */}
+                  <div className="flex items-center gap-1 p-2 bg-neutral-100 dark:bg-neutral-850 border-b border-neutral-200 dark:border-neutral-700">
+                    <button
+                      type="button"
+                      onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+                      className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('heading', { level: 3 }) ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
+                    >
+                      <Heading1 className="w-3.5 h-3.5" />
+                    </button>
                     <button
                       type="button"
                       onClick={() => editor.chain().focus().toggleBold().run()}
                       className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('bold') ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
-                      title="Bold"
                     >
                       <Bold className="w-3.5 h-3.5" />
                     </button>
@@ -291,23 +329,13 @@ export default function NewProductPage() {
                       type="button"
                       onClick={() => editor.chain().focus().toggleItalic().run()}
                       className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('italic') ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
-                      title="Italic"
                     >
                       <Italic className="w-3.5 h-3.5" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
-                      className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('heading', { level: 1 }) ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
-                      title="Heading"
-                    >
-                      <Heading1 className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => editor.chain().focus().toggleBulletList().run()}
                       className={`p-1.5 rounded hover:bg-neutral-200 dark:hover:bg-neutral-800 ${editor.isActive('bulletList') ? 'text-primary-500 bg-neutral-200' : 'text-neutral-500'}`}
-                      title="Bullet List"
                     >
                       <List className="w-3.5 h-3.5" />
                     </button>
@@ -318,10 +346,143 @@ export default function NewProductPage() {
                 </div>
               )}
             </div>
-
           </div>
 
-          {/* Multiple Image upload UI with Cloudinary */}
+          {/* Section 2: PRODUCT VARIANTS & PACK SIZES */}
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b pb-3">
+              <div>
+                <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <Layers className="w-4 h-4 text-primary-500" />
+                  Product Variants, Pricing & Stock
+                </h3>
+                <p className="text-[11px] text-neutral-500 font-medium mt-0.5">
+                  Save exact prices and stock separately for each pack size. Customers will choose from these options.
+                </p>
+              </div>
+
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                onClick={handleAddVariant}
+                className="text-xs font-bold text-primary-600 dark:text-primary-400 border-primary-500/30 hover:bg-primary-50 dark:hover:bg-primary-950/30 shrink-0 self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5 mr-1" /> Add Pack Variant
+              </Button>
+            </div>
+
+            {/* Variants Table / Cards */}
+            <div className="space-y-3">
+              {variants.map((variant, idx) => {
+                const hasDiscount = variant.originalPrice > 0 && variant.originalPrice > variant.price;
+                const discountPercent = hasDiscount
+                  ? Math.round(((variant.originalPrice - variant.price) / variant.originalPrice) * 100)
+                  : 0;
+
+                return (
+                  <div 
+                    key={`var-${idx}`} 
+                    className="p-4 rounded-card border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-850/40 space-y-3 transition-colors hover:border-primary-500/30"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        <span className="w-5 h-5 rounded-full bg-primary-500/10 text-primary-500 font-black text-[10px] flex items-center justify-center">
+                          {idx + 1}
+                        </span>
+                        <span className="text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                          {variant.name || `Variant #${idx + 1}`}
+                        </span>
+                        {hasDiscount && (
+                          <span className="px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            {discountPercent}% OFF
+                          </span>
+                        )}
+                      </div>
+
+                      {variants.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveVariant(idx)}
+                          className="p-1 rounded text-red-500 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          title="Delete variant"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 pt-1">
+                      
+                      {/* Pack / Variant Title */}
+                      <div className="space-y-1 sm:col-span-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Pack Size / Title *
+                        </label>
+                        <input
+                          type="text"
+                          value={variant.name}
+                          onChange={(e) => handleVariantChange(idx, 'name', e.target.value)}
+                          placeholder="e.g. 500g Pack"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* Selling Price */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Selling Price (₹) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={variant.price || ''}
+                          onChange={(e) => handleVariantChange(idx, 'price', e.target.value)}
+                          placeholder="e.g. 100"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* MRP / Strikethrough Price */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          MRP / Original (₹)
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="any"
+                          value={variant.originalPrice || ''}
+                          onChange={(e) => handleVariantChange(idx, 'originalPrice', e.target.value)}
+                          placeholder="e.g. 120 (Optional)"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                      {/* Stock Quantity */}
+                      <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-widest block">
+                          Stock (Units) *
+                        </label>
+                        <input
+                          type="number"
+                          min="0"
+                          value={variant.stock ?? ''}
+                          onChange={(e) => handleVariantChange(idx, 'stock', e.target.value)}
+                          placeholder="e.g. 50"
+                          className="w-full text-xs font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-white dark:bg-neutral-900 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Section 3: Media & Gallery */}
           <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
             <div className="flex items-center justify-between border-b pb-2">
               <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -367,7 +528,7 @@ export default function NewProductPage() {
                     <CloudUpload className="w-6 h-6" />
                   </div>
                   <p className="text-xs font-bold text-neutral-850 dark:text-white">
-                    Click to upload product image, or drag and drop
+                    Click to upload a new product image, or drag and drop
                   </p>
                   <p className="text-[10px] font-semibold text-neutral-450 mt-1">
                     PNG, JPG, or WEBP up to 5MB • Automatically scaled & optimized on Cloudinary
@@ -458,12 +619,13 @@ export default function NewProductPage() {
           </div>
         </div>
 
-        {/* Right Column: Pricing, Inventory, Tags (4 cols) */}
+        {/* Right Column: Category, Status & Summary Card (4 cols) */}
         <div className="lg:col-span-4 space-y-6">
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
+          
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-5 sticky top-24">
             
             <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2">
-              Inventory & Cost
+              Publishing & Category
             </h3>
 
             {/* Category Dropdown */}
@@ -473,7 +635,7 @@ export default function NewProductPage() {
               </label>
               <select
                 {...register('categoryId')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none cursor-pointer"
               >
                 <option value="">-- Select Category --</option>
                 {categories.map((c: any) => (
@@ -485,142 +647,64 @@ export default function NewProductPage() {
               )}
             </div>
 
-            {/* Price */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Price (INR) *
-              </label>
-              <input
-                type="number"
-                {...register('price', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              {errors.price && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.price.message}</span>
-              )}
-            </div>
-
-            {/* Original Price */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Original Price (for discount)
-              </label>
-              <input
-                type="number"
-                {...register('originalPrice', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-            </div>
-
-            {/* Unit */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Unit of Measure (UoM) *
-              </label>
-              <input
-                type="text"
-                {...register('unit')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-                placeholder="500g or 1L"
-              />
-              {errors.unit && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.unit.message}</span>
-              )}
-            </div>
-
-            {/* Stock Quantity */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Stock Quantity *
-              </label>
-              <input
-                type="number"
-                {...register('stock', { valueAsNumber: true })}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none"
-              />
-              {errors.stock && (
-                <span className="text-[10px] font-bold text-red-500 mt-1 block">{errors.stock.message}</span>
-              )}
-            </div>
-
             {/* Status */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                Status
+                Catalog Status
               </label>
               <select
                 {...register('status')}
-                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border rounded-card bg-transparent focus:outline-none cursor-pointer"
+                className="w-full text-base md:text-xs font-semibold px-3 py-2.5 md:py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent focus:outline-none cursor-pointer text-neutral-900 dark:text-white"
               >
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
+                <option value="active">Active (Visible in Store)</option>
+                <option value="inactive">Inactive (Hidden from Customers)</option>
               </select>
             </div>
 
-          </div>
-
-          {/* Weight variants */}
-          <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-6 shadow-sm space-y-4">
-            <h3 className="font-bold text-xs text-neutral-900 dark:text-white uppercase tracking-wider border-b pb-2">
-              Weight Variants
-            </h3>
-
-            {/* Add weight variant controls */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={newVarWeight}
-                onChange={(e) => setNewVarWeight(e.target.value)}
-                placeholder="1kg"
-                className="w-20 text-base md:text-xs font-semibold px-2 py-2.5 md:py-1.5 border rounded-card bg-transparent focus:outline-none"
-              />
-              <input
-                type="number"
-                value={newVarPrice}
-                onChange={(e) => setNewVarPrice(parseFloat(e.target.value) || 0)}
-                placeholder="Price"
-                className="flex-1 text-base md:text-xs font-semibold px-2 py-2.5 md:py-1.5 border rounded-card bg-transparent focus:outline-none"
-              />
-              <button 
-                type="button"
-                onClick={handleAddVariant}
-                className="p-2.5 md:p-2 rounded bg-primary-500 text-white hover:bg-primary-600 transition-colors cursor-pointer flex items-center justify-center min-w-[40px] md:min-w-0"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Active list */}
-            <div className="space-y-2">
-              {variants.map((v, i) => (
-                <div key={v.weight + i} className="flex justify-between items-center bg-neutral-50 dark:bg-neutral-950 p-2 rounded-card text-xs font-bold border">
-                  <span>{v.weight} — ₹{v.price}</span>
-                  <button 
-                    type="button"
-                    onClick={() => handleRemoveVariant(i)}
-                    className="text-neutral-450 hover:text-red-500 transition-colors cursor-pointer"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
+            {/* Live Catalog Summary */}
+            <div className="p-3.5 rounded-card bg-neutral-50 dark:bg-neutral-850/60 border border-neutral-200/60 dark:border-neutral-800 space-y-2">
+              <div className="flex items-center gap-1.5 text-xs font-bold text-neutral-800 dark:text-neutral-200">
+                <Boxes className="w-4 h-4 text-primary-500" />
+                <span>Catalog Overview</span>
+              </div>
+              
+              <div className="text-[11px] space-y-1 text-neutral-500 dark:text-neutral-400">
+                <div className="flex justify-between">
+                  <span>Pack Options:</span>
+                  <strong className="text-neutral-900 dark:text-white">{variants.length} variant{variants.length > 1 ? 's' : ''}</strong>
                 </div>
-              ))}
+                <div className="flex justify-between">
+                  <span>Price Range:</span>
+                  <strong className="text-neutral-900 dark:text-white">
+                    {minPrice === maxPrice ? `₹${minPrice}` : `₹${minPrice} - ₹${maxPrice}`}
+                  </strong>
+                </div>
+                <div className="flex justify-between">
+                  <span>Total Inventory:</span>
+                  <strong className="text-neutral-900 dark:text-white">{totalStockCount} units</strong>
+                </div>
+              </div>
             </div>
-          </div>
 
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={loading}
-            className="w-full py-3 text-xs font-bold"
-            isLoading={loading}
-          >
-            Save Product
-          </Button>
+            {/* Publish Product Button */}
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={loading}
+              className="w-full py-3 text-xs font-bold shadow-md cursor-pointer"
+              isLoading={loading}
+            >
+              Publish Product
+            </Button>
+
+            <p className="text-[10px] text-center text-neutral-400">
+              New product will be added directly to the live catalog.
+            </p>
+          </div>
 
         </div>
 
       </form>
-
     </div>
   );
 }

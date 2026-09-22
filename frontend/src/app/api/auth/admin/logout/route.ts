@@ -9,6 +9,9 @@ export async function POST(request: NextRequest) {
 
     // Clear authentication cookies
     response.cookies.delete('access_token');
+    response.cookies.delete('admin_access_token');
+    response.cookies.set('access_token', '', { path: '/', maxAge: 0 });
+    response.cookies.set('admin_access_token', '', { path: '/', maxAge: 0 });
     
     response.cookies.set('refresh_token', '', {
       path: '/api/auth/refresh',

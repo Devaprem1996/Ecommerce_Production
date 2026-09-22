@@ -37,7 +37,8 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
   const [shopExpanded, setShopExpanded] = useState(false);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
-  const { user, isLoggedIn } = useAuthStore();
+  const { user, isLoggedIn, role } = useAuthStore();
+  const isAdmin = role === 'admin' || user?.role?.toLowerCase() === 'admin';
 
   const cartCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
   const wishlistCount = useWishlist((state) => state.items.length);
@@ -101,9 +102,18 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
                 </div>
                 {isLoggedIn && user ? (
                   <div className="flex items-center justify-between flex-1 min-w-0 pr-1">
-                    <Link href="/account" onClick={onClose} className="flex flex-col text-left focus:outline-none min-w-0">
-                      <span className="text-xs text-primary-200 leading-tight font-medium">
+                    <Link 
+                      href={isAdmin ? '/admin' : '/account'} 
+                      onClick={onClose} 
+                      className="flex flex-col text-left focus:outline-none min-w-0"
+                    >
+                      <span className="text-xs text-primary-200 leading-tight font-medium flex items-center gap-1.5">
                         {t('nav.welcome', 'Welcome')},
+                        {isAdmin && (
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-white/20 text-white">
+                            Admin
+                          </span>
+                        )}
                       </span>
                       <span className="text-base font-bold leading-tight hover:text-primary-100 transition-colors truncate">
                         {user.name || 'Customer'}

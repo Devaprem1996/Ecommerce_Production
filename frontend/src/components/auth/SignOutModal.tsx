@@ -34,7 +34,9 @@ export const SignOutModal: React.FC<SignOutModalProps> = ({
       if (typeof window !== "undefined") {
         localStorage.removeItem("access_token");
         localStorage.removeItem("admin_access_token");
+        localStorage.removeItem("admin_logged_in");
         document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+        document.cookie = "admin_access_token=; path=/; max-age=0; SameSite=Lax";
       }
 
       // Reset client store

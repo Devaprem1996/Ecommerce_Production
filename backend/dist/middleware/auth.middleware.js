@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.requireAuth = requireAuth;
+exports.optionalAuth = optionalAuth;
 exports.requireRole = requireRole;
 exports.validateRequest = validateRequest;
 const zod_1 = require("zod");
@@ -30,6 +31,30 @@ function requireAuth(req, res, next) {
     catch (error) {
         return next(error);
     }
+}
+/**
+ * Optional Authentication Guard Middleware
+ * Attaches verified JWT user payload to req.user if token is present, but does not block requests
+ */
+function optionalAuth(req, res, next) {
+    let token;
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith("Bearer ")) {
+        token = authHeader.split(" ")[1];
+    }
+    else if (req.cookies && (req.cookies.access_token || req.cookies.accessToken)) {
+        token = req.cookies.access_token || req.cookies.accessToken;
+    }
+    if (token) {
+        try {
+            const decoded = auth_service_js_1.AuthService.verifyAccessToken(token);
+            req.user = decoded;
+        }
+        catch {
+            // Ignore token verification errors for optional authentication
+        }
+    }
+    return next();
 }
 /**
  * Role Authorization Guard Middleware

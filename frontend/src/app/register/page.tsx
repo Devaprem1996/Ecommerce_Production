@@ -49,7 +49,7 @@ export default function RegisterPage() {
   // Redirect if already logged in with a valid token
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    const token = localStorage.getItem('access_token') || (window as any).__accessToken;
+    const token = localStorage.getItem('access_token') || localStorage.getItem('admin_access_token') || (window as any).__accessToken;
     if (!token) {
       if (isLoggedIn) {
         useAuthStore.getState().logout();
@@ -57,7 +57,13 @@ export default function RegisterPage() {
       return;
     }
     if (isLoggedIn) {
-      router.replace('/account');
+      const authState = useAuthStore.getState();
+      const isAdmin = authState.role === 'admin' || authState.user?.role?.toLowerCase() === 'admin' || localStorage.getItem('admin_logged_in') === 'true';
+      if (isAdmin) {
+        router.replace('/admin');
+      } else {
+        router.replace('/account');
+      }
     }
   }, [isLoggedIn, router]);
 

@@ -52,12 +52,24 @@ class ApiClient {
     }
 
     // Set authorization access token if available in memory, localStorage, or cookies
-    let token = typeof window !== "undefined" ? (window as any).__accessToken : null;
-    if (!token && typeof window !== "undefined") {
-      const isAdminRoute = normalizedPath.startsWith("/admin");
-      token = isAdminRoute
-        ? localStorage.getItem("admin_access_token") || localStorage.getItem("access_token")
-        : localStorage.getItem("access_token") || localStorage.getItem("admin_access_token");
+    let token: string | null = null;
+    if (typeof window !== "undefined") {
+      const isInAdminContext =
+        window.location.pathname.startsWith("/admin") ||
+        normalizedPath.startsWith("/admin") ||
+        normalizedPath.startsWith("/cms");
+
+      if (isInAdminContext) {
+        token =
+          localStorage.getItem("admin_access_token") ||
+          (window as any).__accessToken ||
+          localStorage.getItem("access_token");
+      } else {
+        token =
+          (window as any).__accessToken ||
+          localStorage.getItem("access_token") ||
+          localStorage.getItem("admin_access_token");
+      }
 
       if (!token) {
         const match = document.cookie.match(new RegExp('(^| )access_token=([^;]+)'));

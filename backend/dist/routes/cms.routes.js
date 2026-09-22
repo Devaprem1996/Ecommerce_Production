@@ -13,8 +13,8 @@ const router = (0, express_1.Router)();
 router.get("/categories", cms_controller_js_1.CmsController.listCategories);
 // Category Details by Slug
 router.get("/categories/:slug", cms_controller_js_1.CmsController.getCategory);
-// Products Catalog List with filters
-router.get("/products", (0, auth_middleware_js_1.validateRequest)(cms_validation_js_1.listProductsQuerySchema), cms_controller_js_1.CmsController.listProducts);
+// Products Catalog List with filters (optionalAuth extracts admin role when token is sent)
+router.get("/products", auth_middleware_js_1.optionalAuth, (0, auth_middleware_js_1.validateRequest)(cms_validation_js_1.listProductsQuerySchema), cms_controller_js_1.CmsController.listProducts);
 // Product Details by Slug
 router.get("/products/:slug", cms_controller_js_1.CmsController.getProduct);
 /* =========================================================================
@@ -30,8 +30,9 @@ router.patch("/categories/:id", auth_middleware_js_1.requireAuth, (0, auth_middl
 router.delete("/categories/:id", auth_middleware_js_1.requireAuth, (0, auth_middleware_js_1.requireRole)(["ADMIN"]), cms_controller_js_1.CmsController.deleteCategory);
 // Create Product with initial variants
 router.post("/products", auth_middleware_js_1.requireAuth, (0, auth_middleware_js_1.requireRole)(["ADMIN"]), (0, auth_middleware_js_1.validateRequest)(cms_validation_js_1.createProductSchema), cms_controller_js_1.CmsController.createProduct);
-// Update Product general settings
+// Update Product general settings (support both PATCH and PUT)
 router.patch("/products/:id", auth_middleware_js_1.requireAuth, (0, auth_middleware_js_1.requireRole)(["ADMIN"]), (0, auth_middleware_js_1.validateRequest)(cms_validation_js_1.updateProductSchema), cms_controller_js_1.CmsController.updateProduct);
+router.put("/products/:id", auth_middleware_js_1.requireAuth, (0, auth_middleware_js_1.requireRole)(["ADMIN"]), (0, auth_middleware_js_1.validateRequest)(cms_validation_js_1.updateProductSchema), cms_controller_js_1.CmsController.updateProduct);
 // Soft Delete Product
 router.delete("/products/:id", auth_middleware_js_1.requireAuth, (0, auth_middleware_js_1.requireRole)(["ADMIN"]), cms_controller_js_1.CmsController.deleteProduct);
 // Add Standalone Product Variant

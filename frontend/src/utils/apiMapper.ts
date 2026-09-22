@@ -1,4 +1,4 @@
-import { ProductType, CategoryType } from '@/types';
+import { ProductType, CategoryType, ProductVariantType } from '@/types';
 
 const PRODUCT_TYPE_IMAGE = {
   oils: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=600',
@@ -175,8 +175,31 @@ export function mapCategoryToFrontend(backendCategory: any): CategoryType {
 }
 
 export function mapProductToFrontend(backendProduct: any): ProductType {
-  const firstVariant = backendProduct.variants?.[0];
-  const rawImage = backendProduct.thumbnailUrl || firstVariant?.images?.[0] || '';
+  const rawVariants = backendProduct.variants || [];
+  const mappedVariants: ProductVariantType[] = rawVariants.map((v: any) => {
+    const rawPrice = Number(v.price) || 0;
+    const rawDiscount = v.discountPrice != null ? Number(v.discountPrice) : null;
+    let sellingPrice = rawPrice;
+    let originalPrice: number | undefined = undefined;
+
+    if (rawDiscount != null && rawDiscount > 0 && rawDiscount < rawPrice) {
+      sellingPrice = rawDiscount;
+      originalPrice = rawPrice;
+    }
+
+    return {
+      id: v.id,
+      name: v.nameEn || 'Standard Pack',
+      nameTamil: v.nameTa || undefined,
+      price: sellingPrice,
+      originalPrice: originalPrice,
+      stock: v.inventory?.availableQuantity ?? 0,
+      sku: v.sku || undefined,
+    };
+  });
+
+  const firstVariant = mappedVariants[0];
+  const rawImage = backendProduct.thumbnailUrl || backendProduct.variants?.[0]?.images?.[0] || '';
   // Authentic Cloudinary URLs (from cloud chv6xh1d or user's account) or external CDN URLs are preserved
   const isPlaceholderUrl =
     !rawImage ||
@@ -188,11 +211,10 @@ export function mapProductToFrontend(backendProduct: any): ProductType {
     ? resolveProductImage(backendProduct.slug, backendProduct.category?.slug)
     : rawImage;
 
-  const stock = firstVariant?.inventory?.availableQuantity ?? 0;
-  const price = firstVariant?.price ? Number(firstVariant.price) : 0;
-const unit = firstVariant?.weight
-    ? `${firstVariant.weight}${firstVariant.unit || 'kg'}`
-    : firstVariant?.nameEn || '1 unit';
+  const stock = firstVariant ? firstVariant.stock : (backendProduct.stock ?? 0);
+  const price = firstVariant ? firstVariant.price : (Number(backendProduct.price) || 0);
+  const originalPrice = firstVariant?.originalPrice;
+  const unit = firstVariant ? firstVariant.name : (backendProduct.unit || '1 unit');
 
   return {
     id: backendProduct.id,
@@ -201,6 +223,7 @@ const unit = firstVariant?.weight
     description: backendProduct.descriptionEn || '',
     descriptionTamil: backendProduct.descriptionTa || undefined,
     price: price,
+    originalPrice: originalPrice,
     images: [image],
     category: backendProduct.category?.nameEn || 'General',
     stock: stock,
@@ -209,6 +232,6 @@ const unit = firstVariant?.weight
     isOrganic: backendProduct.isOrganic ?? true,
     isLabTested: backendProduct.isLabTested ?? false,
     unit: unit,
+    variants: mappedVariants,
   };
 }
-

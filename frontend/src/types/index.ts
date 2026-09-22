@@ -1,3 +1,13 @@
+export interface ProductVariantType {
+  id: string;
+  name: string;
+  nameTamil?: string;
+  price: number;
+  originalPrice?: number;
+  stock: number;
+  sku?: string;
+}
+
 export interface ProductType {
   id: string;
   name: string;
@@ -5,6 +15,7 @@ export interface ProductType {
   description: string;
   descriptionTamil?: string;
   price: number;
+  originalPrice?: number;
   images: string[];
   category: string;
   stock: number;
@@ -12,7 +23,9 @@ export interface ProductType {
   reviewsCount: number;
   isOrganic: boolean;
   isLabTested: boolean;
-  unit: string; // e.g., "500g", "1kg", "1L"
+  unit: string; // e.g., "500g", "1kg", "1L", "250g Pack"
+  variants?: ProductVariantType[];
+  selectedVariantId?: string;
 }
 
 export interface CategoryType {

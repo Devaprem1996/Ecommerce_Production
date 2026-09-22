@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -19,8 +19,11 @@ const loginSchema = z.object({
 
 type LoginFormData = z.infer<typeof loginSchema>;
 
-export default function AdminLoginPage() {
+function AdminLoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const rawRedirect = searchParams.get('redirect');
+  const redirectUrl = rawRedirect && rawRedirect.startsWith('/admin') ? rawRedirect : '/admin';
   const login = useAuthStore((state) => state.login);
   
   const [loading, setLoading] = useState(false);
@@ -31,6 +34,15 @@ export default function AdminLoginPage() {
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutMinutes, setLockoutMinutes] = useState(0);
   const [attempts, setAttempts] = useState(0);
+
+  // Auto-redirect if already logged in as admin
+  useEffect(() => {
+    const adminLoggedIn = localStorage.getItem('admin_logged_in');
+    const token = localStorage.getItem('admin_access_token') || localStorage.getItem('access_token');
+    if (adminLoggedIn === 'true' && token) {
+      window.location.href = redirectUrl;
+    }
+  }, [redirectUrl]);
 
   // Initialize CSRF Token and Check Lockout
   useEffect(() => {
@@ -107,13 +119,19 @@ export default function AdminLoginPage() {
         localStorage.setItem('admin_logged_in', 'true');
         if (resData.accessToken) {
           localStorage.setItem('admin_access_token', resData.accessToken);
+          localStorage.setItem('access_token', resData.accessToken);
+          document.cookie = `access_token=${resData.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
         
         // Log in to Zustand store
         login(resData.user, resData.accessToken);
         
         toast.success(`Welcome back, ${resData.user.name || 'Administrator'}!`);
-        router.replace('/admin');
+        
+        // Clean redirection to admin dashboard or destination
+        setTimeout(() => {
+          window.location.href = redirectUrl;
+        }, 500);
       } else {
         // Log failed attempt
         console.warn(`[SECURITY] Failed admin login attempt for email: ${data.email} at ${new Date().toISOString()}`);
@@ -284,3 +302,18 @@ export default function AdminLoginPage() {
     </motion.div>
   );
 }
+
+export default function AdminLoginPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="w-full max-w-md min-h-[400px] flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-primary-500 animate-spin" />
+        </div>
+      }
+    >
+      <AdminLoginForm />
+    </Suspense>
+  );
+}
+
