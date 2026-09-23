@@ -289,7 +289,7 @@ export class UserService {
           address: true,
         },
       });
-    });
+    }, { maxWait: 15000, timeout: 20000 });
 
     // 4. Asynchronously notify customer
     const customerPhone = order.address?.phone || order.user?.phone;
@@ -541,147 +541,161 @@ export class UserService {
       throw ApiError.badRequest("Cannot place order with an empty cart.");
     }
 
-    const createdOrder = await prisma.$transaction(async (tx) => {
-      // 1. Resolve Address
-      let addressId = data.addressId;
-      if (!addressId && data.shippingAddress) {
-        const createdAddr = await tx.address.create({
-          data: {
-            userId,
-            fullName: data.shippingAddress.name,
-            phone: data.shippingAddress.mobile,
-            addressLine1: data.shippingAddress.addressLine1,
-            addressLine2: data.shippingAddress.addressLine2 || null,
-            city: data.shippingAddress.city,
-            state: data.shippingAddress.state,
-            postalCode: data.shippingAddress.pincode,
-            country: "India",
-            isDefault: false,
-          },
-        });
-        addressId = createdAddr.id;
-      }
-
-      if (!addressId) {
-        const defaultAddr = await tx.address.findFirst({
-          where: { userId, deletedAt: null },
-          orderBy: { isDefault: "desc" },
-        });
-        if (defaultAddr) {
-          addressId = defaultAddr.id;
-        } else {
-          throw ApiError.badRequest("Delivery address is required to place an order.");
-        }
-      }
-
-      // 2. Resolve Variants and Line Items
-      let subtotalSum = 0;
-      const orderItemsToCreate: Array<{
-        variantId: string;
-        productName: string;
-        sku: string;
-        quantity: number;
-        unitPrice: number;
-        discount: number;
-        tax: number;
-        subtotal: number;
-      }> = [];
-
-      for (const item of data.items) {
-        let variant = null;
-        if (item.variantId) {
-          variant = await tx.productVariant.findUnique({
-            where: { id: item.variantId },
-            include: { product: true },
-          });
-        }
-
-        if (!variant && item.productId) {
-          variant = await tx.productVariant.findFirst({
-            where: { productId: item.productId, deletedAt: null },
-            include: { product: true },
-          });
-        }
-
-        if (!variant) {
-          variant = await tx.productVariant.findFirst({
-            where: { deletedAt: null },
-            include: { product: true },
-          });
-        }
-
-        if (!variant) {
-          throw ApiError.badRequest("Unable to resolve catalog product variant.");
-        }
-
-        const unitPrice = item.price !== undefined ? Number(item.price) : Number(variant.price);
-        const quantity = Math.max(1, item.quantity || 1);
-        const lineSubtotal = unitPrice * quantity;
-        subtotalSum += lineSubtotal;
-
-        orderItemsToCreate.push({
-          variantId: variant.id,
-          productName: item.productName || variant.product.nameEn || variant.nameEn,
-          sku: variant.sku || `SKU-${variant.id.slice(0, 6).toUpperCase()}`,
-          quantity,
-          unitPrice,
-          discount: 0,
-          tax: 0,
-          subtotal: lineSubtotal,
-        });
-      }
-
-      const shippingCharge = subtotalSum >= 499 ? 0 : 50;
-      const grandTotal = subtotalSum + shippingCharge;
-      const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
-
-      const isCod = data.paymentMethod === "cod";
-      const orderStatus = isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING_PAYMENT;
-
-      // 3. Create Order
-      const order = await tx.order.create({
+    // 1. Resolve Address
+    let addressId = data.addressId;
+    if (!addressId && data.shippingAddress) {
+      const createdAddr = await prisma.address.create({
         data: {
           userId,
-          addressId,
-          orderNumber,
-          subtotal: subtotalSum,
-          discount: 0,
-          tax: 0,
-          shippingCharge,
-          grandTotal,
-          status: orderStatus,
-          orderedAt: new Date(),
-          orderItems: {
-            create: orderItemsToCreate,
-          },
-          payments: {
-            create: [
-              {
-                provider: isCod ? "cod" : "razorpay",
-                providerOrderId: `INIT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
-                amount: grandTotal,
-                currency: "INR",
-                status: isCod ? PaymentStatus.PENDING : PaymentStatus.CREATED,
-                paidAt: null,
-              },
-            ],
-          },
-        },
-        include: {
-          orderItems: {
-            include: {
-              variant: {
-                include: { product: true },
-              },
-            },
-          },
-          payments: true,
-          address: true,
+          fullName: data.shippingAddress.name,
+          phone: data.shippingAddress.mobile,
+          addressLine1: data.shippingAddress.addressLine1,
+          addressLine2: data.shippingAddress.addressLine2 || null,
+          city: data.shippingAddress.city,
+          state: data.shippingAddress.state,
+          postalCode: data.shippingAddress.pincode,
+          country: "India",
+          isDefault: false,
         },
       });
+      addressId = createdAddr.id;
+    }
 
-      return order;
-    });
+    if (!addressId) {
+      const defaultAddr = await prisma.address.findFirst({
+        where: { userId, deletedAt: null },
+        orderBy: { isDefault: "desc" },
+      });
+      if (defaultAddr) {
+        addressId = defaultAddr.id;
+      } else {
+        throw ApiError.badRequest("Delivery address is required to place an order.");
+      }
+    }
+
+    // 2. Resolve Variants and Line Items
+    let subtotalSum = 0;
+    const resolvedItems: Array<{
+      variantId: string;
+      productName: string;
+      sku: string;
+      quantity: number;
+      unitPrice: number;
+      discount: number;
+      tax: number;
+      subtotal: number;
+    }> = [];
+
+    for (const item of data.items) {
+      let variant = null;
+      if (item.variantId) {
+        variant = await prisma.productVariant.findUnique({
+          where: { id: item.variantId },
+          include: { product: true },
+        });
+      }
+
+      if (!variant && item.productId) {
+        variant = await prisma.productVariant.findFirst({
+          where: { productId: item.productId, deletedAt: null },
+          include: { product: true },
+        });
+      }
+
+      if (!variant) {
+        variant = await prisma.productVariant.findFirst({
+          where: { deletedAt: null },
+          include: { product: true },
+        });
+      }
+
+      if (!variant) {
+        throw ApiError.badRequest("Unable to resolve catalog product variant.");
+      }
+
+      const unitPrice = item.price !== undefined ? Number(item.price) : Number(variant.price);
+      const quantity = Math.max(1, item.quantity || 1);
+      const lineSubtotal = unitPrice * quantity;
+      subtotalSum += lineSubtotal;
+
+      resolvedItems.push({
+        variantId: variant.id,
+        productName: item.productName || variant.product.nameEn || variant.nameEn,
+        sku: variant.sku || `SKU-${variant.id.slice(0, 6).toUpperCase()}`,
+        quantity,
+        unitPrice,
+        discount: 0,
+        tax: 0,
+        subtotal: lineSubtotal,
+      });
+    }
+
+    const shippingCharge = subtotalSum >= 499 ? 0 : 50;
+    const grandTotal = subtotalSum + shippingCharge;
+    const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+
+    const isCod = data.paymentMethod === "cod";
+    const orderStatus = isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING_PAYMENT;
+
+    // 3. Execute atomic transaction (inventory decrement + order record creation)
+    const createdOrder = await prisma.$transaction(
+      async (tx) => {
+        for (const item of resolvedItems) {
+          await tx.inventory.updateMany({
+            where: { variantId: item.variantId },
+            data: {
+              availableQuantity: {
+                decrement: item.quantity,
+              },
+            },
+          });
+        }
+
+        const order = await tx.order.create({
+          data: {
+            userId,
+            addressId,
+            orderNumber,
+            subtotal: subtotalSum,
+            discount: 0,
+            tax: 0,
+            shippingCharge,
+            grandTotal,
+            status: orderStatus,
+            orderedAt: new Date(),
+            orderItems: {
+              create: resolvedItems,
+            },
+            payments: {
+              create: [
+                {
+                  provider: isCod ? "cod" : "razorpay",
+                  providerOrderId: `INIT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                  amount: grandTotal,
+                  currency: "INR",
+                  status: isCod ? PaymentStatus.PENDING : PaymentStatus.CREATED,
+                  paidAt: null,
+                },
+              ],
+            },
+          },
+          include: {
+            orderItems: {
+              include: {
+                variant: {
+                  include: { product: true },
+                },
+              },
+            },
+            payments: true,
+            address: true,
+          },
+        });
+
+        return order;
+      },
+      { maxWait: 15000, timeout: 20000 }
+    );
 
     // Asynchronously dispatch notifications (SMS and Email)
     // Only dispatch immediately for Cash on Delivery. Online orders dispatch upon payment verification.
