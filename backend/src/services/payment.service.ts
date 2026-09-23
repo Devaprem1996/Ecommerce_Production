@@ -338,6 +338,64 @@ export class PaymentService {
   }
 
   /**
+   * Initiate a Razorpay payment refund via Razorpay Refunds API
+   */
+  static async refundPayment(params: {
+    paymentId: string;
+    amountInPaise?: number;
+    notes?: Record<string, any>;
+    reason?: string;
+  }) {
+    const { paymentId, amountInPaise, notes = {}, reason = "Customer Cancellation" } = params;
+    if (!paymentId) {
+      throw ApiError.badRequest("Razorpay payment ID is required for refund.");
+    }
+
+    validateRazorpayConfig();
+
+    const refundPayload: any = {
+      notes: {
+        ...notes,
+        reason: reason.slice(0, 255),
+      },
+    };
+
+    if (amountInPaise !== undefined) {
+      if (!Number.isInteger(amountInPaise) || amountInPaise < 100) {
+        throw ApiError.badRequest(
+          "Refund amount must resolve to an integer >= 100 in smallest currency unit (paise)."
+        );
+      }
+      refundPayload.amount = amountInPaise;
+    }
+
+    logger.info(
+      `Initiating Razorpay refund for payment ${paymentId} (Amount: ${
+        amountInPaise ? `₹${amountInPaise / 100}` : "Full"
+      })...`
+    );
+
+    const refundResult = await executeWithRetry<any>(
+      (client) => client.payments.refund(paymentId, refundPayload),
+      "Create Razorpay Refund"
+    );
+
+    logger.info(
+      `Razorpay refund created: ID=${refundResult.id}, Payment=${paymentId}, Status=${refundResult.status}`
+    );
+
+    return {
+      success: true,
+      refundId: refundResult.id,
+      paymentId: refundResult.payment_id || paymentId,
+      amount: refundResult.amount,
+      currency: refundResult.currency || "INR",
+      status: refundResult.status,
+      speedProcessed: refundResult.speed_processed,
+    };
+  }
+
+  /**
    * Process Razorpay Webhook Event for async updates
    */
   static async handleWebhook(rawBody: string, signature: string) {
@@ -394,6 +452,32 @@ export class PaymentService {
           },
         });
         logger.warn(`Webhook: Payment failed for Razorpay Order ${providerOrderId}`);
+      }
+    } else if (event === "refund.processed") {
+      const refundEntity = payload.payload?.refund?.entity;
+      const paymentId = refundEntity?.payment_id;
+
+      if (paymentId) {
+        await prisma.payment.updateMany({
+          where: { providerPaymentId: paymentId },
+          data: {
+            status: "REFUNDED",
+          },
+        });
+        logger.info(
+          `Webhook: Refund processed for Payment ${paymentId} (Refund ID: ${refundEntity?.id})`
+        );
+      }
+    } else if (event === "refund.failed") {
+      const refundEntity = payload.payload?.refund?.entity;
+      const paymentId = refundEntity?.payment_id;
+
+      if (paymentId) {
+        logger.error(
+          `Webhook: Refund failed for Payment ${paymentId}. Reason: ${
+            refundEntity?.error_description || "Unknown"
+          }`
+        );
       }
     }
 

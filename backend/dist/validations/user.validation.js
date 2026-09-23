@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createOrderSchema = exports.updateAddressSchema = exports.createAddressSchema = exports.wishlistSchema = exports.updateProfileSchema = void 0;
+exports.cancelOrderSchema = exports.createOrderSchema = exports.updateAddressSchema = exports.createAddressSchema = exports.wishlistSchema = exports.updateProfileSchema = void 0;
 const zod_1 = require("zod");
 exports.updateProfileSchema = zod_1.z.object({
     body: zod_1.z.object({
@@ -71,4 +71,14 @@ exports.createOrderSchema = zod_1.z.object({
         paymentMethod: zod_1.z.string().default("upi"),
         couponCode: zod_1.z.string().optional(),
     }),
+});
+exports.cancelOrderSchema = zod_1.z.object({
+    params: zod_1.z.object({
+        id: zod_1.z.string().min(1, "Order ID is required"),
+    }),
+    body: zod_1.z
+        .object({
+        reason: zod_1.z.string().max(255).optional(),
+    })
+        .optional(),
 });

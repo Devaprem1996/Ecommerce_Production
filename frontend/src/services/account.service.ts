@@ -137,8 +137,10 @@ class AccountService {
   /**
    * Cancel a pending order
    */
-  async cancelOrder(orderId: string): Promise<CustomerOrder> {
-    const res = await apiClient.post<{ order: CustomerOrder }>(`/user/orders/${orderId}/cancel`);
+  async cancelOrder(orderId: string, reason?: string): Promise<CustomerOrder> {
+    const res = await apiClient.post<{ order: CustomerOrder }>(`/user/orders/${orderId}/cancel`, {
+      reason: reason || "Customer requested cancellation",
+    });
     return res.data!.order;
   }
 

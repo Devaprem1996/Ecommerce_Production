@@ -29,5 +29,11 @@ class ApiError extends Error {
     static internal(message = "Internal server error.") {
         return new ApiError(500, message);
     }
+    static badGateway(message = "Bad gateway / upstream provider error.") {
+        return new ApiError(502, message);
+    }
+    static serviceUnavailable(message = "Service temporarily unavailable.") {
+        return new ApiError(503, message);
+    }
 }
 exports.ApiError = ApiError;

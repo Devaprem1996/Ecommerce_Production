@@ -109,7 +109,8 @@ class UserController {
             if (!userId) {
                 throw api_error_js_1.ApiError.unauthorized("Authentication required.");
             }
-            const order = await user_service_js_1.UserService.cancelOrder(userId, req.params.id);
+            const reason = req.body?.reason || "Customer Cancellation";
+            const order = await user_service_js_1.UserService.cancelOrder(userId, req.params.id, reason);
             return res.status(200).json({
                 success: true,
                 message: "Order cancelled successfully.",

@@ -117,7 +117,8 @@ export class UserController {
         throw ApiError.unauthorized("Authentication required.");
       }
 
-      const order = await UserService.cancelOrder(userId, req.params.id);
+      const reason = req.body?.reason || "Customer Cancellation";
+      const order = await UserService.cancelOrder(userId, req.params.id, reason);
 
       return res.status(200).json({
         success: true,

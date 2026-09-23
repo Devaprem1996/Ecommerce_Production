@@ -11,21 +11,36 @@ import {
   XCircle, 
   Truck, 
   Calendar, 
-  Loader2 
+  Loader2,
+  AlertTriangle,
+  X,
+  CreditCard,
+  CheckCircle2
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
 
 const TABS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
-export default function OrdersListPage() {
-  const addItem = useActualCartStore((state) => state.addItem);
-  const openMiniCart = useActualCartStore((state) => state.openMiniCart);
+const CANCELLATION_REASONS = [
+  'Ordered by mistake',
+  'Found a better price or alternative elsewhere',
+  'Incorrect delivery address or contact number',
+  'Delivery time is too long',
+  'Item no longer needed',
+  'Other reason',
+];
 
+export default function OrdersListPage() {
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
-  const [cancellingId, setCancellingId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('all');
+
+  // Cancel order modal state
+  const [cancelModalOrder, setCancelModalOrder] = useState<CustomerOrder | null>(null);
+  const [selectedReason, setSelectedReason] = useState<string>(CANCELLATION_REASONS[0]);
+  const [customReasonNote, setCustomReasonNote] = useState<string>('');
+  const [isSubmittingCancel, setIsSubmittingCancel] = useState(false);
 
   // Load orders from database
   const loadOrders = async () => {
@@ -58,21 +73,36 @@ export default function OrdersListPage() {
     if (activeTab === 'shipped') {
       return status.includes('shipped') || status.includes('out_for_delivery');
     }
+    if (activeTab === 'cancelled') {
+      return status === 'cancelled' || status === 'refunded';
+    }
     return status === activeTab;
   });
 
-  // Action: Cancel Order (Calls live backend API)
-  const handleCancelOrder = async (orderId: string) => {
-    if (!confirm('Are you sure you want to cancel this order?')) return;
-    setCancellingId(orderId);
+  // Action: Open Cancel Dialog
+  const openCancelModal = (order: CustomerOrder) => {
+    setCancelModalOrder(order);
+    setSelectedReason(CANCELLATION_REASONS[0]);
+    setCustomReasonNote('');
+  };
+
+  // Action: Submit Cancel Order
+  const handleConfirmCancel = async () => {
+    if (!cancelModalOrder) return;
+    const finalReason = selectedReason === 'Other reason' && customReasonNote.trim()
+      ? customReasonNote.trim()
+      : selectedReason;
+
+    setIsSubmittingCancel(true);
     try {
-      await accountService.cancelOrder(orderId);
+      await accountService.cancelOrder(cancelModalOrder.id, finalReason);
       toast.success('Order has been cancelled successfully.');
+      setCancelModalOrder(null);
       await loadOrders();
     } catch (err: any) {
       toast.error(err?.message || 'Failed to cancel order.');
     } finally {
-      setCancellingId(null);
+      setIsSubmittingCancel(false);
     }
   };
 
@@ -85,9 +115,17 @@ export default function OrdersListPage() {
             Delivered
           </span>
         );
+      case 'REFUNDED':
+        return (
+          <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 uppercase tracking-wide flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+            Refunded
+          </span>
+        );
       case 'PROCESSING':
       case 'CONFIRMED':
       case 'PACKED':
+      case 'PAYMENT_VERIFIED':
         return (
           <span className="px-2.5 py-1 text-[10px] font-bold rounded-full bg-blue-500/10 text-blue-500 border border-blue-500/15 uppercase tracking-wide">
             {status}
@@ -182,7 +220,12 @@ export default function OrdersListPage() {
               day: 'numeric',
             });
 
-            const isCancellable = ['DRAFT', 'PENDING_PAYMENT', 'CONFIRMED'].includes(order.status.toUpperCase());
+            const upperStatus = order.status.toUpperCase();
+            const isCancellable = ['DRAFT', 'PENDING', 'PENDING_PAYMENT', 'CONFIRMED', 'PAYMENT_VERIFIED'].includes(upperStatus);
+            
+            const refundedPayment = order.payments?.find(
+              (p) => p.status.toUpperCase() === 'REFUNDED'
+            );
 
             return (
               <div 
@@ -205,6 +248,17 @@ export default function OrdersListPage() {
                     Total: {formatPrice(Number(order.grandTotal))}
                   </div>
                 </div>
+
+                {/* Refund Notice (if refunded) */}
+                {refundedPayment && (
+                  <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-850/50 rounded-card p-3 flex items-center gap-3 text-xs text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
+                    <div>
+                      <span className="font-bold">Refund Processed: </span>
+                      Full refund of {formatPrice(Number(refundedPayment.amount))} was credited back via Razorpay. It usually reflects in your original account within 5-7 working days.
+                    </div>
+                  </div>
+                )}
 
                 {/* Items Preview */}
                 <div className="flex flex-col gap-3">
@@ -240,21 +294,16 @@ export default function OrdersListPage() {
                   {/* Cancel Trigger */}
                   {isCancellable && (
                     <button
-                      onClick={() => handleCancelOrder(order.id)}
-                      disabled={cancellingId === order.id}
-                      className="flex items-center space-x-1.5 px-3.5 py-2 border border-red-200 hover:border-red-300 dark:border-red-950 bg-red-500/5 hover:bg-red-500/10 text-xs font-bold text-red-500 rounded-card transition-colors cursor-pointer disabled:opacity-50"
+                      onClick={() => openCancelModal(order)}
+                      className="flex items-center space-x-1.5 px-3.5 py-2 border border-red-200 hover:border-red-300 dark:border-red-950 bg-red-500/5 hover:bg-red-500/10 text-xs font-bold text-red-500 rounded-card transition-colors cursor-pointer"
                     >
-                      {cancellingId === order.id ? (
-                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                      ) : (
-                        <XCircle className="w-3.5 h-3.5" />
-                      )}
+                      <XCircle className="w-3.5 h-3.5" />
                       <span>Cancel Order</span>
                     </button>
                   )}
 
                   {/* Track Trigger */}
-                  {(order.status.toUpperCase() === 'SHIPPED' || order.status.toUpperCase() === 'PROCESSING') && (
+                  {(upperStatus === 'SHIPPED' || upperStatus === 'PROCESSING' || upperStatus === 'OUT_FOR_DELIVERY') && (
                     <Link href={`/account/orders/${order.id}#tracker`}>
                       <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/30 dark:border-neutral-750 bg-transparent text-xs font-bold text-neutral-750 dark:text-neutral-355 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer">
                         <Truck className="w-3.5 h-3.5 text-primary-500 animate-pulse" />
@@ -277,6 +326,124 @@ export default function OrdersListPage() {
         )}
       </div>
 
+      {/* Cancellation Confirmation Modal */}
+      {cancelModalOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div 
+            className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-5"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-start justify-between">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-950/40 text-red-600 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-neutral-900 dark:text-white">
+                    Cancel Order #{cancelModalOrder.orderNumber || cancelModalOrder.id.slice(0, 8)}
+                  </h3>
+                  <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                    Please confirm if you want to cancel this order.
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setCancelModalOrder(null)}
+                className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 p-1"
+                disabled={isSubmittingCancel}
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Online payment refund alert notice */}
+            {cancelModalOrder.payments?.some(
+              (p) =>
+                (p.provider === 'razorpay' || p.provider === 'online') &&
+                (p.status.toUpperCase() === 'SUCCESSFUL' || p.status.toUpperCase() === 'CAPTURED')
+            ) && (
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/50 rounded-xl p-3.5 flex items-start space-x-3">
+                <CreditCard className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div className="text-xs text-blue-900 dark:text-blue-200 space-y-1">
+                  <p className="font-bold">Instant Automated Refund</p>
+                  <p className="text-blue-800 dark:text-blue-300">
+                    Your payment of <strong>{formatPrice(Number(cancelModalOrder.grandTotal))}</strong> will be automatically refunded through Razorpay to your original bank/UPI/card account within 5-7 business days.
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Reason selector */}
+            <div className="space-y-3">
+              <label className="text-xs font-bold text-neutral-700 dark:text-neutral-300 block">
+                Please select a reason for cancellation:
+              </label>
+              <div className="space-y-2">
+                {CANCELLATION_REASONS.map((reason) => (
+                  <label 
+                    key={reason}
+                    className={`flex items-center space-x-3 p-3 rounded-xl border text-xs cursor-pointer transition-all ${
+                      selectedReason === reason 
+                        ? 'border-primary-500 bg-primary-50/30 dark:bg-primary-950/20 font-bold text-neutral-900 dark:text-white' 
+                        : 'border-neutral-200 dark:border-neutral-800 text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-850'
+                    }`}
+                  >
+                    <input 
+                      type="radio" 
+                      name="cancel_reason" 
+                      value={reason} 
+                      checked={selectedReason === reason}
+                      onChange={() => setSelectedReason(reason)}
+                      className="text-primary-600 focus:ring-primary-500"
+                    />
+                    <span>{reason}</span>
+                  </label>
+                ))}
+              </div>
+
+              {selectedReason === 'Other reason' && (
+                <div className="pt-1">
+                  <textarea
+                    rows={3}
+                    placeholder="Please specify why you are cancelling..."
+                    value={customReasonNote}
+                    onChange={(e) => setCustomReasonNote(e.target.value)}
+                    className="w-full text-xs p-3 border border-neutral-300 dark:border-neutral-700 rounded-xl bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Modal Actions */}
+            <div className="flex items-center justify-end space-x-3 pt-2 border-t border-neutral-100 dark:border-neutral-800">
+              <button
+                type="button"
+                onClick={() => setCancelModalOrder(null)}
+                disabled={isSubmittingCancel}
+                className="px-4 py-2.5 rounded-xl border border-neutral-200 dark:border-neutral-800 text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:bg-neutral-50 dark:hover:bg-neutral-800 transition-colors"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmCancel}
+                disabled={isSubmittingCancel}
+                className="px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center space-x-2 transition-colors shadow-sm disabled:opacity-50"
+              >
+                {isSubmittingCancel ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>Processing Cancellation...</span>
+                  </>
+                ) : (
+                  <span>Confirm Cancellation</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

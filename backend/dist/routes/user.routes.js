@@ -22,7 +22,7 @@ router.post("/wishlist/toggle", (0, auth_middleware_js_1.validateRequest)(user_v
 router.get("/orders", user_controller_js_1.UserController.getOrders);
 router.get("/orders/:id", user_controller_js_1.UserController.getOrderById);
 router.post("/orders", (0, auth_middleware_js_1.validateRequest)(user_validation_js_1.createOrderSchema), user_controller_js_1.UserController.createOrder);
-router.post("/orders/:id/cancel", user_controller_js_1.UserController.cancelOrder);
+router.post("/orders/:id/cancel", (0, auth_middleware_js_1.validateRequest)(user_validation_js_1.cancelOrderSchema), user_controller_js_1.UserController.cancelOrder);
 // Addresses
 router.get("/addresses", user_controller_js_1.UserController.getAddresses);
 router.post("/addresses", (0, auth_middleware_js_1.validateRequest)(user_validation_js_1.createAddressSchema), user_controller_js_1.UserController.createAddress);

@@ -10,6 +10,7 @@ const api_error_js_1 = require("../exceptions/api-error.js");
 const client_1 = require("@prisma/client");
 const sms_service_js_1 = require("./sms.service.js");
 const email_service_js_1 = require("./email.service.js");
+const payment_service_js_1 = require("./payment.service.js");
 const index_js_1 = __importDefault(require("../logger/index.js"));
 class UserService {
     /**
@@ -135,31 +136,135 @@ class UserService {
         return order;
     }
     /**
-     * Customer cancels their own pending order
+     * Cancel an order (customer or admin initiated)
+     * Restores product inventory and triggers automatic Razorpay refund if paid online
      */
-    static async cancelOrder(userId, orderId) {
+    static async cancelOrder(userId, orderId, reason = "Customer Cancellation") {
         const order = await db_js_1.default.order.findFirst({
             where: {
                 id: orderId,
-                userId,
+                ...(userId ? { userId } : {}),
                 deletedAt: null,
+            },
+            include: {
+                orderItems: true,
+                payments: true,
+                user: { include: { profile: true } },
+                address: true,
             },
         });
         if (!order) {
             throw api_error_js_1.ApiError.notFound("Order not found or access denied.");
         }
-        const cancellableStatuses = [
-            client_1.OrderStatus.DRAFT,
-            client_1.OrderStatus.PENDING_PAYMENT,
-            client_1.OrderStatus.CONFIRMED,
-        ];
-        if (!cancellableStatuses.includes(order.status)) {
-            throw api_error_js_1.ApiError.badRequest(`Order in status '${order.status}' cannot be cancelled.`);
+        if (order.status === client_1.OrderStatus.CANCELLED ||
+            order.status === client_1.OrderStatus.REFUNDED) {
+            throw api_error_js_1.ApiError.badRequest("Order has already been cancelled.");
         }
-        return await db_js_1.default.order.update({
-            where: { id: orderId },
-            data: { status: client_1.OrderStatus.CANCELLED },
+        const nonCancellableStatuses = [
+            client_1.OrderStatus.SHIPPED,
+            client_1.OrderStatus.OUT_FOR_DELIVERY,
+            client_1.OrderStatus.DELIVERED,
+            client_1.OrderStatus.RETURNED,
+        ];
+        if (nonCancellableStatuses.includes(order.status)) {
+            throw api_error_js_1.ApiError.badRequest(`Order is currently in '${order.status}' status and cannot be cancelled directly. Please initiate a return request if the package has shipped or been delivered.`);
+        }
+        // Identify if there is a successful online payment to refund
+        const successfulOnlinePayment = order.payments.find((p) => (p.provider === "razorpay" || p.provider === "online") &&
+            (p.status === client_1.PaymentStatus.SUCCESSFUL ||
+                p.status === client_1.PaymentStatus.CAPTURED) &&
+            Boolean(p.providerPaymentId));
+        let refundDetails = null;
+        let refundAmount = 0;
+        // Trigger Razorpay refund via official API if online payment was captured
+        if (successfulOnlinePayment && successfulOnlinePayment.providerPaymentId) {
+            try {
+                const amountInPaise = Math.round(Number(successfulOnlinePayment.amount) * 100);
+                refundAmount = Number(successfulOnlinePayment.amount);
+                refundDetails = await payment_service_js_1.PaymentService.refundPayment({
+                    paymentId: successfulOnlinePayment.providerPaymentId,
+                    amountInPaise,
+                    notes: {
+                        order_id: order.id,
+                        order_number: order.orderNumber,
+                        reason: reason.slice(0, 255),
+                    },
+                    reason: reason.slice(0, 255),
+                });
+            }
+            catch (err) {
+                index_js_1.default.error(`Failed to process Razorpay refund for Order ${order.id}:`, err);
+                throw api_error_js_1.ApiError.internal(`Failed to process payment gateway refund: ${err.message}`);
+            }
+        }
+        // Database transaction: Restore inventory and update order/payment statuses
+        const updatedOrder = await db_js_1.default.$transaction(async (tx) => {
+            // 1. Restore product inventory
+            for (const item of order.orderItems) {
+                if (item.variantId) {
+                    await tx.inventory.updateMany({
+                        where: { variantId: item.variantId },
+                        data: {
+                            availableQuantity: {
+                                increment: item.quantity,
+                            },
+                        },
+                    });
+                }
+            }
+            // 2. Update payment records
+            if (successfulOnlinePayment) {
+                await tx.payment.update({
+                    where: { id: successfulOnlinePayment.id },
+                    data: {
+                        status: client_1.PaymentStatus.REFUNDED,
+                        failureReason: refundDetails?.refundId
+                            ? `Refund ID: ${refundDetails.refundId}`
+                            : "Refund processed on order cancellation",
+                    },
+                });
+            }
+            else {
+                await tx.payment.updateMany({
+                    where: { orderId },
+                    data: {
+                        status: client_1.PaymentStatus.CANCELLED,
+                        failureReason: reason.slice(0, 255),
+                    },
+                });
+            }
+            // 3. Update order status
+            return await tx.order.update({
+                where: { id: orderId },
+                data: {
+                    status: successfulOnlinePayment
+                        ? client_1.OrderStatus.REFUNDED
+                        : client_1.OrderStatus.CANCELLED,
+                },
+                include: {
+                    orderItems: true,
+                    payments: true,
+                    address: true,
+                },
+            });
         });
+        // 4. Asynchronously notify customer
+        const customerPhone = order.address?.phone || order.user?.phone;
+        if (customerPhone) {
+            sms_service_js_1.SmsService.sendOrderCancelled({
+                phone: customerPhone,
+                orderNumber: order.orderNumber,
+                refundAmount: refundAmount > 0 ? refundAmount : null,
+            }).catch((err) => index_js_1.default.error("Failed to send cancellation SMS:", err));
+        }
+        const customerEmail = order.user?.email;
+        if (customerEmail && !customerEmail.endsWith(".local")) {
+            const customerName = `${order.user?.profile?.firstName || ""} ${order.user?.profile?.lastName || ""}`.trim() ||
+                order.address?.fullName ||
+                "Customer";
+            email_service_js_1.EmailService.sendOrderCancelled(customerEmail, order.orderNumber, refundAmount > 0 ? refundAmount : null, customerName).catch((err) => index_js_1.default.error("Failed to send cancellation Email:", err));
+        }
+        return updatedOrder;
     }
     /**
      * Get all active addresses for the customer
@@ -381,9 +486,8 @@ class UserService {
             const shippingCharge = subtotalSum >= 499 ? 0 : 50;
             const grandTotal = subtotalSum + shippingCharge;
             const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
-            const orderStatus = data.paymentMethod === "cod"
-                ? client_1.OrderStatus.CONFIRMED
-                : client_1.OrderStatus.CONFIRMED;
+            const isCod = data.paymentMethod === "cod";
+            const orderStatus = isCod ? client_1.OrderStatus.CONFIRMED : client_1.OrderStatus.PENDING_PAYMENT;
             // 3. Create Order
             const order = await tx.order.create({
                 data: {
@@ -403,14 +507,12 @@ class UserService {
                     payments: {
                         create: [
                             {
-                                provider: data.paymentMethod || "upi",
-                                providerOrderId: `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                                provider: isCod ? "cod" : "razorpay",
+                                providerOrderId: `INIT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
                                 amount: grandTotal,
                                 currency: "INR",
-                                status: data.paymentMethod === "cod"
-                                    ? client_1.PaymentStatus.PENDING
-                                    : client_1.PaymentStatus.SUCCESSFUL,
-                                paidAt: data.paymentMethod === "cod" ? null : new Date(),
+                                status: isCod ? client_1.PaymentStatus.PENDING : client_1.PaymentStatus.CREATED,
+                                paidAt: null,
                             },
                         ],
                     },
@@ -430,16 +532,19 @@ class UserService {
             return order;
         });
         // Asynchronously dispatch notifications (SMS and Email)
-        const phoneToNotify = createdOrder.address?.phone || user?.phone;
-        if (phoneToNotify) {
-            sms_service_js_1.SmsService.sendOrderConfirmation({
-                phone: phoneToNotify,
-                orderNumber: createdOrder.orderNumber,
-                grandTotal: Number(createdOrder.grandTotal),
-            }).catch((err) => index_js_1.default.error("Failed to send order SMS:", err));
-        }
-        if (user?.email && !user.email.endsWith(".local")) {
-            email_service_js_1.EmailService.sendOrderConfirmation(user.email, createdOrder.orderNumber, Number(createdOrder.grandTotal), createdOrder.address?.fullName || "Customer").catch((err) => index_js_1.default.error("Failed to send order email:", err));
+        // Only dispatch immediately for Cash on Delivery. Online orders dispatch upon payment verification.
+        if (data.paymentMethod === "cod") {
+            const phoneToNotify = createdOrder.address?.phone || user?.phone;
+            if (phoneToNotify) {
+                sms_service_js_1.SmsService.sendOrderConfirmation({
+                    phone: phoneToNotify,
+                    orderNumber: createdOrder.orderNumber,
+                    grandTotal: Number(createdOrder.grandTotal),
+                }).catch((err) => index_js_1.default.error("Failed to send order SMS:", err));
+            }
+            if (user?.email && !user.email.endsWith(".local")) {
+                email_service_js_1.EmailService.sendOrderConfirmation(user.email, createdOrder.orderNumber, Number(createdOrder.grandTotal), createdOrder.address?.fullName || "Customer").catch((err) => index_js_1.default.error("Failed to send order email:", err));
+            }
         }
         return createdOrder;
     }

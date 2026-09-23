@@ -7,6 +7,7 @@ exports.AdminService = void 0;
 const db_js_1 = __importDefault(require("../config/db.js"));
 const client_1 = require("@prisma/client");
 const sms_service_js_1 = require("./sms.service.js");
+const user_service_js_1 = require("./user.service.js");
 const index_js_1 = __importDefault(require("../logger/index.js"));
 class AdminService {
     /**
@@ -314,6 +315,9 @@ class AdminService {
      */
     static async updateOrderStatus(id, status) {
         const upperStatus = status.toUpperCase();
+        if (upperStatus === client_1.OrderStatus.CANCELLED || upperStatus === client_1.OrderStatus.REFUNDED) {
+            return user_service_js_1.UserService.cancelOrder(null, id, "Admin Cancellation");
+        }
         const order = await db_js_1.default.order.update({
             where: { id },
             data: { status: upperStatus },

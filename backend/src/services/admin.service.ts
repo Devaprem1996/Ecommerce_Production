@@ -1,6 +1,7 @@
 import prisma from "../config/db.js";
 import { OrderStatus, DiscountType } from "@prisma/client";
 import { SmsService } from "./sms.service.js";
+import { UserService } from "./user.service.js";
 import logger from "../logger/index.js";
 
 export interface DashboardKpiItem {
@@ -398,6 +399,11 @@ export class AdminService {
    */
   static async updateOrderStatus(id: string, status: string) {
     const upperStatus = status.toUpperCase() as OrderStatus;
+
+    if (upperStatus === OrderStatus.CANCELLED || upperStatus === OrderStatus.REFUNDED) {
+      return UserService.cancelOrder(null, id, "Admin Cancellation");
+    }
+
     const order = await prisma.order.update({
       where: { id },
       data: { status: upperStatus },

@@ -6,6 +6,7 @@ import {
   createAddressSchema,
   updateAddressSchema,
   createOrderSchema,
+  cancelOrderSchema,
   wishlistSchema,
 } from "../validations/user.validation.js";
 import { trackByOtpSchema } from "../validations/otp.validation.js";
@@ -52,7 +53,11 @@ router.post(
   validateRequest(createOrderSchema),
   UserController.createOrder
 );
-router.post("/orders/:id/cancel", UserController.cancelOrder);
+router.post(
+  "/orders/:id/cancel",
+  validateRequest(cancelOrderSchema),
+  UserController.cancelOrder
+);
 
 // Addresses
 router.get("/addresses", UserController.getAddresses);

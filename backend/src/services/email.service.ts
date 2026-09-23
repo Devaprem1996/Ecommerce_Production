@@ -128,4 +128,48 @@ export class EmailService {
 
     return this.sendEmail({ to, subject, html });
   }
+
+  /**
+   * Helper: Send Order Cancellation & Refund Email with branded HTML
+   */
+  static async sendOrderCancelled(
+    to: string,
+    orderNumber: string,
+    refundAmount: string | number | null = null,
+    customerName: string = "Customer"
+  ) {
+    const subject = `Order Cancelled #${orderNumber} - Yathu Arokiyagam`;
+    const refundSection =
+      refundAmount && Number(refundAmount) > 0
+        ? `<div style="margin-top: 12px; padding: 12px; background-color: #ecfdf5; border-radius: 6px; border: 1px solid #a7f3d0;">
+             <p style="margin: 0; color: #065f46; font-size: 14px;"><strong>Refund Initiated:</strong> ₹${refundAmount} has been refunded to your original payment method. Please allow 5–7 business days for the funds to reflect in your bank account.</p>
+           </div>`
+        : "";
+
+    const html = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 8px;">
+        <div style="text-align: center; margin-bottom: 24px;">
+          <h1 style="color: #15803d; margin: 0; font-size: 24px;">Yathu Arokiyagam</h1>
+          <p style="color: #4b5563; margin-top: 4px;">Traditional Organic & Cold-Pressed Goodness</p>
+        </div>
+
+        <div style="background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 16px; margin-bottom: 20px;">
+          <h2 style="color: #991b1b; margin: 0 0 8px 0; font-size: 18px;">Order Cancelled</h2>
+          <p style="color: #374151; margin: 0;">Hello <strong>${customerName}</strong>, your order #${orderNumber} has been cancelled.</p>
+          ${refundSection}
+        </div>
+
+        <p style="color: #4b5563; font-size: 14px;">
+          If you have any questions or cancelled by mistake, you can browse our shop to place a new order anytime.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 24px 0;" />
+        <p style="color: #6b7280; font-size: 12px; text-align: center; margin: 0;">
+          Need help? Reach out to support at Yathu Arokiyagam.
+        </p>
+      </div>
+    `;
+
+    return this.sendEmail({ to, subject, html });
+  }
 }

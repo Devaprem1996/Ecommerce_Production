@@ -4,6 +4,7 @@ import { ApiError } from "../exceptions/api-error.js";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
 import { SmsService } from "./sms.service.js";
 import { EmailService } from "./email.service.js";
+import { PaymentService } from "./payment.service.js";
 import logger from "../logger/index.js";
 
 export class UserService {
@@ -151,14 +152,25 @@ export class UserService {
   }
 
   /**
-   * Customer cancels their own pending order
+   * Cancel an order (customer or admin initiated)
+   * Restores product inventory and triggers automatic Razorpay refund if paid online
    */
-  static async cancelOrder(userId: string, orderId: string) {
+  static async cancelOrder(
+    userId: string | null | undefined,
+    orderId: string,
+    reason: string = "Customer Cancellation"
+  ) {
     const order = await prisma.order.findFirst({
       where: {
         id: orderId,
-        userId,
+        ...(userId ? { userId } : {}),
         deletedAt: null,
+      },
+      include: {
+        orderItems: true,
+        payments: true,
+        user: { include: { profile: true } },
+        address: true,
       },
     });
 
@@ -166,22 +178,148 @@ export class UserService {
       throw ApiError.notFound("Order not found or access denied.");
     }
 
-    const cancellableStatuses: OrderStatus[] = [
-      OrderStatus.DRAFT,
-      OrderStatus.PENDING_PAYMENT,
-      OrderStatus.CONFIRMED,
+    if (
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.REFUNDED
+    ) {
+      throw ApiError.badRequest("Order has already been cancelled.");
+    }
+
+    const nonCancellableStatuses: OrderStatus[] = [
+      OrderStatus.SHIPPED,
+      OrderStatus.OUT_FOR_DELIVERY,
+      OrderStatus.DELIVERED,
+      OrderStatus.RETURNED,
     ];
 
-    if (!cancellableStatuses.includes(order.status)) {
+    if (nonCancellableStatuses.includes(order.status)) {
       throw ApiError.badRequest(
-        `Order in status '${order.status}' cannot be cancelled.`
+        `Order is currently in '${order.status}' status and cannot be cancelled directly. Please initiate a return request if the package has shipped or been delivered.`
       );
     }
 
-    return await prisma.order.update({
-      where: { id: orderId },
-      data: { status: OrderStatus.CANCELLED },
+    // Identify if there is a successful online payment to refund
+    const successfulOnlinePayment = order.payments.find(
+      (p) =>
+        (p.provider === "razorpay" || p.provider === "online") &&
+        (p.status === PaymentStatus.SUCCESSFUL ||
+          p.status === PaymentStatus.CAPTURED) &&
+        Boolean(p.providerPaymentId)
+    );
+
+    let refundDetails: any = null;
+    let refundAmount: number = 0;
+
+    // Trigger Razorpay refund via official API if online payment was captured
+    if (successfulOnlinePayment && successfulOnlinePayment.providerPaymentId) {
+      try {
+        const amountInPaise = Math.round(
+          Number(successfulOnlinePayment.amount) * 100
+        );
+        refundAmount = Number(successfulOnlinePayment.amount);
+        refundDetails = await PaymentService.refundPayment({
+          paymentId: successfulOnlinePayment.providerPaymentId,
+          amountInPaise,
+          notes: {
+            order_id: order.id,
+            order_number: order.orderNumber,
+            reason: reason.slice(0, 255),
+          },
+          reason: reason.slice(0, 255),
+        });
+      } catch (err: any) {
+        logger.error(
+          `Failed to process Razorpay refund for Order ${order.id}:`,
+          err
+        );
+        throw ApiError.internal(
+          `Failed to process payment gateway refund: ${err.message}`
+        );
+      }
+    }
+
+    // Database transaction: Restore inventory and update order/payment statuses
+    const updatedOrder = await prisma.$transaction(async (tx) => {
+      // 1. Restore product inventory
+      for (const item of order.orderItems) {
+        if (item.variantId) {
+          await tx.inventory.updateMany({
+            where: { variantId: item.variantId },
+            data: {
+              availableQuantity: {
+                increment: item.quantity,
+              },
+            },
+          });
+        }
+      }
+
+      // 2. Update payment records
+      if (successfulOnlinePayment) {
+        await tx.payment.update({
+          where: { id: successfulOnlinePayment.id },
+          data: {
+            status: PaymentStatus.REFUNDED,
+            failureReason: refundDetails?.refundId
+              ? `Refund ID: ${refundDetails.refundId}`
+              : "Refund processed on order cancellation",
+          },
+        });
+      } else {
+        await tx.payment.updateMany({
+          where: { orderId },
+          data: {
+            status: PaymentStatus.CANCELLED,
+            failureReason: reason.slice(0, 255),
+          },
+        });
+      }
+
+      // 3. Update order status
+      return await tx.order.update({
+        where: { id: orderId },
+        data: {
+          status: successfulOnlinePayment
+            ? OrderStatus.REFUNDED
+            : OrderStatus.CANCELLED,
+        },
+        include: {
+          orderItems: true,
+          payments: true,
+          address: true,
+        },
+      });
     });
+
+    // 4. Asynchronously notify customer
+    const customerPhone = order.address?.phone || order.user?.phone;
+    if (customerPhone) {
+      SmsService.sendOrderCancelled({
+        phone: customerPhone,
+        orderNumber: order.orderNumber,
+        refundAmount: refundAmount > 0 ? refundAmount : null,
+      }).catch((err) => logger.error("Failed to send cancellation SMS:", err));
+    }
+
+    const customerEmail = order.user?.email;
+    if (customerEmail && !customerEmail.endsWith(".local")) {
+      const customerName =
+        `${order.user?.profile?.firstName || ""} ${
+          order.user?.profile?.lastName || ""
+        }`.trim() ||
+        order.address?.fullName ||
+        "Customer";
+      EmailService.sendOrderCancelled(
+        customerEmail,
+        order.orderNumber,
+        refundAmount > 0 ? refundAmount : null,
+        customerName
+      ).catch((err) =>
+        logger.error("Failed to send cancellation Email:", err)
+      );
+    }
+
+    return updatedOrder;
   }
 
   /**

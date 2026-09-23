@@ -192,6 +192,23 @@ export class SmsService {
   }
 
   /**
+   * Send Order Cancelled & Refund Initiated SMS
+   */
+  static async sendOrderCancelled(options: {
+    phone: string;
+    orderNumber: string;
+    refundAmount?: number | string | null;
+  }): Promise<boolean> {
+    const { phone, orderNumber, refundAmount } = options;
+    const refundText =
+      refundAmount && Number(refundAmount) > 0
+        ? ` Your refund of Rs.${refundAmount} has been initiated to your source account (takes 5-7 business days).`
+        : "";
+    const message = `Dear Customer, your order #${orderNumber} at Yathu Arokiyagam has been cancelled.${refundText} Thank you.`;
+    return this.dispatchQuickSms(phone, message, "Order Cancelled SMS");
+  }
+
+  /**
    * Backward compatibility
    */
   static async sendOrderConfirmation(options: SendOrderSmsOptions): Promise<boolean> {

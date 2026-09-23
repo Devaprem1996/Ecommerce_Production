@@ -37,6 +37,25 @@ declare module "razorpay" {
     payments: {
       fetch(paymentId: string): Promise<any>;
       capture(paymentId: string, amount: number, currency: string): Promise<any>;
+      refund(
+        paymentId: string,
+        params?: {
+          amount?: number;
+          notes?: Record<string, any>;
+          speed?: "normal" | "optimum";
+          receipt?: string;
+        }
+      ): Promise<any>;
+    };
+    refunds: {
+      create(params: {
+        payment_id: string;
+        amount?: number;
+        notes?: Record<string, any>;
+        speed?: "normal" | "optimum";
+        receipt?: string;
+      }): Promise<any>;
+      fetch(refundId: string): Promise<any>;
     };
   }
 
