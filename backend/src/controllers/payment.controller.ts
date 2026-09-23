@@ -4,25 +4,31 @@ import { ApiError } from "../exceptions/api-error.js";
 
 export class PaymentController {
   /**
-   * Create Razorpay payment order
+   * POST /api/create-order
+   * Creates a Razorpay Order via the official Orders API
    */
   static async createOrder(req: Request, res: Response, next: NextFunction) {
     try {
-      const { orderId } = req.body;
-      const userId = req.user?.userId;
+      const { orderId, amount, currency, receipt, notes } = req.body;
+      const userId = (req as any).user?.userId;
 
-      if (!orderId) {
-        throw ApiError.badRequest("Order ID is required.");
-      }
-      if (!userId) {
-        throw ApiError.unauthorized("Authentication required.");
-      }
-
-      const result = await PaymentService.createPaymentOrder(orderId, userId);
+      const result = await PaymentService.createPaymentOrder({
+        orderId,
+        userId,
+        amount,
+        currency,
+        receipt,
+        notes,
+      });
 
       return res.status(200).json({
         success: true,
-        message: "Razorpay payment order created successfully.",
+        message: "Razorpay order created successfully.",
+        order_id: result.order_id,
+        amount: result.amount,
+        currency: result.currency,
+        key_id: result.key_id,
+        receipt: result.receipt,
         data: result,
         timestamp: new Date().toISOString(),
       });
@@ -32,26 +38,41 @@ export class PaymentController {
   }
 
   /**
-   * Verify checkout payment signature
+   * POST /api/verify-payment
+   * Verifies the Razorpay payment signature server-side before marking the order paid
    */
   static async verifyPayment(req: Request, res: Response, next: NextFunction) {
     try {
-      const { orderId, razorpayOrderId, razorpayPaymentId, razorpaySignature } = req.body;
+      const body = req.body || {};
+      const razorpay_order_id =
+        body.razorpay_order_id || body.razorpayOrderId;
+      const razorpay_payment_id =
+        body.razorpay_payment_id || body.razorpayPaymentId;
+      const razorpay_signature =
+        body.razorpay_signature || body.razorpaySignature;
+      const orderId = body.orderId || body.order_id;
 
-      if (!orderId || !razorpayOrderId || !razorpayPaymentId || !razorpaySignature) {
-        throw ApiError.badRequest("Missing required payment verification parameters.");
+      if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+        throw ApiError.badRequest(
+          "Missing required payment verification parameters: razorpay_payment_id, razorpay_order_id, and razorpay_signature."
+        );
       }
 
       const result = await PaymentService.verifyPayment({
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
         orderId,
-        razorpayOrderId,
-        razorpayPaymentId,
-        razorpaySignature,
       });
 
       return res.status(200).json({
         success: true,
-        message: "Payment verified successfully.",
+        message: result.alreadyProcessed
+          ? "Payment already verified."
+          : "Payment verified successfully.",
+        verified: result.verified,
+        order_id: result.order_id,
+        payment_id: result.payment_id,
         data: result,
         timestamp: new Date().toISOString(),
       });
@@ -61,6 +82,31 @@ export class PaymentController {
   }
 
   /**
+   * GET /api/order-status/:order_id
+   * Payment status fallback query for a Razorpay order
+   */
+  static async getOrderStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { order_id } = req.params;
+      if (!order_id) {
+        throw ApiError.badRequest("Razorpay order ID parameter is required.");
+      }
+
+      const result = await PaymentService.getOrderStatus(order_id);
+
+      return res.status(200).json({
+        success: true,
+        order_id: result.order_id,
+        payments: result.payments,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * POST /api/payments/webhook
    * Handle Razorpay webhook notifications
    */
   static async handleWebhook(req: Request, res: Response, next: NextFunction) {
@@ -75,7 +121,7 @@ export class PaymentController {
 
       return res.status(200).json({
         success: true,
-        message: "Webhook processed.",
+        message: "Webhook processed successfully.",
         data: result,
       });
     } catch (error) {

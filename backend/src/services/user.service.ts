@@ -497,10 +497,8 @@ export class UserService {
       const grandTotal = subtotalSum + shippingCharge;
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
-      const orderStatus =
-        data.paymentMethod === "cod"
-          ? OrderStatus.CONFIRMED
-          : OrderStatus.CONFIRMED;
+      const isCod = data.paymentMethod === "cod";
+      const orderStatus = isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING_PAYMENT;
 
       // 3. Create Order
       const order = await tx.order.create({
@@ -521,15 +519,12 @@ export class UserService {
           payments: {
             create: [
               {
-                provider: data.paymentMethod || "upi",
-                providerOrderId: `PAY-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+                provider: isCod ? "cod" : "razorpay",
+                providerOrderId: `INIT-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
                 amount: grandTotal,
                 currency: "INR",
-                status:
-                  data.paymentMethod === "cod"
-                    ? PaymentStatus.PENDING
-                    : PaymentStatus.SUCCESSFUL,
-                paidAt: data.paymentMethod === "cod" ? null : new Date(),
+                status: isCod ? PaymentStatus.PENDING : PaymentStatus.CREATED,
+                paidAt: null,
               },
             ],
           },
@@ -551,22 +546,25 @@ export class UserService {
     });
 
     // Asynchronously dispatch notifications (SMS and Email)
-    const phoneToNotify = (createdOrder as any).address?.phone || user?.phone;
-    if (phoneToNotify) {
-      SmsService.sendOrderConfirmation({
-        phone: phoneToNotify,
-        orderNumber: createdOrder.orderNumber,
-        grandTotal: Number(createdOrder.grandTotal),
-      }).catch((err) => logger.error("Failed to send order SMS:", err));
-    }
+    // Only dispatch immediately for Cash on Delivery. Online orders dispatch upon payment verification.
+    if (data.paymentMethod === "cod") {
+      const phoneToNotify = (createdOrder as any).address?.phone || user?.phone;
+      if (phoneToNotify) {
+        SmsService.sendOrderConfirmation({
+          phone: phoneToNotify,
+          orderNumber: createdOrder.orderNumber,
+          grandTotal: Number(createdOrder.grandTotal),
+        }).catch((err) => logger.error("Failed to send order SMS:", err));
+      }
 
-    if (user?.email && !user.email.endsWith(".local")) {
-      EmailService.sendOrderConfirmation(
-        user.email,
-        createdOrder.orderNumber,
-        Number(createdOrder.grandTotal),
-        (createdOrder as any).address?.fullName || "Customer"
-      ).catch((err) => logger.error("Failed to send order email:", err));
+      if (user?.email && !user.email.endsWith(".local")) {
+        EmailService.sendOrderConfirmation(
+          user.email,
+          createdOrder.orderNumber,
+          Number(createdOrder.grandTotal),
+          (createdOrder as any).address?.fullName || "Customer"
+        ).catch((err) => logger.error("Failed to send order email:", err));
+      }
     }
 
     return createdOrder;

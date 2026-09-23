@@ -21,7 +21,8 @@ export async function GET(
       return NextResponse.json({
         available: true,
         estimatedDays: 3,
-        city: 'Chennai',
+        city: pincode.startsWith('600') ? 'Chennai' : 'Tamil Nadu',
+        state: 'Tamil Nadu',
         freeDeliveryThreshold: 499
       });
     } else if (/^[1-5]/.test(pincode)) {
@@ -29,6 +30,7 @@ export async function GET(
         available: true,
         estimatedDays: 5,
         city: 'Metro City',
+        state: 'India',
         freeDeliveryThreshold: 499
       });
     } else {

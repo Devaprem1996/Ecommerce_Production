@@ -28,6 +28,8 @@ import { Button } from '@/components/ui/Button';
 import { toast } from '@/components/ui/Toast';
 import { apiClient } from '@/services/api-client';
 import { accountService, UserAddress } from '@/services/account.service';
+import { openRazorpayCheckout } from '@/lib/razorpay';
+import { paymentService } from '@/services/payment.service';
 
 interface AddressData {
   name: string;
@@ -46,6 +48,12 @@ export default function CheckoutPage() {
   // Stores
   const { items, getTotal, clearCart, getItemCount } = useCartStore();
   const { user, isAuthenticated, login } = useAuthStore();
+
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   // Guest Phone OTP States
   const [isOtpSending, setIsOtpSending] = useState(false);
@@ -136,15 +144,15 @@ export default function CheckoutPage() {
     }
   };
 
-  // Redirect if cart is empty (unless we are on order confirmation step)
-  useEffect(() => {
-    if (items.length === 0 && activeStep !== 'confirm') {
-      router.replace('/shop');
-    }
-  }, [items]);
-
   // Checkout Step
   const [activeStep, setActiveStep] = useState<'address' | 'payment' | 'confirm'>('address');
+
+  // Redirect if cart is empty after hydration (unless we are on order confirmation step)
+  useEffect(() => {
+    if (hasMounted && items.length === 0 && activeStep !== 'confirm') {
+      router.replace('/shop');
+    }
+  }, [hasMounted, items, activeStep, router]);
 
   // Address Step States
   const [savedAddresses, setSavedAddresses] = useState<UserAddress[]>([]);
@@ -232,7 +240,7 @@ export default function CheckoutPage() {
           setAddressForm(prev => ({
             ...prev,
             city: data.city,
-            state: data.estimatedDays === 3 ? 'Tamil Nadu' : 'State'
+            state: data.state || (data.estimatedDays === 3 ? 'Tamil Nadu' : 'State')
           }));
           toast.success(`Serviceable: ${data.city}`);
         } else {
@@ -305,39 +313,8 @@ export default function CheckoutPage() {
     return cleanValue;
   };
 
-  const handlePlaceOrder = () => {
-    // Validate inputs based on paymentMethod
-    if (paymentMethod === 'card') {
-      const cleanCard = cardNumber.replace(/\D/g, '');
-      if (cleanCard.length < 16) {
-        toast.warning('Please enter a valid 16-digit credit card number.');
-        return;
-      }
-      if (!cardExpiry || cardExpiry.length < 5) {
-        toast.warning('Please enter Expiry Date (MM/YY).');
-        return;
-      }
-      if (!cardCvv || cardCvv.length < 3) {
-        toast.warning('Please enter CVV.');
-        return;
-      }
-    } else if (paymentMethod === 'upi') {
-      if (!upiId || !upiId.includes('@')) {
-        toast.warning('Please enter a valid UPI ID (e.g. username@okaxis).');
-        return;
-      }
-    }
-
+  const handlePlaceOrder = async () => {
     setIsProcessingPayment(true);
-
-    if (paymentMethod === 'card' && cardCvv === '999') {
-      setTimeout(() => {
-        setIsProcessingPayment(false);
-        toast.error('Payment declined by payment gateway.');
-        router.push(`/checkout/failed?orderId=TEMP-${Date.now()}&reason=Declined by issuing bank (CVV validation error)`);
-      }, 1200);
-      return;
-    }
 
     const orderItems = items.map((item) => ({
       productId: item.product.id,
@@ -367,20 +344,89 @@ export default function CheckoutPage() {
       paymentMethod,
     };
 
-    accountService
-      .createOrder(orderPayload)
-      .then((createdOrder) => {
+    try {
+      if (paymentMethod === 'cod') {
+        const createdOrder = await accountService.createOrder(orderPayload);
         setIsProcessingPayment(false);
         clearCart();
         const orderNo = createdOrder.orderNumber || createdOrder.id;
-        toast.success('Order placed successfully!');
+        toast.success('Order placed successfully (Cash on Delivery)!');
         router.push(`/checkout/success?orderId=${orderNo}`);
-      })
-      .catch((err: any) => {
-        setIsProcessingPayment(false);
-        console.error('Failed to place order:', err);
-        toast.error(err?.message || 'Failed to place order. Please try again.');
+        return;
+      }
+
+      // Online payment via Razorpay
+      const createdOrder = await accountService.createOrder({
+        ...orderPayload,
+        paymentMethod: 'razorpay',
       });
+
+      // Call backend POST /api/create-order (computes amount server-side from order record)
+      const razorpayOrder = await paymentService.createRazorpayOrder({
+        orderId: createdOrder.id,
+      });
+
+      // Open Razorpay Standard Web Checkout Modal
+      await openRazorpayCheckout({
+        orderData: razorpayOrder,
+        name: 'Yathu Arokiyagam',
+        description: `Order #${createdOrder.orderNumber || createdOrder.id}`,
+        prefill: {
+          name: addressForm.name || (user as any)?.name || '',
+          email: (user as any)?.email || '',
+          contact: addressForm.mobile || (user as any)?.phone || '',
+        },
+        notes: {
+          order_id: createdOrder.id,
+        },
+        themeColor: '#16a34a',
+        onSuccess: async (paymentResult) => {
+          try {
+            // POST to /api/verify-payment to verify HMAC-SHA256 signature server-side
+            const verifyRes = await paymentService.verifyPaymentSignature({
+              razorpay_payment_id: paymentResult.razorpay_payment_id,
+              razorpay_order_id: paymentResult.razorpay_order_id,
+              razorpay_signature: paymentResult.razorpay_signature,
+              orderId: createdOrder.id,
+            });
+
+            if (verifyRes.verified || verifyRes.success) {
+              clearCart();
+              const orderNo = createdOrder.orderNumber || createdOrder.id;
+              toast.success('Payment verified! Order placed successfully.');
+              router.push(`/checkout/success?orderId=${orderNo}`);
+            } else {
+              setIsProcessingPayment(false);
+              toast.error('Payment signature verification failed.');
+            }
+          } catch (verifyErr: any) {
+            setIsProcessingPayment(false);
+            console.error('Payment verification failed:', verifyErr);
+            toast.error(
+              verifyErr.message ||
+                'Payment verification failed. Please contact customer support.'
+            );
+          }
+        },
+        onDismiss: () => {
+          // Customer closed the modal: treat as cancelled, not an error
+          setIsProcessingPayment(false);
+          toast.info(
+            'Payment window was closed. You can retry payment whenever you are ready.'
+          );
+        },
+        onFailure: (err) => {
+          // Payment authorization failed: show returned error and allow retry
+          setIsProcessingPayment(false);
+          console.error('Razorpay payment failed:', err?.description || err?.code || err);
+          toast.error(err?.description || 'Payment was declined or failed.');
+        },
+      });
+    } catch (err: any) {
+      setIsProcessingPayment(false);
+      console.error('Failed to process payment/order:', err);
+      toast.error(err?.message || 'Failed to initiate payment. Please try again.');
+    }
   };
 
 
@@ -388,6 +434,24 @@ export default function CheckoutPage() {
   const whatsappUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(
     `Hello! I just placed an order at Yathu Arokiyagam!\nOrder Number: *${orderNumber}*\nTotal Amount: *₹${confirmedTotal}*\nExpected Delivery: *${estimatedDays} days*\nHealthy traditional goodness! 🌱`
   )}`;
+
+  if (!hasMounted) {
+    return (
+      <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-20 transition-colors duration-normal">
+        <div className="w-full bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-6">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 className="text-2.5xl sm:text-3.5xl font-bold font-heading text-neutral-900 dark:text-white leading-tight">
+              Checkout
+            </h1>
+          </div>
+        </div>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 flex flex-col items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-primary-600 mb-3" />
+          <p className="text-sm font-semibold text-neutral-600 dark:text-neutral-400">Loading your checkout details...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-20 transition-colors duration-normal">
@@ -783,15 +847,15 @@ export default function CheckoutPage() {
                   <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 space-y-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span>₹{subtotal}</span>
+                      <span suppressHydrationWarning>₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span>₹{deliveryFee}</span>}
+                      {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span suppressHydrationWarning>₹{deliveryFee}</span>}
                     </div>
                     <div className="flex justify-between text-base font-black text-neutral-900 dark:text-white border-t border-neutral-100 dark:border-neutral-800 pt-3">
                       <span>Total Amount</span>
-                      <span>₹{totalAmount}</span>
+                      <span suppressHydrationWarning>₹{totalAmount}</span>
                     </div>
                   </div>
                 </div>
@@ -837,159 +901,147 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Active tab component render */}
-                    <div className="min-h-[220px]">
+                    <div className="min-h-[200px]">
                       
                       {/* UPI */}
                       {paymentMethod === 'upi' && (
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                          {/* QR Generator */}
-                          <div className="flex flex-col items-center justify-center p-4 border border-neutral-100 dark:border-neutral-800 rounded-feature bg-neutral-50 dark:bg-neutral-850/30">
-                            <div className="w-36 h-36 border-2 border-primary-500/30 rounded-feature bg-white flex items-center justify-center p-2 shadow-inner">
-                              {/* Simple Mock QR SVG */}
-                              <svg viewBox="0 0 100 100" className="w-full h-full text-neutral-900">
-                                <rect width="25" height="25" fill="currentColor"/>
-                                <rect x="75" width="25" height="25" fill="currentColor"/>
-                                <rect y="75" width="25" height="25" fill="currentColor"/>
-                                <rect x="35" y="35" width="30" height="30" fill="currentColor"/>
-                                <rect x="10" y="10" width="5" height="5" fill="white"/>
-                                <rect x="85" y="10" width="5" height="5" fill="white"/>
-                                <rect x="10" y="85" width="5" height="5" fill="white"/>
-                                <rect x="42.5" y="42.5" width="15" height="15" fill="white"/>
-                                <rect x="10" y="40" width="10" height="5" fill="currentColor"/>
-                                <rect x="40" y="10" width="15" height="10" fill="currentColor"/>
-                                <rect x="80" y="45" width="10" height="20" fill="currentColor"/>
-                                <rect x="15" y="60" width="10" height="10" fill="currentColor"/>
-                              </svg>
+                        <div className="p-5 border border-primary-100 dark:border-primary-900/30 rounded-feature bg-primary-50/20 dark:bg-primary-950/10 space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-card">
+                              <Smartphone className="w-6 h-6" />
                             </div>
-                            <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-500 uppercase tracking-wider mt-2.5 flex items-center gap-1.5">
-                              <QrCode className="w-4 h-4 text-primary-500" />
-                              Scan QR with GPay / PhonePe / BHIM
-                            </span>
+                            <div>
+                              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                                Instant UPI Payment
+                              </h4>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+                                Pay instantly via any UPI app or scan dynamic QR code in the Razorpay window.
+                              </p>
+                            </div>
                           </div>
 
-                          {/* UPI ID input */}
-                          <div className="space-y-4">
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                                Enter UPI ID *
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                value={upiId}
-                                onChange={(e) => setUpiId(e.target.value)}
-                                placeholder="e.g. mobileNumber@upi"
-                                className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              />
+                          {/* Supported Apps Chips */}
+                          <div className="pt-2">
+                            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-2">
+                              Supported UPI Apps
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {['Google Pay', 'PhonePe', 'Paytm', 'BHIM UPI', 'CRED', 'WhatsApp Pay'].map(app => (
+                                <span
+                                  key={app}
+                                  className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-800 dark:text-neutral-200 shadow-2xs"
+                                >
+                                  {app}
+                                </span>
+                              ))}
                             </div>
-                            <p className="text-[10px] font-semibold text-neutral-500">
-                              A payment request will be sent to your UPI app. Approve it to complete order.
-                            </p>
+                          </div>
+
+                          {/* Trust banner */}
+                          <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-card text-emerald-800 dark:text-emerald-400 text-xs font-semibold">
+                            <ShieldCheck className="w-4 h-4 flex-shrink-0" />
+                            <span>Zero convenience fee • Real-time dynamic QR • Instant order confirmation</span>
                           </div>
                         </div>
                       )}
 
                       {/* Card */}
                       {paymentMethod === 'card' && (
-                        <div className="space-y-4 max-w-md">
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                              Card Number *
-                            </label>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                required
-                                value={cardNumber}
-                                onChange={(e) => setCardNumber(formatCardNumber(e.target.value))}
-                                placeholder="4000 1234 5678 9010"
-                                maxLength={19}
-                                className="w-full text-xs font-semibold pl-3.5 pr-12 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              />
-                              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[10px] font-black text-primary-500 uppercase tracking-wider">
-                                {detectCardType(cardNumber)}
-                              </span>
+                        <div className="p-5 border border-primary-100 dark:border-primary-900/30 rounded-feature bg-primary-50/20 dark:bg-primary-950/10 space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-card">
+                              <CreditCard className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                                Credit & Debit Cards
+                              </h4>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+                                Safe 256-bit encrypted checkout with 3D Secure OTP verification.
+                              </p>
                             </div>
                           </div>
 
-                          <div className="space-y-1.5">
-                            <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                              Cardholder Name *
-                            </label>
-                            <input
-                              type="text"
-                              required
-                              value={cardName}
-                              onChange={(e) => setCardName(e.target.value)}
-                              placeholder="Name on card"
-                              className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                            />
+                          {/* Supported Cards Chips */}
+                          <div className="pt-2">
+                            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-2">
+                              Supported Networks
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {['Visa', 'MasterCard', 'RuPay', 'Maestro', 'Diners Club'].map(card => (
+                                <span
+                                  key={card}
+                                  className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-800 dark:text-neutral-200 shadow-2xs"
+                                >
+                                  {card}
+                                </span>
+                              ))}
+                            </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-4">
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                                Expiry Date *
-                              </label>
-                              <input
-                                type="text"
-                                required
-                                value={cardExpiry}
-                                onChange={(e) => setCardExpiry(formatExpiry(e.target.value))}
-                                placeholder="MM/YY"
-                                maxLength={5}
-                                className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              />
-                            </div>
-                            <div className="space-y-1.5">
-                              <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                                CVV *
-                              </label>
-                              <input
-                                type="password"
-                                required
-                                value={cardCvv}
-                                onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 3))}
-                                placeholder="•••"
-                                maxLength={3}
-                                className="w-full text-xs font-semibold px-3.5 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
-                              />
-                            </div>
+                          {/* Security Notice */}
+                          <div className="flex items-center gap-2 p-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-card text-emerald-800 dark:text-emerald-400 text-xs font-semibold">
+                            <Lock className="w-4 h-4 flex-shrink-0" />
+                            <span>PCI-DSS Level 1 Certified • Card details are securely processed directly by Razorpay</span>
                           </div>
                         </div>
                       )}
 
                       {/* Net Banking */}
                       {paymentMethod === 'netbanking' && (
-                        <div className="space-y-4">
-                          <label className="text-[10px] font-bold text-neutral-650 dark:text-neutral-400 uppercase tracking-widest block">
-                            Select Your Bank
-                          </label>
-                          <select className="w-full max-w-sm text-xs font-semibold px-3 py-2.5 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 cursor-pointer">
-                            <option value="">Choose Bank</option>
-                            <option value="sbi">State Bank of India</option>
-                            <option value="hdfc">HDFC Bank</option>
-                            <option value="icici">ICICI Bank</option>
-                            <option value="axis">Axis Bank</option>
-                            <option value="kotak">Kotak Mahindra Bank</option>
-                          </select>
-                          <p className="text-[10px] font-semibold text-neutral-500">
-                            You will be redirected to your bank's secure page to authorize the payment.
-                          </p>
+                        <div className="p-5 border border-primary-100 dark:border-primary-900/30 rounded-feature bg-primary-50/20 dark:bg-primary-950/10 space-y-4">
+                          <div className="flex items-start gap-3">
+                            <div className="p-2.5 bg-primary-500/10 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 rounded-card">
+                              <Lock className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h4 className="font-bold text-sm text-neutral-900 dark:text-white">
+                                All Major Indian Banks
+                              </h4>
+                              <p className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+                                Connect directly with your bank account through Razorpay's verified gateway.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Popular Banks Chips */}
+                          <div className="pt-2">
+                            <span className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider block mb-2">
+                              Popular Supported Banks
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {['HDFC Bank', 'State Bank of India', 'ICICI Bank', 'Axis Bank', 'Kotak Bank', '+45 more'].map(bank => (
+                                <span
+                                  key={bank}
+                                  className="text-xs font-semibold px-2.5 py-1 bg-white dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 rounded-md text-neutral-800 dark:text-neutral-200 shadow-2xs"
+                                >
+                                  {bank}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 p-2.5 bg-neutral-100 dark:bg-neutral-800 rounded-card text-neutral-700 dark:text-neutral-300 text-xs font-medium">
+                            <Info className="w-4 h-4 flex-shrink-0 text-primary-500" />
+                            <span>Select your bank in the checkout modal to authenticate securely with your net banking portal.</span>
+                          </div>
                         </div>
                       )}
 
                       {/* COD */}
                       {paymentMethod === 'cod' && (
-                        <div className="space-y-4 max-w-md bg-orange-500/5 border border-orange-500/10 p-4 rounded-feature">
-                          <div className="flex gap-2 text-xs font-bold text-orange-650 dark:text-orange-450">
+                        <div className="p-5 bg-orange-500/5 border border-orange-500/15 rounded-feature space-y-3">
+                          <div className="flex gap-2.5 text-xs font-bold text-orange-700 dark:text-orange-400">
                             <Info className="w-5 h-5 flex-shrink-0 text-orange-500" />
                             <div>
-                              <p className="uppercase tracking-wider">COD Handling Fee Applied</p>
-                              <p className="text-[10px] font-medium text-neutral-600 dark:text-neutral-400 mt-1 normal-case leading-relaxed">
-                                Cash on Delivery orders incur an additional <strong>₹30</strong> handling charge to process local shipping routes securely.
+                              <p className="uppercase tracking-wider text-xs">Cash on Delivery (COD)</p>
+                              <p className="text-xs font-medium text-neutral-600 dark:text-neutral-300 mt-1 leading-relaxed">
+                                Pay with cash or UPI at your doorstep when the delivery partner arrives.
                               </p>
                             </div>
+                          </div>
+                          <div className="p-2.5 bg-white dark:bg-neutral-850 rounded-card border border-orange-500/10 text-[11px] text-neutral-600 dark:text-neutral-400">
+                            <strong>Note:</strong> A nominal handling fee of <strong>₹30</strong> is applied for COD orders.
                           </div>
                         </div>
                       )}
@@ -1038,10 +1090,14 @@ export default function CheckoutPage() {
                       size="lg"
                       onClick={handlePlaceOrder}
                       disabled={isProcessingPayment}
-                      className="font-bold text-sm bg-gradient-to-r from-primary-500 to-primary-700 text-white min-w-[160px]"
-                      leftIcon={isProcessingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : undefined}
+                      className="font-bold text-sm bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-800 text-white min-w-[200px] shadow-sm hover:shadow-md transition-all cursor-pointer"
+                      leftIcon={isProcessingPayment ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
                     >
-                      {isProcessingPayment ? 'Processing...' : 'Place Secure Order'}
+                      {isProcessingPayment
+                        ? 'Connecting to Gateway...'
+                        : paymentMethod === 'cod'
+                        ? `Place COD Order • ₹${totalAmount}`
+                        : `Proceed to Pay ₹${totalAmount}`}
                     </Button>
                   </div>
 
@@ -1056,21 +1112,21 @@ export default function CheckoutPage() {
                   <div className="space-y-2.5 text-xs font-semibold text-neutral-650 dark:text-neutral-400">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
-                      <span className="text-neutral-900 dark:text-white">₹{subtotal}</span>
+                      <span className="text-neutral-900 dark:text-white" suppressHydrationWarning>₹{subtotal}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Delivery</span>
-                      {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span className="text-neutral-900 dark:text-white">₹{deliveryFee}</span>}
+                      {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span className="text-neutral-900 dark:text-white" suppressHydrationWarning>₹{deliveryFee}</span>}
                     </div>
                     {codFee > 0 && (
                       <div className="flex justify-between text-orange-500 font-bold">
                         <span>COD Handling Fee</span>
-                        <span>₹{codFee}</span>
+                        <span suppressHydrationWarning>₹{codFee}</span>
                       </div>
                     )}
                     <div className="flex justify-between text-base font-black text-neutral-905 dark:text-white border-t border-neutral-100 dark:border-neutral-800 pt-3">
                       <span>Grand Total</span>
-                      <span className="text-primary-700 dark:text-primary-400">₹{totalAmount}</span>
+                      <span className="text-primary-700 dark:text-primary-400" suppressHydrationWarning>₹{totalAmount}</span>
                     </div>
                   </div>
                 </div>

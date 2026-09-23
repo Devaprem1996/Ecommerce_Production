@@ -18,8 +18,20 @@ const app = express();
 // Trust proxy header from local Next.js proxy
 app.set("trust proxy", 1);
 
-// Apply security headers
-app.use(helmet());
+// Apply security headers with Razorpay CDN/frame allowances
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        scriptSrc: ["'self'", "https://checkout.razorpay.com"],
+        frameSrc: ["'self'", "https://api.razorpay.com", "https://checkout.razorpay.com"],
+        connectSrc: ["'self'", "https://api.razorpay.com", "https://lumberjack.razorpay.com"],
+      },
+    },
+    crossOriginResourcePolicy: { policy: "cross-origin" },
+  })
+);
 
 // Cross-Origin Resource Sharing
 const explicitWhitelist = [
@@ -85,7 +97,8 @@ app.use("/api/v1/auth", authRouter);
 // Product & Category CMS API routes
 app.use("/api/v1/cms", cmsRouter);
 
-// Payment Gateway API routes
+// Payment Gateway API routes (/api/create-order, /api/verify-payment, /api/v1/payments/*)
+app.use("/api", paymentRouter);
 app.use("/api/v1/payments", paymentRouter);
 
 // Shipping & Pincode API routes

@@ -33,4 +33,12 @@ export class ApiError extends Error {
   static internal(message: string = "Internal server error.") {
     return new ApiError(500, message);
   }
+
+  static badGateway(message: string = "Bad gateway / upstream provider error.") {
+    return new ApiError(502, message);
+  }
+
+  static serviceUnavailable(message: string = "Service temporarily unavailable.") {
+    return new ApiError(503, message);
+  }
 }
