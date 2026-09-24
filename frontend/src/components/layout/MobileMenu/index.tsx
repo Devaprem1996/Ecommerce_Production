@@ -5,42 +5,53 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MobileMenuProps } from './MobileMenu.types';
-import { useCart } from '@/hooks/useCart';
+import { useCartStore } from '@/store/cartStore';
 import { useWishlist } from '@/hooks/useWishlist';
-import { X, ChevronDown, User, Heart, ShoppingBag, Truck, Globe, LogOut } from 'lucide-react';
+import { 
+  X, 
+  ChevronDown, 
+  User, 
+  Heart, 
+  ShoppingBag, 
+  Truck, 
+  Globe, 
+  LogOut, 
+  ShieldCheck, 
+  MessageSquare,
+  Sparkles,
+  Zap,
+  ArrowRight,
+  Search,
+  Leaf,
+  PhoneCall
+} from 'lucide-react';
 import { clsx } from 'clsx';
-import { twMerge } from 'tailwind-merge';
 import { useAuthStore } from '@/store/auth-store';
 import { SignOutModal } from '@/components/auth/SignOutModal';
 
-const Facebook = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" {...props}>
-    <path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z" />
-  </svg>
-);
-
-const Instagram = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" {...props}>
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
-    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-  </svg>
-);
-
-const Twitter = (props: React.SVGProps<SVGSVGElement>) => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5" {...props}>
-    <path d="M22 4s-.7 2.1-2 3.4c1.6 10-9.4 17.3-18 11.6 2.2.1 4.4-.6 6-2C3 15.5.5 9.6 3 5c2.2 2.6 5.6 4.1 9 4-.9-4.2 4-6.6 7-3.8 1.1 0 3-1.2 3-1.2z" />
-  </svg>
-);
+const realCategories = [
+  { labelEn: 'Wood-Pressed Oils', labelTa: 'மரச்செக்கு எண்ணெய்', path: '/shop?category=cold-pressed-oils', icon: '🫒', count: '4 Oils' },
+  { labelEn: 'Heritage Ancient Rice', labelTa: 'பாரம்பரிய அரிசி', path: '/shop?category=traditional-rices', icon: '🌾', count: '12 Rice' },
+  { labelEn: 'Palm Jaggery & Sweeteners', labelTa: 'பனை கருப்பட்டி & நாட்டு சர்க்கரை', path: '/shop?category=natural-sweeteners', icon: '🍯', count: '7 Sweeteners' },
+  { labelEn: 'Native Millets', labelTa: 'பாரம்பரிய சிறுதானியங்கள்', path: '/shop?category=organic-millets', icon: '🥣', count: '8 Millets' },
+  { labelEn: 'Herbal Health Mix Porridge', labelTa: 'மூலிகை கஞ்சி & சத்துமாவு', path: '/shop?category=herbal-health-mix', icon: '🌿', count: 'Pure Mix' },
+  { labelEn: 'Pure Cow Ghee & Honey', labelTa: 'நாட்டு மாட்டு நெய் & தேன்', path: '/shop?category=pure-ghee-honey', icon: '🧈', count: 'A2 Native' },
+  { labelEn: 'Traditional Healthy Snacks', labelTa: 'ஆரோக்கிய தின்பண்டங்கள்', path: '/shop?category=traditional-snacks-sweets', icon: '🍘', count: '26 Snacks' },
+  { labelEn: 'Stone Ground Grain Flours', labelTa: 'கல் அரைத்த தானிய மாவு', path: '/shop?category=healthy-flours', icon: '🌾', count: 'Stone-Milled' },
+  { labelEn: 'Organic Pulses & Dals', labelTa: 'இயற்கை பருப்பு வகைகள்', path: '/shop?category=organic-pulses-dals', icon: '🌱', count: '10 Dals' },
+  { labelEn: 'Millet Noodles & Flakes', labelTa: 'சிறுதானிய நூடுல்ஸ் & அவல்', path: '/shop?category=millet-noodles', icon: '🍜', count: '11 Varieties' },
+];
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
   const { t, i18n } = useTranslation();
-  const [shopExpanded, setShopExpanded] = useState(false);
+  const currentLang = i18n.language;
+  const [shopExpanded, setShopExpanded] = useState(true);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const { user, isLoggedIn, role } = useAuthStore();
   const isAdmin = role === 'admin' || user?.role?.toLowerCase() === 'admin';
 
-  const cartCount = useCart((state) => state.items.reduce((acc, item) => acc + item.quantity, 0));
+  const cartItems = useCartStore((state) => state.items);
+  const cartCount = cartItems.reduce((acc, item) => acc + item.quantity, 0);
   const wishlistCount = useWishlist((state) => state.items.length);
 
   const toggleLanguage = () => {
@@ -49,270 +60,227 @@ export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
 
   const navLinks = [
     { label: t('nav.home', 'Home'), path: '/' },
-    { label: t('nav.shop', 'Shop'), path: '/shop', hasSubItems: true },
-    { label: t('footer.about', 'About'), path: '/about' },
-    { label: t('nav.faq', 'FAQs'), path: '/faq' },
-    { label: t('nav.contact', 'Contact'), path: '/contact' },
-  ];
-
-  const subItems = [
-    { label: t('category.vegetables', 'Fresh Vegetables'), path: '/shop?category=fruits-vegetables' },
-    { label: t('category.fruits', 'Organic Fruits'), path: '/shop?category=fruits-vegetables' },
-    { label: t('category.groceries', 'Spices & Groceries'), path: '/shop?category=honey-spices' },
-    { label: t('category.dairy', 'Farm Dairy Products'), path: '/shop?category=dairy-eggs' },
+    { label: t('nav.shop', 'All Products Catalog'), path: '/shop' },
+    { label: t('footer.about', 'Our Farm Story'), path: '/about' },
+    { label: t('nav.track_order', 'Track Order Status'), path: '/track-order' },
+    { label: t('nav.contact', 'Contact & Farm Support'), path: '/contact' },
   ];
 
   return (
     <>
       <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop overlay */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/45 backdrop-blur-[3px] z-40"
-            aria-hidden="true"
-          />
+        {isOpen && (
+          <>
+            {/* Backdrop overlay with blur */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={onClose}
+              className="fixed inset-0 bg-neutral-950/70 backdrop-blur-xs z-[1040]"
+              aria-hidden="true"
+            />
 
-          {/* Slide-out Menu */}
-          <motion.div
-            initial={{ x: '-100%' }}
-            animate={{ x: 0 }}
-            exit={{ x: '-100%' }}
-            transition={{ type: 'tween', duration: 0.3, ease: 'easeOut' }}
-            className="fixed top-0 left-0 bottom-0 w-[290px] sm:w-[320px] bg-white dark:bg-neutral-900 z-50 shadow-2xl flex flex-col font-sans"
-          >
-            {/* Header / User Greeting */}
-            <div className="bg-primary-700 text-white p-5 flex flex-col gap-4 relative">
-              <button
-                type="button"
-                onClick={onClose}
-                className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
-                aria-label="Close menu"
-              >
-                <X className="w-5 h-5" />
-              </button>
+            {/* Slide-out Menu Panel */}
+            <motion.div
+              initial={{ x: '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 260 }}
+              className="fixed top-0 left-0 bottom-0 w-[310px] sm:w-[350px] bg-white dark:bg-neutral-900 z-[1050] shadow-2xl flex flex-col font-sans border-r border-neutral-200 dark:border-neutral-800"
+            >
+              {/* Header / Brand & User Profile Banner */}
+              <div className="bg-gradient-to-br from-emerald-900 via-teal-950 to-neutral-900 text-white p-5 flex flex-col gap-3 relative shadow-md">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="absolute top-4 right-4 text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer"
+                  aria-label="Close menu"
+                >
+                  <X className="w-5 h-5" />
+                </button>
 
-              <div className="flex items-center gap-3 mt-2">
-                <div className="bg-white/10 p-2.5 rounded-full text-white">
-                  <User className="w-6 h-6" />
+                {/* Brand Seal */}
+                <div className="flex items-center gap-2.5">
+                  <div className="w-9 h-9 rounded-xl bg-white/15 backdrop-blur-md border border-white/20 flex items-center justify-center text-white shrink-0">
+                    <Leaf className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black font-heading tracking-tight leading-none">
+                      {currentLang === 'ta' ? 'யாத்து ஆரோக்கியகம்' : 'YATHU AROKIYAGAM'}
+                    </h3>
+                    <p className="text-[9px] uppercase tracking-wider text-emerald-300 font-bold mt-0.5">
+                      {currentLang === 'ta' ? 'பாரம்பரிய இயற்கை அங்காடி' : 'Traditional Organic Store'}
+                    </p>
+                  </div>
                 </div>
-                {isLoggedIn && user ? (
-                  <div className="flex items-center justify-between flex-1 min-w-0 pr-1">
-                    <Link 
-                      href={isAdmin ? '/admin' : '/account'} 
-                      onClick={onClose} 
-                      className="flex flex-col text-left focus:outline-none min-w-0"
-                    >
-                      <span className="text-xs text-primary-200 leading-tight font-medium flex items-center gap-1.5">
-                        {t('nav.welcome', 'Welcome')},
+
+                {/* User Status Bar */}
+                <div className="pt-2 border-t border-white/15 flex items-center justify-between">
+                  {isLoggedIn && user ? (
+                    <div className="flex-1 min-w-0 pr-3">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-xs text-emerald-200 font-medium">
+                          {t('nav.welcome', 'Welcome')},
+                        </span>
                         {isAdmin && (
-                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-white/20 text-white">
+                          <span className="text-[9px] font-black uppercase px-1.5 py-0.2 rounded bg-amber-400 text-neutral-950">
                             Admin
                           </span>
                         )}
-                      </span>
-                      <span className="text-base font-bold leading-tight hover:text-primary-100 transition-colors truncate">
+                      </div>
+                      <Link
+                        href={isAdmin ? '/admin' : '/account'}
+                        onClick={onClose}
+                        className="text-xs font-bold text-white hover:underline truncate block"
+                      >
                         {user.name || 'Customer'}
+                      </Link>
+                    </div>
+                  ) : (
+                    <Link href="/login" onClick={onClose} className="flex flex-col text-left focus:outline-none">
+                      <span className="text-[11px] text-emerald-200 font-medium">
+                        {currentLang === 'ta' ? 'வணக்கம் வாடிக்கையாளரே' : 'Welcome to Yathu'}
+                      </span>
+                      <span className="text-xs font-extrabold text-white hover:text-amber-300 transition-colors">
+                        {currentLang === 'ta' ? 'உள்நுழைக / பதிவு செய்க →' : 'Login / Register →'}
                       </span>
                     </Link>
+                  )}
+
+                  {/* Language switch button */}
+                  <div className="inline-flex items-center bg-black/25 p-0.5 rounded-full border border-white/15">
                     <button
                       type="button"
-                      onClick={() => setShowSignOutModal(true)}
-                      className="p-2 rounded-full bg-white/10 hover:bg-red-500/20 text-white hover:text-red-200 transition-colors cursor-pointer ml-2 flex items-center justify-center min-w-[36px] min-h-[36px]"
-                      title="Sign Out"
-                      aria-label="Sign Out"
+                      onClick={() => i18n.changeLanguage('en')}
+                      className={clsx(
+                        "px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer",
+                        i18n.language === 'en' ? "bg-white text-emerald-900 shadow-xs" : "text-white/80"
+                      )}
                     >
-                      <LogOut className="w-4 h-4" />
+                      EN
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => i18n.changeLanguage('ta')}
+                      className={clsx(
+                        "px-2 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer",
+                        i18n.language === 'ta' ? "bg-white text-emerald-900 shadow-xs" : "text-white/80"
+                      )}
+                    >
+                      தமிழ்
                     </button>
                   </div>
-                ) : (
-                  <Link href="/login" onClick={onClose} className="flex flex-col text-left focus:outline-none">
-                    <span className="text-xs text-primary-200 leading-tight font-medium">
-                      {t('nav.welcome_guest', 'Welcome Guest')}
-                    </span>
-                    <span className="text-base font-bold leading-tight hover:text-primary-100 transition-colors">
-                      {t('nav.login_signup', 'Login / Signup')}
-                    </span>
-                  </Link>
-                )}
+                </div>
               </div>
-            </div>
 
-            {/* Scrollable Navigation Area */}
-            <div className="flex-1 overflow-y-auto px-5 py-6 flex flex-col gap-6">
-              <nav className="flex flex-col gap-1">
-                {navLinks.map((link) => {
-                  if (link.hasSubItems) {
-                    return (
-                      <div key={link.label} className="flex flex-col">
-                        <button
-                          onClick={() => setShopExpanded(!shopExpanded)}
-                          className="flex items-center justify-between py-3 text-base font-medium text-neutral-800 dark:text-neutral-200 hover:text-primary-500 transition-colors w-full cursor-pointer text-left focus:outline-none"
-                        >
-                          <span>{link.label}</span>
-                          <motion.div
-                            animate={{ rotate: shopExpanded ? 180 : 0 }}
-                            transition={{ duration: 0.2 }}
+              {/* Scrollable Navigation Area */}
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
+                
+                {/* Categorized Shop Accordion */}
+                <div className="rounded-2xl bg-neutral-50 dark:bg-neutral-850 border border-neutral-200/80 dark:border-neutral-750 p-3 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setShopExpanded(!shopExpanded)}
+                    className="flex items-center justify-between w-full text-xs font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 cursor-pointer text-left"
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-500" />
+                      <span>{currentLang === 'ta' ? 'அங்காடி வகைகள்' : 'Organic Categories (10)'}</span>
+                    </span>
+                    <ChevronDown className={clsx("w-4 h-4 transition-transform duration-200", shopExpanded && "rotate-180")} />
+                  </button>
+
+                  <AnimatePresence initial={false}>
+                    {shopExpanded && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden mt-3 space-y-1 border-t border-neutral-200/60 dark:border-neutral-700/60 pt-2"
+                      >
+                        {realCategories.map((cat, idx) => (
+                          <Link
+                            key={idx}
+                            href={cat.path}
+                            onClick={onClose}
+                            className="flex items-center justify-between p-2 rounded-xl text-xs font-bold text-neutral-800 dark:text-neutral-200 hover:bg-white dark:hover:bg-neutral-800 hover:text-emerald-700 dark:hover:text-emerald-300 transition-colors"
                           >
-                            <ChevronDown className="w-5 h-5 text-neutral-600" />
-                          </motion.div>
-                        </button>
+                            <div className="flex items-center gap-2.5 truncate">
+                              <span className="text-base shrink-0">{cat.icon}</span>
+                              <span className="truncate">{currentLang === 'ta' ? cat.labelTa : cat.labelEn}</span>
+                            </div>
+                            <span className="text-[10px] font-semibold text-neutral-400 shrink-0 ml-2">
+                              {cat.count}
+                            </span>
+                          </Link>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
 
-                        <AnimatePresence initial={false}>
-                          {shopExpanded && (
-                            <motion.div
-                              initial={{ height: 0, opacity: 0 }}
-                              animate={{ height: 'auto', opacity: 1 }}
-                              exit={{ height: 0, opacity: 0 }}
-                              transition={{ duration: 0.2 }}
-                              className="overflow-hidden pl-4 border-l border-neutral-200 dark:border-neutral-800 flex flex-col gap-1.5"
-                            >
-                              {subItems.map((sub) => (
-                                <Link
-                                  key={sub.label}
-                                  href={sub.path}
-                                  onClick={onClose}
-                                  className="py-2 text-sm text-neutral-600 dark:text-neutral-400 hover:text-primary-500 transition-colors block"
-                                >
-                                  {sub.label}
-                                </Link>
-                              ))}
-                            </motion.div>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    );
-                  }
-
-                  return (
+                {/* Primary Nav Links */}
+                <nav className="flex flex-col gap-1">
+                  {navLinks.map((link) => (
                     <Link
                       key={link.label}
                       href={link.path}
                       onClick={onClose}
-                      className="py-3 text-base font-medium text-neutral-800 dark:text-neutral-200 hover:text-primary-500 transition-colors block border-b border-neutral-100 dark:border-neutral-800/20"
+                      className="flex items-center justify-between py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
                     >
-                      {link.label}
+                      <span>{link.label}</span>
+                      <ArrowRight className="w-3.5 h-3.5 text-neutral-400" />
                     </Link>
-                  );
-                })}
-              </nav>
+                  ))}
+                </nav>
 
-              {/* Utility shortcuts */}
-              <div className="flex flex-col gap-4 border-t border-neutral-100 dark:border-neutral-850 pt-5">
-                <Link
-                  href="/track-order"
-                  onClick={onClose}
-                  className="flex items-center gap-3 text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-500 transition-colors"
-                >
-                  <Truck className="w-4 h-4" />
-                  <span>{t('nav.track_order', 'Track Order')}</span>
-                </Link>
-
-                <Link
-                  href="/wishlist"
-                  onClick={onClose}
-                  className="flex items-center justify-between text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-500 transition-colors w-full"
-                >
-                  <div className="flex items-center gap-3">
-                    <Heart className="w-4 h-4" />
-                    <span>{t('nav.wishlist', 'Wishlist')}</span>
+                {/* Direct WhatsApp Farm Help Card */}
+                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-teal-500/5 to-amber-500/10 border border-emerald-500/25 text-xs">
+                  <div className="flex items-center gap-2 font-bold text-emerald-800 dark:text-emerald-300 mb-1">
+                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    <span>{currentLang === 'ta' ? 'நேரடி வாட்ஸ்அப் உதவி' : 'Direct WhatsApp Farm Support'}</span>
                   </div>
-                  {wishlistCount > 0 && (
-                    <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full leading-none">
-                      {wishlistCount}
-                    </span>
-                  )}
-                </Link>
-
-                <Link
-                  href="/cart"
-                  onClick={onClose}
-                  className="flex items-center justify-between text-sm font-medium text-neutral-600 dark:text-neutral-400 hover:text-primary-500 transition-colors w-full"
-                >
-                  <div className="flex items-center gap-3">
-                    <ShoppingBag className="w-4 h-4" />
-                    <span>{t('nav.cart', 'Shopping Cart')}</span>
-                  </div>
-                  {cartCount > 0 && (
-                    <span className="bg-primary-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full leading-none">
-                      {cartCount}
-                    </span>
-                  )}
-                </Link>
-              </div>
-            </div>
-
-            {/* Footer / Settings Section */}
-            <div className="p-5 border-t border-neutral-150 dark:border-neutral-850 flex flex-col gap-4 bg-neutral-50 dark:bg-neutral-900/50">
-              {/* Language Switcher */}
-              <button
-                type="button"
-                onClick={toggleLanguage}
-                className="flex items-center justify-between w-full text-xs font-semibold text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-800 rounded-card p-2.5 bg-white dark:bg-neutral-900 hover:border-primary-500 hover:text-primary-500 cursor-pointer transition-colors focus:outline-none"
-              >
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4" />
-                  <span>Language / மொழி</span>
+                  <p className="text-[11px] text-neutral-600 dark:text-neutral-400 mb-2.5 leading-relaxed">
+                    {currentLang === 'ta' ? 'மரச்செக்கு எண்ணெய் ஆர்டர்கள் மற்றும் சந்தேகங்களுக்கு எங்களை அழைக்கவும்.' : 'For bulk custom oils, harvest delivery status, or order inquiries.'}
+                  </p>
+                  <a
+                    href="https://wa.me/918870159766"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-1.5 w-full py-2 rounded-xl bg-emerald-600 text-white font-bold text-xs shadow-xs hover:bg-emerald-700 transition-colors"
+                  >
+                    <PhoneCall className="w-3.5 h-3.5" />
+                    <span>WhatsApp: +91 88701 59766</span>
+                  </a>
                 </div>
-                <span className="text-primary-500 font-bold">
-                  {i18n.language === 'en' ? 'தமிழ்' : 'English'}
-                </span>
-              </button>
 
-              {/* Mobile Drawer Sign Out Button */}
-              {isLoggedIn && (
-                <button
-                  type="button"
-                  onClick={() => setShowSignOutModal(true)}
-                  className="flex items-center justify-center gap-2 w-full text-xs font-bold text-red-500 hover:text-red-600 border border-red-200 dark:border-red-900/40 rounded-card p-2.5 bg-red-50/60 dark:bg-red-950/20 hover:bg-red-100/60 dark:hover:bg-red-950/30 cursor-pointer transition-colors"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Sign Out</span>
-                </button>
-              )}
+                {/* Sign Out Option (if logged in) */}
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onClose();
+                      setShowSignOutModal(true);
+                    }}
+                    className="flex items-center gap-2 py-2 px-3 text-xs font-bold text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40 rounded-xl transition-colors w-full text-left cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>{currentLang === 'ta' ? 'வெளியேறுக' : 'Sign Out'}</span>
+                  </button>
+                )}
 
-              {/* Social icons */}
-              <div className="flex items-center justify-center gap-5 mt-2">
-                <span
-                  title="Coming soon"
-                  aria-disabled="true"
-                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
-                >
-                  <Facebook className="w-5 h-5" />
-                </span>
-                <span
-                  title="Coming soon"
-                  aria-disabled="true"
-                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
-                >
-                  <Instagram className="w-5 h-5" />
-                </span>
-                <span
-                  title="Coming soon"
-                  aria-disabled="true"
-                  className="text-neutral-400 opacity-50 cursor-not-allowed select-none"
-                >
-                  <Twitter className="w-5 h-5" />
-                </span>
               </div>
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
 
-    {/* Sign Out Confirmation Modal */}
-    <SignOutModal
-      isOpen={showSignOutModal}
-      onClose={() => setShowSignOutModal(false)}
-      onSuccess={onClose}
-    />
+      <SignOutModal
+        isOpen={showSignOutModal}
+        onClose={() => setShowSignOutModal(false)}
+      />
     </>
   );
 };
-
-MobileMenu.displayName = 'MobileMenu';

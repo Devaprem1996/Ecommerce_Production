@@ -108,13 +108,18 @@ export default function ContactPage() {
       </div>
 
       {/* Header section */}
-      <div className="bg-white dark:bg-neutral-900 border-b border-neutral-100 dark:border-neutral-800 py-10 text-center">
-        <div className="max-w-3xl mx-auto px-4 space-y-2">
-          <h1 className="text-3.5xl font-black font-heading text-neutral-905 dark:text-white tracking-tight">
+      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-900 to-amber-900 text-white py-12 sm:py-16 text-center shadow-sm">
+        <div className="absolute inset-0 bg-black/15" />
+        <div className="absolute -right-16 -bottom-16 w-60 h-60 bg-amber-400/15 rounded-full blur-2xl pointer-events-none" />
+        <div className="max-w-3xl mx-auto px-4 space-y-2 relative z-10">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-amber-200 text-xs font-bold uppercase tracking-wider border border-white/15 mb-1">
+            <span>Direct Farm Support • பண்ணை தொடர்பு</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-black font-heading text-white tracking-tight">
             {t('contact.title', 'Contact Us')}
           </h1>
-          <p className="text-xs sm:text-sm font-semibold text-neutral-600 dark:text-neutral-400">
-            {t('contact.subtitle', 'Get in touch with our team for healthy, traditional food')}
+          <p className="text-xs sm:text-sm font-semibold text-emerald-100/90 max-w-xl mx-auto">
+            {t('contact.subtitle', 'Get in touch with our team for healthy, traditional food and bulk orders.')}
           </p>
         </div>
       </div>

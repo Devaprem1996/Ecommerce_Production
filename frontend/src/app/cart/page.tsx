@@ -187,7 +187,35 @@ export default function CartPage() {
           </div>
         ) : (
           /* Main Cart Content */
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          <div>
+            {/* Dynamic Free Shipping Progress Bar */}
+            <div className="mb-6 p-4 rounded-3xl bg-gradient-to-r from-emerald-500/10 via-teal-500/10 to-amber-500/10 border border-emerald-500/20 font-sans shadow-xs">
+              <div className="flex items-center justify-between text-xs font-bold text-neutral-800 dark:text-neutral-200 mb-2">
+                <span className="flex items-center gap-1.5">
+                  <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  {remainingForFreeShipping > 0 ? (
+                    currentLang === 'ta' 
+                      ? `இலவச டெலிவரி பெற இன்னும் ₹${remainingForFreeShipping} சேர்க்கவும்`
+                      : `Add ₹${remainingForFreeShipping} more to unlock FREE Farm Delivery!`
+                  ) : (
+                    currentLang === 'ta'
+                      ? '🎉 வாழ்த்துகள்! உங்களுக்கு இலவச டெலிவரி தகுதி கிடைத்துள்ளது!'
+                      : '🎉 Congratulations! You have unlocked FREE Express Farm Delivery!'
+                  )}
+                </span>
+                <span className="text-[11px] font-black text-emerald-700 dark:text-emerald-400">
+                  {Math.min(100, Math.round((subtotal / freeShippingThreshold) * 100))}%
+                </span>
+              </div>
+              <div className="w-full h-2.5 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-emerald-500 via-teal-500 to-amber-400 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(100, (subtotal / freeShippingThreshold) * 100)}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
             
             {/* Items List (Left Column) */}
             <div className="lg:col-span-8 space-y-4">
@@ -344,6 +372,27 @@ export default function CartPage() {
                     </motion.form>
                   )}
                 </AnimatePresence>
+
+                {/* Quick Coupon Suggestions */}
+                {!activeCoupon && (
+                  <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-neutral-100 dark:border-neutral-800 flex-wrap">
+                    <span className="text-[10px] font-extrabold text-neutral-400 uppercase tracking-wider">Offer:</span>
+                    <button
+                      type="button"
+                      onClick={() => { setCouponCode('ORGANIC10'); }}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                    >
+                      ORGANIC10 (10% OFF)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setCouponCode('YATHUFREE'); }}
+                      className="text-[10px] font-bold px-2 py-0.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 cursor-pointer"
+                    >
+                      YATHUFREE (Free Delivery)
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Order Summary calculations */}
@@ -413,6 +462,7 @@ export default function CartPage() {
             </div>
 
           </div>
+        </div>
         )}
 
       </div>

@@ -1,11 +1,11 @@
 import { ProductType, CategoryType, ProductVariantType } from '@/types';
 
 const PRODUCT_TYPE_IMAGE = {
-  oils: 'https://images.unsplash.com/photo-1474979266404-7eaacbcd87c5?auto=format&fit=crop&q=80&w=600',
-  noodles: 'https://images.unsplash.com/photo-1612929633738-8fe44f7ec841?auto=format&fit=crop&q=80&w=600',
-  vermicelli: 'https://images.unsplash.com/photo-1569718212165-3a8278d5f624?auto=format&fit=crop&q=80&w=600',
-  sweeteners: 'https://images.unsplash.com/photo-1587049352846-4a222e784d38?auto=format&fit=crop&q=80&w=600',
-  millets: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80&w=600',
+  oils: '/images/category-oils.png',
+  noodles: '/images/category-noodles.png',
+  vermicelli: '/images/category-noodles.png',
+  sweeteners: '/images/category-sweeteners.png',
+  millets: '/images/category-millets.png',
   rices: 'https://images.unsplash.com/photo-1536304929831-ee1ca9d44906?auto=format&fit=crop&q=80&w=600',
   flours: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&q=80&w=600',
   flakes: 'https://images.unsplash.com/photo-1517686469429-8bdb88b9f907?auto=format&fit=crop&q=80&w=600',
@@ -17,24 +17,30 @@ const PRODUCT_TYPE_IMAGE = {
 };
 
 const CATEGORY_IMAGE_MAP: Record<string, string> = {
-  'traditional-oils': PRODUCT_TYPE_IMAGE.oils,
-  'millet-noodles': PRODUCT_TYPE_IMAGE.noodles,
-  'millet-vermicelli': PRODUCT_TYPE_IMAGE.vermicelli,
-  'natural-sweeteners': PRODUCT_TYPE_IMAGE.sweeteners,
-  'organic-millets': PRODUCT_TYPE_IMAGE.millets,
+  'traditional-oils': '/images/category-oils.png',
+  'oils': '/images/category-oils.png',
+  'millet-noodles': '/images/category-noodles.png',
+  'noodles': '/images/category-noodles.png',
+  'millet-vermicelli': '/images/category-noodles.png',
+  'vermicelli': '/images/category-noodles.png',
+  'natural-sweeteners': '/images/category-sweeteners.png',
+  'sweeteners': '/images/category-sweeteners.png',
+  'sweetner': '/images/category-sweeteners.png',
+  'organic-millets': '/images/category-millets.png',
+  'millets': '/images/category-millets.png',
   'traditional-rices': PRODUCT_TYPE_IMAGE.rices,
   'healthy-flours': PRODUCT_TYPE_IMAGE.flours,
   'millet-rice-flakes': PRODUCT_TYPE_IMAGE.flakes,
   'organic-pulses-dals': PRODUCT_TYPE_IMAGE.pulses,
   'traditional-snacks-sweets': PRODUCT_TYPE_IMAGE.snacks,
-  'natural-sweeteners-salts': PRODUCT_TYPE_IMAGE.sweeteners,
+  'natural-sweeteners-salts': '/images/category-sweeteners.png',
   'traditional-heritage-rices': PRODUCT_TYPE_IMAGE.rices,
   'healthy-grain-flours': PRODUCT_TYPE_IMAGE.flours,
   'millet-rice-flakes-aval': PRODUCT_TYPE_IMAGE.flakes,
   'traditional-healthy-snacks-sweets': PRODUCT_TYPE_IMAGE.snacks,
   'fruits-vegetables': PRODUCT_TYPE_IMAGE.produce,
   'dairy-eggs': PRODUCT_TYPE_IMAGE.dairy,
-  'honey-spices': PRODUCT_TYPE_IMAGE.sweeteners,
+  'honey-spices': '/images/category-sweeteners.png',
   'grains-flours': PRODUCT_TYPE_IMAGE.flours,
   'beverages': PRODUCT_TYPE_IMAGE.beverages,
 };
@@ -43,7 +49,7 @@ const DEFAULT_CATEGORY_IMAGE = 'https://images.unsplash.com/photo-1542838132-92c
 const DEFAULT_PRODUCT_IMAGE = '/images/placeholder.svg';
 const PRODUCT_IMAGE_MAP: Record<string, string> = {
   'aavarampoo-biscuits': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d3/Sweet_Biscuits_-_Kolkata_2011-11-15_7019.JPG/960px-Sweet_Biscuits_-_Kolkata_2011-11-15_7019.JPG',
-  'achu-murukku': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/21/A_Traditional_Tamil_Snack_Murukku_1.jpg/960px-A_Traditional_Tamil_Snack_Murukku_1.jpg',
+  'achu-murukku': '/images/prod-achu-murukku.jpg',
   'athur-kichili-samba-semi-polished-boiled': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/34/A_white_Ponni_Rice.JPG/960px-A_white_Ponni_Rice.JPG',
   'baloon-vine-biscuits': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/1/16/Biscuits_perspective.jpg/960px-Biscuits_perspective.jpg',
   'barnyard-millet-biscuits': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/7/74/Krupuk_Ikan_Cap_Jalu.jpg/960px-Krupuk_Ikan_Cap_Jalu.jpg',
@@ -65,9 +71,9 @@ const PRODUCT_IMAGE_MAP: Record<string, string> = {
   'foxtail-millet-noodles': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d5/Thai_Prawn_Noodles_%2822154724644%29.jpg/960px-Thai_Prawn_Noodles_%2822154724644%29.jpg',
   'foxtail-millet-semi-polished': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/28/Foxtailmillet.jpg/960px-Foxtailmillet.jpg',
   'foxtail-millet-vermicelli': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cf/Semiya_payasam.jpg/960px-Semiya_payasam.jpg',
-  'fried-native-sirumani-groundnut': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fb/Peanuts_%28Arachis_hypogaea%29_-_in_shell%2C_shell_cracked_open%2C_shelled%2C_peeled.jpg/960px-Peanuts_%28Arachis_hypogaea%29_-_in_shell%2C_shell_cracked_open%2C_shelled%2C_peeled.jpg',
+  'fried-native-sirumani-groundnut': '/images/prod-roasted-groundnuts.jpg',
   'fried-rice-balls': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/91/Puffed_Rice_of_Chinna_Salem.jpg/960px-Puffed_Rice_of_Chinna_Salem.jpg',
-  'ginger-candy': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bd/HK_food_Made_in_Indonesia_%E8%96%91%E7%B3%96_Ginger_Candy_5-2013_Product_of_Ting_Ting_Jahe_SINA.jpg/960px-HK_food_Made_in_Indonesia_%E8%96%91%E7%B3%96_Ginger_Candy_5-2013_Product_of_Ting_Ting_Jahe_SINA.jpg',
+  'ginger-candy': '/images/prod-ginger-candy.jpg',
   'green-gram': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/9/9d/Vigna_radiata_256733486.jpg/960px-Vigna_radiata_256733486.jpg',
   'groundnut-balls': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Peanut_Snack_%2826238488870%29.jpg/960px-Peanut_Snack_%2826238488870%29.jpg',
   'groundnut-chikki': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/Peanut_Chikki_in_VA.jpg/960px-Peanut_Chikki_in_VA.jpg',
@@ -109,7 +115,7 @@ const PRODUCT_IMAGE_MAP: Record<string, string> = {
   'rathasali-rice-boiled': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/d/de/Germinated_brown_rice_-_medium_grain.jpg/960px-Germinated_brown_rice_-_medium_grain.jpg',
   'seeraga-samba-fully-polished-boiled': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8b/Seeraga_samba_mutton_biriyani_-Home_made-Tamilnadu-IMG_20210411_140551.jpg/960px-Seeraga_samba_mutton_biriyani_-Home_made-Tamilnadu-IMG_20210411_140551.jpg',
   'sesame-balls': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2d/Gur_Rewari_%28a_kind_of_Gajak%29_from_Lucknow%2C_a_traditional_Indian_snack_made_with_Jaggery_and_crunchy_sesame_seeds_in_the_form_of_crispy_bars.jpg/960px-Gur_Rewari_%28a_kind_of_Gajak%29_from_Lucknow%2C_a_traditional_Indian_snack_made_with_Jaggery_and_crunchy_sesame_seeds_in_the_form_of_crispy_bars.jpg',
-  'sesame-seedai': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/8/8d/Murukku_variety_02.jpg/960px-Murukku_variety_02.jpg',
+  'sesame-seedai': '/images/prod-sesame-seedai.jpg',
   'sugarcane-jaggery-powder': 'https://upload.wikimedia.org/wikipedia/commons/c/c0/Jaggery_powder.png',
   'sugarcane-jaggery-round': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Liquid_Jaggery_of_Bangladesh.jpg/960px-Liquid_Jaggery_of_Bangladesh.jpg',
   'thanga-samba-semi-polished-boiled': 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/29/Short-grain_rice_%28japonica%29.jpg/960px-Short-grain_rice_%28japonica%29.jpg',
@@ -162,7 +168,7 @@ export function mapCategoryToFrontend(backendCategory: any): CategoryType {
     rawImage.includes('yathu-iyarkaiyagam') ||
     rawImage.includes('placeholder.svg') ||
     rawImage.includes('via.placeholder.com');
-  const image = isPlaceholderUrl ? (CATEGORY_IMAGE_MAP[slug] || DEFAULT_CATEGORY_IMAGE) : rawImage;
+  const image = CATEGORY_IMAGE_MAP[slug] || (isPlaceholderUrl ? DEFAULT_CATEGORY_IMAGE : rawImage);
 
   return {
     id: backendCategory.id,

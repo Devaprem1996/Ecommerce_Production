@@ -37,7 +37,8 @@ export default function StandaloneWishlistPage() {
 }
 
 function StandaloneWishlistContent() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLang = i18n.language;
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -258,15 +259,15 @@ function StandaloneWishlistContent() {
                   )}
 
                   {/* Product Image */}
-                  <Link href={`/shop/${slugify(product.name)}`} className="block relative w-full aspect-square bg-neutral-100 dark:bg-neutral-850 rounded-card overflow-hidden mb-3">
+                  <Link href={`/shop/${slugify(product.name)}`} className="block relative w-full aspect-square bg-neutral-100 dark:bg-neutral-850 rounded-2xl overflow-hidden mb-3">
                     <img
                       src={product.images[0] || "/placeholder.png"}
-                      alt={product.name}
+                      alt={currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                     />
                     {product.isOrganic && (
-                      <span className="absolute bottom-2.5 left-2.5 z-10 px-2 py-0.5 text-[10px] font-bold rounded bg-green-500/10 text-green-600 border border-green-500/20 uppercase tracking-wide select-none">
-                        Organic
+                      <span className="absolute bottom-2.5 left-2.5 z-10 px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-500 text-white uppercase tracking-wide select-none shadow-xs">
+                        100% Organic
                       </span>
                     )}
                   </Link>
@@ -274,11 +275,11 @@ function StandaloneWishlistContent() {
                   {/* Info */}
                   <div className="flex-1 flex flex-col justify-between space-y-2">
                     <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-neutral-505 dark:text-neutral-450 uppercase tracking-wider block">
+                      <span className="text-[10px] font-extrabold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider block">
                         {product.category}
                       </span>
-                      <h4 className="text-xs font-bold text-neutral-900 dark:text-white line-clamp-1 group-hover:text-primary-500 transition-colors">
-                        {product.name}
+                      <h4 className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white line-clamp-1 group-hover:text-emerald-600 transition-colors">
+                        {currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name}
                       </h4>
                       
                       {/* Ratings */}
@@ -293,10 +294,10 @@ function StandaloneWishlistContent() {
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-3">
+                    <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2.5">
                       {/* Price */}
                       <div className="flex items-baseline space-x-1">
-                        <span className="text-sm font-black text-primary-700 dark:text-primary-400">
+                        <span className="text-sm font-black text-emerald-700 dark:text-emerald-400">
                           {formatPrice(product.price)}
                         </span>
                         <span className="text-[10px] text-neutral-500 font-medium">
@@ -312,13 +313,14 @@ function StandaloneWishlistContent() {
                           if (!isSharedView) {
                             toggleItem(product);
                           }
-                          toast.success(`${product.name} added to Cart!`);
+                          const title = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
+                          toast.cart(`${title} (1)`);
                           openMiniCart();
                         }}
-                        className="w-full flex items-center justify-center space-x-1.5 py-2.5 bg-primary-500 hover:bg-primary-600 border-none text-xs font-bold text-white rounded-card cursor-pointer transition-colors shadow-sm"
+                        className="w-full flex items-center justify-center space-x-1.5 py-2.5 bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-700 hover:to-teal-800 text-xs font-bold text-white rounded-xl cursor-pointer transition-all shadow-xs active:scale-98"
                       >
                         <ShoppingBag className="w-3.5 h-3.5" />
-                        <span>{isSharedView ? "Add to Cart" : "Move to Cart"}</span>
+                        <span>{isSharedView ? (currentLang === 'ta' ? 'கார்ட்டில் சேர்' : 'Add to Cart') : (currentLang === 'ta' ? 'கார்ட்டிற்கு மாற்றுக' : 'Move to Cart')}</span>
                       </button>
                     </div>
                   </div>

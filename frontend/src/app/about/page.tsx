@@ -79,19 +79,19 @@ export default function AboutPage() {
       </div>
 
       {/* Hero Banner */}
-      <div className="relative overflow-hidden bg-gradient-to-br from-primary-700 to-primary-900 text-white py-20 md:py-28">
-        <div className="absolute inset-0 bg-black/20" />
-        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-primary-500/10 rounded-full blur-3xl" />
-        <div className="absolute -left-20 -top-20 w-80 h-80 bg-primary-300/10 rounded-full blur-3xl" />
+      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-800 via-teal-900 to-amber-900 text-white py-16 sm:py-24 shadow-sm">
+        <div className="absolute inset-0 bg-black/15" />
+        <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-400/15 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute -left-20 -top-20 w-80 h-80 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none" />
         
         <div className="max-w-4xl mx-auto text-center px-4 relative z-10 space-y-4">
           <motion.div
             initial={{ opacity: 0, y: 15 }}
             animate={{ opacity: 1, y: 0 }}
-            className="inline-flex items-center gap-2 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest"
+            className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-white/10 backdrop-blur-md rounded-full text-xs font-bold uppercase tracking-widest border border-white/15"
           >
-            <Leaf className="w-3.5 h-3.5 text-primary-300" />
-            <span>Yathu Arokiyagam Story</span>
+            <Leaf className="w-3.5 h-3.5 text-amber-300" />
+            <span className="text-amber-200">Yathu Arokiyagam Heritage & Mission</span>
           </motion.div>
           
           <motion.h1
@@ -365,13 +365,14 @@ export default function AboutPage() {
 
       {/* CTA To Shop */}
       <div className="max-w-5xl mx-auto px-4 py-8">
-        <div className="bg-gradient-to-r from-primary-500 to-primary-700 rounded-feature p-8 sm:p-12 text-center text-white space-y-6 shadow-xl relative overflow-hidden">
+        <div className="bg-gradient-to-r from-emerald-800 via-teal-900 to-amber-900 rounded-3xl p-8 sm:p-12 text-center text-white space-y-6 shadow-xl relative overflow-hidden border border-white/10">
           <div className="absolute inset-0 bg-black/10" />
+          <div className="absolute -right-16 -bottom-16 w-60 h-60 bg-amber-400/20 rounded-full blur-2xl pointer-events-none" />
           <div className="relative z-10 max-w-xl mx-auto space-y-4">
             <h2 className="text-2.5xl sm:text-3.5xl font-black font-heading leading-tight tracking-tight">
               {t('about.cta_title', 'Ready to experience pure nutrition?')}
             </h2>
-            <p className="text-xs sm:text-sm text-neutral-100 leading-relaxed font-semibold">
+            <p className="text-xs sm:text-sm text-emerald-100/90 leading-relaxed font-semibold">
               Join our collective of families making the transition to honest, unadulterated traditional rices, millets, wood-pressed oils, and natural sweeteners.
             </p>
             <div className="pt-2">
@@ -379,7 +380,7 @@ export default function AboutPage() {
                 <Button
                   variant="cta"
                   size="lg"
-                  className="font-bold text-xs bg-white text-primary-700 hover:bg-neutral-100 py-3.5 px-6 rounded-card border-none shadow-md"
+                  className="font-bold text-xs bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 text-neutral-900 py-3.5 px-8 rounded-2xl border-none shadow-lg cursor-pointer"
                 >
                   {t('about.cta_button', 'Shop Organic Now')}
                 </Button>

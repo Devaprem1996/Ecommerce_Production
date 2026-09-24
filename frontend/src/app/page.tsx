@@ -12,10 +12,16 @@ import { NewArrivals } from '@/components/home/NewArrivals';
 import { WhyChooseUs } from '@/components/home/WhyChooseUs';
 import { Testimonials } from '@/components/home/Testimonials';
 import { BlogPreview } from '@/components/home/BlogPreview';
+import { ArtisansSection } from '@/components/home/ArtisansSection';
+import { CertificationBanner } from '@/components/home/CertificationBanner';
+import { FaqSection } from '@/components/home/FaqSection';
+import { PreFooterCallout } from '@/components/home/PreFooterCallout';
+import { InfiniteMarqueeRibbon } from '@/components/home/InfiniteMarqueeRibbon';
 import { Newsletter } from '@/components/home/Newsletter';
 import { Modal } from '@/components/ui/Modal';
 import { Button } from '@/components/ui/Button';
 import { StarRating } from '@/components/ui/StarRating';
+import { PincodeChecker } from '@/components/ui/PincodeChecker';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
@@ -103,14 +109,14 @@ export default function Home() {
     const displayName = currentLang === 'ta' && selectedProduct.nameTamil ? selectedProduct.nameTamil : selectedProduct.name;
     if (!wasWishlisted) {
       toast.success(
-        currentLang === 'ta' 
-          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!` 
+        currentLang === 'ta'
+          ? `${displayName} விருப்பப்பட்டியலில் சேர்க்கப்பட்டது!`
           : `${displayName} added to wishlist!`
       );
     } else {
       toast.info(
-        currentLang === 'ta' 
-          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது` 
+        currentLang === 'ta'
+          ? `${displayName} விருப்பப்பட்டியலில் இருந்து நீக்கப்பட்டது`
           : `${displayName} removed from wishlist`
       );
     }
@@ -126,35 +132,47 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-1 w-full bg-white dark:bg-neutral-950 font-sans transition-colors duration-normal">
-      {/* 1. HeroBanner Carousel */}
+      {/* 1. Modern Split Hero */}
       <HeroBanner />
 
-      {/* 2. TrustBar Icons */}
+      {/* 2. Floating Stats Bar */}
       <TrustBar />
 
-      {/* 3. CategorySection Grid */}
-      <CategorySection />
+      {/* 2.5 Full-Bleed Drifting Live Ribbon */}
+      <InfiniteMarqueeRibbon />
 
-      {/* 4. BestSellers Grid */}
+      {/* 3. Most Popular / Best Sellers Grid */}
       <BestSellers onQuickView={openQuickView} />
 
-      {/* 5. PromoBanner Parallax */}
-      <PromoBanner />
-
-      {/* 6. NewArrivals Swipeable Carousel / Grid */}
-      <NewArrivals onQuickView={openQuickView} />
-
-      {/* 7. WhyChooseUs USPS & Stats */}
+      {/* 4. High-Contrast Dark Showcase (Why Choose Us) */}
       <WhyChooseUs />
 
-      {/* 8. Testimonials Review Slider */}
+      {/* 5. Vibrant Pastel Category Section */}
+      <CategorySection />
+
+      {/* 6. Real Families Story Spotlight Banner (Warm Peach Cutout) */}
+      <PromoBanner />
+
+      {/* 7. Meet Our Traditional Artisans & Farmers (4 Solid Color Backdrops) */}
+      <ArtisansSection />
+
+      {/* 8. 100% Lab Tested & Certified Callout (Dark Feature Banner) */}
+      <CertificationBanner />
+
+      {/* 9. Customer Testimonials (3-Column Reviews) */}
       <Testimonials />
 
-      {/* 9. BlogPreview Articles */}
-      {/* <BlogPreview /> */}
+      {/* 10. From Our Wellness Blog (4-Column Insights) */}
+      <BlogPreview />
 
-      {/* 10. Newsletter Form */}
-      {/* <Newsletter /> */}
+      {/* 11. Frequently Asked Questions (Interactive Accordion) */}
+      <FaqSection />
+
+      {/* 12. Newsletter & Farm Updates Subscription */}
+      <Newsletter />
+
+      {/* 13. Scenic Nature Pre-Footer Callout Banner */}
+      <PreFooterCallout />
 
       {/* Central Product Quick View Modal */}
       <Modal
@@ -283,18 +301,16 @@ export default function Home() {
                               setSelectedVariant(v);
                               setQuantity(1);
                             }}
-                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-badge border transition-all cursor-pointer ${
-                              isSelected
+                            className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-badge border transition-all cursor-pointer ${isSelected
                                 ? 'bg-primary-500 text-white border-primary-500 shadow-sm ring-2 ring-primary-500/20'
                                 : isOutOfStock
-                                ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 border-neutral-200 dark:border-neutral-700 opacity-60 line-through cursor-not-allowed'
-                                : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-300 hover:border-primary-500/50'
-                            }`}
+                                  ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 border-neutral-200 dark:border-neutral-700 opacity-60 line-through cursor-not-allowed'
+                                  : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-300 hover:border-primary-500/50'
+                              }`}
                           >
                             <span>{v.name}</span>
-                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${
-                              isSelected ? 'bg-white/20 text-white' : 'bg-neutral-100 dark:bg-neutral-750 text-neutral-700 dark:text-neutral-300'
-                            }`}>
+                            <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded ${isSelected ? 'bg-white/20 text-white' : 'bg-neutral-100 dark:bg-neutral-750 text-neutral-700 dark:text-neutral-300'
+                              }`}>
                               ₹{v.price}
                             </span>
                           </button>
@@ -323,6 +339,9 @@ export default function Home() {
                     <ExternalLink className="w-3.5 h-3.5" />
                   </Link>
                 </div>
+
+                {/* Real-time Delivery Pincode Checker */}
+                <PincodeChecker className="mt-2" />
               </div>
 
               {/* Quantity Selector & Add To Cart Button */}

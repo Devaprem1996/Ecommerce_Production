@@ -11,6 +11,7 @@ import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 import { BackToTop } from "@/components/layout/BackToTop";
 import { I18nProvider } from "@/components/layout/I18nProvider";
 import { MiniCart } from "@/components/layout/MiniCart";
+import { SmoothScrollProvider } from "@/providers/SmoothScrollProvider";
 
 
 const inter = Inter({
@@ -45,16 +46,18 @@ export default function RootLayout({
       className={`${inter.variable} ${playfair.variable} ${tamil.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-neutral-50 dark:bg-neutral-905">
-        <I18nProvider>
-          <AnnouncementBar />
-          <Navbar />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <MobileBottomNav />
-          <WhatsAppFloat />
-          <BackToTop />
-          <MiniCart />
-        </I18nProvider>
+        <SmoothScrollProvider>
+          <I18nProvider>
+            <AnnouncementBar />
+            <Navbar />
+            <main className="flex-1">{children}</main>
+            <Footer />
+            <MobileBottomNav />
+            <WhatsAppFloat />
+            <BackToTop />
+            <MiniCart />
+          </I18nProvider>
+        </SmoothScrollProvider>
 
         <Toaster />
       </body>

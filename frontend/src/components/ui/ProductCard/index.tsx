@@ -7,12 +7,9 @@ import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import { motion } from 'framer-motion';
 import { ProductCardProps } from './ProductCard.types';
-import { Badge } from '../Badge';
-import { StarRating } from '../StarRating';
-import { Button } from '../Button';
 import { formatPrice } from '@/utils/formatPrice';
 import { slugify } from '@/utils/slugify';
-import { Heart, ShoppingBag, Eye } from 'lucide-react';
+import { Heart, ShoppingBag, Eye, Leaf, Star } from 'lucide-react';
 import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -31,14 +28,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   // Bilingual support for name
   const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
-
   const productSlug = slugify(product.name);
 
-  // Determine badge to show
+  // Stock & Pricing calculations
   const isSoldOut = product.stock === 0;
-  const isLowStock = product.stock > 0 && product.stock <= 5;
   const hasDiscount = Boolean(product.originalPrice && product.originalPrice > product.price);
   const originalPrice = product.originalPrice || (product.price * 1.25);
+  const discountPercent = hasDiscount && product.originalPrice
+    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+    : 0;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -61,134 +59,171 @@ export const ProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <div
+      onClick={handleQuickView}
       className={twMerge(
         clsx(
-          'group relative flex flex-col w-full bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-card p-4 overflow-hidden transition-all duration-normal hover:-translate-y-2 hover:shadow-card-hover font-sans cursor-pointer'
+          // Liquid Glass Surface & Compact Proportions
+          'group relative flex flex-col w-full rounded-[18px] sm:rounded-[20px] p-2.5 sm:p-3 overflow-hidden font-sans cursor-pointer transition-all duration-300',
+          // Translucent Frosted Liquid Glass styling
+          'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl',
+          'border border-white/80 dark:border-white/10',
+          // Specular Inner Light Highlight & Ambient Drop Shadow
+          'shadow-[0_4px_20px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.85)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.08)]',
+          // Liquid Glass Hover Lift & Specular Glow
+          'hover:-translate-y-1.5 hover:border-emerald-500/35 hover:shadow-[0_12px_28px_rgba(45,106,79,0.12),inset_0_1px_1px_rgba(255,255,255,0.95)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]'
         ),
         className
       )}
       {...props}
     >
-      {/* Badge List (Top-Left Absolute) */}
-      <div className="absolute top-6 left-6 z-20 flex flex-col gap-1.5 items-start pointer-events-none">
-        {isSoldOut ? (
-          <Badge variant="sold-out" />
-        ) : (
-          <>
-            {product.isOrganic && <Badge variant="organic" />}
-            {product.rating >= 4.7 && <Badge variant="hot" />}
-          </>
-        )}
-      </div>
+      {/* Specular Liquid Sheen Light Sweep on Hover */}
+      <div 
+        className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-in-out pointer-events-none z-30" 
+        aria-hidden="true" 
+      />
 
-      {/* Wishlist Button (Top-Right Absolute) */}
-      <div className="absolute top-6 right-6 z-20">
-        <motion.button
-          type="button"
-          onClick={handleWishlistToggle}
-          whileHover={{ scale: 1.15 }}
-          whileTap={{ scale: 0.85 }}
-          animate={{ scale: isWishlisted ? [1, 1.25, 1] : 1 }}
-          transition={{ duration: 0.3 }}
-          className={twMerge(
-            clsx(
-              'p-2 rounded-full shadow-md bg-white/90 hover:bg-white dark:bg-neutral-800/90 dark:hover:bg-neutral-800 border border-neutral-100 dark:border-neutral-700 min-w-[36px] min-h-[36px] flex items-center justify-center cursor-pointer transition-colors',
-              isWishlisted ? 'text-red-500' : 'text-neutral-600 hover:text-red-500'
-            )
-          )}
-          aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-        >
-          <Heart className={clsx('w-5 h-5', isWishlisted && 'fill-current')} />
-        </motion.button>
-      </div>
-
-      {/* Image Section with Quick View Overlay */}
-      <div className="relative w-full aspect-square bg-neutral-100 dark:bg-neutral-800 rounded-feature overflow-hidden flex items-center justify-center mb-4">
+      {/* Image Container with Crisp Compact Aspect Ratio */}
+      <div className="relative w-full aspect-square bg-[#F5F6F8] dark:bg-neutral-850 rounded-[14px] overflow-hidden flex items-center justify-center mb-2.5 border border-white/60 dark:border-neutral-800">
+        
+        {/* Product Image with Smooth Scale Zoom */}
         <Image
-          src={product.images[0] || '/placeholder.png'}
+          src={product.images[0] || 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80&w=400'}
           alt={displayName}
           fill
-          sizes="(max-width: 576px) 100vw, (max-width: 992px) 50vw, 25vw"
-          className="object-cover transition-transform duration-slow group-hover:scale-105"
+          sizes="(max-width: 576px) 160px, (max-width: 992px) 240px, 280px"
+          className="object-cover transition-transform duration-500 ease-out group-hover:scale-106"
         />
 
-        {/* Hover Quick View Overlay */}
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-normal flex items-center justify-center z-10">
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={handleQuickView}
-            leftIcon={<Eye className="w-4 h-4" />}
-            className="shadow-lg transform translate-y-4 group-hover:translate-y-0 transition-transform duration-normal"
-          >
-            {t('hero.cta.explore', 'Explore')}
-          </Button>
+        {/* Liquid Glass Badges (Top-Left Absolute) */}
+        <div className="absolute top-2.5 left-2.5 z-20 flex flex-col gap-1 items-start pointer-events-none">
+          {isSoldOut ? (
+            <span className="text-[9px] font-black uppercase tracking-wider text-white bg-red-600/90 backdrop-blur-md px-2 py-0.5 rounded-full shadow-xs">
+              {currentLang === 'ta' ? 'விற்றுத்தீர்ந்தது' : 'Sold Out'}
+            </span>
+          ) : (
+            <>
+              {product.isOrganic && (
+                <span className="inline-flex items-center gap-1 text-[9px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-200 bg-white/85 dark:bg-emerald-950/80 backdrop-blur-md px-2 py-0.5 rounded-full shadow-xs border border-white/60 dark:border-emerald-500/20">
+                  <Leaf className="w-2.5 h-2.5 text-emerald-600 fill-current" />
+                  <span>{currentLang === 'ta' ? 'இயற்கை' : 'Organic'}</span>
+                </span>
+              )}
+              {discountPercent > 0 && (
+                <span className="text-[9px] font-black uppercase tracking-wider text-white bg-gradient-to-r from-orange-500 to-amber-500 px-1.5 py-0.5 rounded-full shadow-xs">
+                  {discountPercent}% OFF
+                </span>
+              )}
+            </>
+          )}
         </div>
+
+        {/* Liquid Glass Wishlist Heart (Top-Right Absolute) */}
+        <div className="absolute top-2.5 right-2.5 z-20">
+          <motion.button
+            type="button"
+            onClick={handleWishlistToggle}
+            whileHover={{ scale: 1.15 }}
+            whileTap={{ scale: 0.85 }}
+            animate={{ scale: isWishlisted ? [1, 1.25, 1] : 1 }}
+            transition={{ duration: 0.25 }}
+            className={twMerge(
+              clsx(
+                'w-7 h-7 sm:w-8 sm:h-8 rounded-full shadow-xs flex items-center justify-center cursor-pointer transition-colors backdrop-blur-md border border-white/70 dark:border-neutral-700',
+                isWishlisted
+                  ? 'bg-red-50 text-red-500 dark:bg-red-950/40'
+                  : 'bg-white/80 hover:bg-white dark:bg-neutral-850/80 dark:hover:bg-neutral-800 text-neutral-600 dark:text-neutral-300 hover:text-red-500'
+              )
+            )}
+            aria-label={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+          >
+            <Heart className={clsx('w-3.5 h-3.5', isWishlisted && 'fill-current text-red-500')} />
+          </motion.button>
+        </div>
+
+        {/* Glassmorphic Quick View Overlay Capsule */}
+        <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px] opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center z-10 pointer-events-none">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/95 dark:bg-neutral-900/95 text-neutral-900 dark:text-white font-bold text-[11px] shadow-md border border-white/40 transform translate-y-2 group-hover:translate-y-0 transition-transform duration-300">
+            <Eye className="w-3.5 h-3.5 text-primary-500" />
+            <span>{t('quick_view.title', 'Quick View')}</span>
+          </div>
+        </div>
+
       </div>
 
-      {/* Content Section */}
-      <div className="flex flex-col flex-1">
-        {/* Category Tag */}
-        <span className="text-xs font-semibold text-neutral-600 dark:text-neutral-400 uppercase tracking-wider mb-1">
-          {product.category}
-        </span>
+      {/* Content Section: Compact, Balanced & Elegant */}
+      <div className="flex flex-col flex-1 text-left px-0.5">
+        
+        {/* Top Row: Category + Star Rating Inline (Space-Saving) */}
+        <div className="flex items-center justify-between gap-1 mb-1">
+          <span className="text-[10px] font-bold text-neutral-400 dark:text-neutral-500 uppercase tracking-wider truncate">
+            {product.category}
+          </span>
+          <div className="flex items-center gap-1 text-[11px] font-bold text-neutral-700 dark:text-neutral-300 shrink-0">
+            <Star className="w-3 h-3 text-amber-500 fill-current" />
+            <span>{product.rating ? Number(product.rating).toFixed(1) : '4.9'}</span>
+            <span className="text-[10px] text-neutral-400 font-normal">
+              ({product.reviewsCount || 18})
+            </span>
+          </div>
+        </div>
 
-        {/* Product Name */}
+        {/* Product Title */}
         <Link
           href={`/shop/${productSlug}`}
           onClick={(e) => e.stopPropagation()}
-          className="line-clamp-1 mb-1 group-hover:text-primary-500 transition-colors"
+          className="line-clamp-1 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors"
         >
-          <h4 className="text-base font-semibold text-neutral-900 dark:text-white group-hover:text-primary-500 transition-colors">
+          <h4 className="kinetic-title text-xs sm:text-[13px] font-bold text-neutral-900 dark:text-white leading-tight">
             {displayName}
           </h4>
         </Link>
 
-        {/* Ratings display */}
-        <div className="flex items-center gap-2 mb-3">
-          <StarRating rating={product.rating} size="sm" />
-          <span className="text-xs text-neutral-600 dark:text-neutral-400 font-medium">
-            ({product.reviewsCount})
-          </span>
-        </div>
-
-        {/* Price & Cart row */}
-        <div className="flex flex-wrap items-center justify-between gap-2 mt-auto pt-3 border-t border-neutral-100 dark:border-neutral-800">
+        {/* Bottom Row: Price & Tactile Liquid Add Button */}
+        <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-neutral-100/90 dark:border-neutral-800/80">
+          
+          {/* Price Stack */}
           <div className="flex flex-col min-w-0">
             {hasDiscount && (
-              <span className="text-xs text-neutral-600 line-through truncate">
+              <span className="text-[10px] text-neutral-400 line-through leading-none mb-0.5 font-medium">
                 {formatPrice(originalPrice)}
               </span>
             )}
-            <span className="text-lg font-bold text-primary-700 dark:text-primary-400 leading-tight truncate">
-              {formatPrice(product.price)}
-              <span className="text-xs text-neutral-600 font-normal ml-1">/ {product.unit}</span>
-            </span>
+            <div className="flex items-baseline gap-1">
+              <span className="text-sm sm:text-[15px] font-black text-emerald-800 dark:text-emerald-400 leading-none">
+                {formatPrice(product.price)}
+              </span>
+              <span className="text-[10px] text-neutral-500 font-medium truncate">
+                /{product.unit}
+              </span>
+            </div>
           </div>
 
+          {/* Compact Add to Cart Pill */}
           {!isSoldOut ? (
-            <Button
-              variant="primary"
-              size="sm"
+            <motion.button
+              type="button"
+              whileTap={{ scale: 0.92 }}
               onClick={handleAddToCart}
-              leftIcon={<ShoppingBag className="w-4 h-4" />}
+              className="liquid-btn inline-flex items-center justify-center gap-1 px-3 py-1.5 rounded-full bg-primary-500 hover:bg-primary-600 text-white font-bold text-xs shadow-xs hover:shadow-md transition-all cursor-pointer shrink-0"
               aria-label={t('products.add_to_cart', 'Add to cart')}
-              className="min-w-[40px] px-2.5 sm:px-3 font-semibold h-9 rounded-card shrink-0"
             >
-              <span className="hidden sm:inline">{t('products.add_to_cart', 'Add')}</span>
-            </Button>
+              <ShoppingBag className="w-3 h-3" />
+              <span>{currentLang === 'ta' ? 'சேர்' : 'Add'}</span>
+            </motion.button>
           ) : (
-            <Button
-              variant="secondary"
-              size="sm"
+            <button
+              type="button"
               disabled
-              className="min-w-[40px] px-2.5 sm:px-3 font-semibold h-9 rounded-card opacity-50 cursor-not-allowed text-xs shrink-0"
+              className="px-2.5 py-1.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-400 text-[10px] font-semibold opacity-60 cursor-not-allowed shrink-0"
             >
-              {t('badge.sold-out', 'Sold Out')}
-            </Button>
+              {currentLang === 'ta' ? 'முடிந்தது' : 'Sold'}
+            </button>
           )}
+
         </div>
+
       </div>
+
     </div>
   );
 };

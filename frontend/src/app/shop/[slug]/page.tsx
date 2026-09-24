@@ -31,6 +31,8 @@ import { ProductCard } from '@/components/ui/ProductCard';
 import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { StarRating } from '@/components/ui/StarRating';
+import { PincodeChecker } from '@/components/ui/PincodeChecker';
+import { StickyMobileBottomBar } from '@/components/ui/StickyMobileBottomBar';
 import { useCart } from '@/hooks/useCart';
 import { useWishlist } from '@/hooks/useWishlist';
 import { toast } from '@/components/ui/Toast';
@@ -646,80 +648,8 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
                 </div>
               )}
 
-              {/* Pincode Validator - Hidden */}
-              {/* <div className="bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature p-4 space-y-3 shadow-inner">
-                <div className="flex items-center gap-2 text-sm font-bold text-neutral-900 dark:text-white">
-                  <MapPin className="w-5 h-5 text-primary-500" />
-                  <span>{t('pincode.title', 'Check Delivery Availability')}</span>
-                </div>
-
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={pincode}
-                    onChange={handlePincodeChange}
-                    placeholder={t('pincode.placeholder', 'Enter 6-digit Pincode')}
-                    className="flex-1 text-sm font-semibold px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500"
-                  />
-                  <Button
-                    variant="primary"
-                    onClick={() => validatePincode(pincode)}
-                    disabled={pincode.length !== 6 || pincodeStatus === 'loading'}
-                    className="text-xs font-bold min-w-[80px]"
-                    leftIcon={pincodeStatus === 'loading' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : undefined}
-                  >
-                    {pincodeStatus === 'loading' ? t('pincode.checking', 'Checking') : t('pincode.check', 'Check')}
-                  </Button>
-                </div>
-
-                <AnimatePresence mode="wait">
-                  {pincodeStatus === 'success' && pincodeResult && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -5 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -5 }}
-                      className="text-xs space-y-1.5 pt-1"
-                    >
-                      <div className="flex items-center gap-1.5 text-success font-semibold">
-                        <Check className="w-4 h-4" />
-                        <span>{t('pincode.available', { pincode })}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-neutral-700 dark:text-neutral-400 font-medium pl-5">
-                        <Calendar className="w-3.5 h-3.5 text-neutral-600" />
-                        <span>{t('pincode.expected', { days: pincodeResult.estimatedDays })}</span>
-                      </div>
-                      <div className="flex items-center gap-2 text-neutral-750 dark:text-neutral-450 font-bold pl-5">
-                        <Truck className="w-3.5 h-3.5 text-primary-500" />
-                        <span>{t('pincode.free_info', 'Free Delivery (order ₹499+)')}</span>
-                      </div>
-                    </motion.div>
-                  )}
-
-                  {pincodeStatus === 'failed' && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-xs text-error font-semibold flex items-center gap-1.5 pt-1 animate-shake"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{t('pincode.failed', 'Sorry, we do not deliver to this area yet')}</span>
-                    </motion.div>
-                  )}
-
-                  {pincodeStatus === 'error' && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      className="text-xs text-error font-semibold flex items-center gap-1.5 pt-1 animate-shake"
-                    >
-                      <AlertCircle className="w-4 h-4" />
-                      <span>{t('pincode.error', 'Something went wrong, please try again')}</span>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-              </div> */}
+              {/* Real-time Delivery Pincode Checker */}
+              <PincodeChecker className="my-1" />
 
               {/* Quantity selector */}
               {activeStock > 0 && (
@@ -1195,6 +1125,18 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
 
         </form>
       </Modal>
+
+      {/* Sticky Mobile Quick-Add & Buy Now Thumb-Zone Drawer */}
+      <StickyMobileBottomBar
+        product={product}
+        selectedVariant={selectedVariant}
+        activePrice={activePrice}
+        originalPrice={originalPrice}
+        activeStock={activeStock}
+        displayName={displayName}
+        onAddToCart={handleAddToCart}
+        onBuyNow={handleBuyNow}
+      />
 
     </div>
   );
