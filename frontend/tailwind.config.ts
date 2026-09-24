@@ -66,6 +66,7 @@ const config: Config = {
       fontFamily: {
         sans: ['var(--font-inter)', 'Inter', 'sans-serif'],
         heading: ['var(--font-playfair)', 'Playfair Display', 'serif'],
+        script: ['var(--font-script)', 'Caveat', 'cursive'],
         tamil: ['var(--font-tamil)', 'Noto Sans Tamil', 'sans-serif'],
       },
       spacing: {

@@ -177,8 +177,8 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
             'sticky top-0 w-full transition-all duration-300 z-[1020]',
             'bg-white/90 dark:bg-neutral-900/90 backdrop-blur-2xl border-b border-neutral-200/80 dark:border-neutral-800',
             isScrolled 
-              ? 'shadow-[0_10px_30px_rgba(0,0,0,0.06)] py-2 sm:py-2.5' 
-              : 'py-3 sm:py-3.5'
+              ? 'shadow-[0_10px_30px_rgba(0,0,0,0.06)] py-1.5 sm:py-2' 
+              : 'py-2 sm:py-2.5'
           ),
           className
         )}
@@ -186,16 +186,16 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
         {/* Subtle specular top highlight line */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
           <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
             
-            {/* 1. Left: Mobile Hamburger & Artisanal Brand Emblem */}
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+            {/* 1. Left: Mobile Hamburger & Nourish Clean Brand Emblem */}
+            <div className="flex items-center gap-3 shrink-0">
               {/* Mobile Hamburger Button */}
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                className="lg:hidden p-2 -ml-1.5 rounded-2xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="lg:hidden p-2 -ml-1.5 rounded-xl text-neutral-800 dark:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
                 aria-label="Open navigation menu"
               >
                 <div className="w-5 h-4 flex flex-col justify-between">
@@ -205,51 +205,54 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 </div>
               </button>
 
-              {/* Artisanal Organic Crest & Brand Identity */}
-              <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none select-none">
-                <div className="relative w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-gradient-to-br from-emerald-600 via-teal-700 to-amber-600 p-[1.5px] shadow-sm group-hover:shadow-emerald-500/25 group-hover:shadow-md transition-all duration-300 group-hover:scale-105 shrink-0 flex items-center justify-center">
-                  <div className="w-full h-full rounded-[14px] bg-white dark:bg-neutral-950 flex items-center justify-center overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 via-transparent to-amber-500/10 group-hover:opacity-100 transition-opacity" />
-                    <Leaf className="w-5 h-5 sm:w-5.5 sm:h-5.5 text-emerald-600 dark:text-emerald-400 group-hover:rotate-12 transition-transform duration-300" />
-                  </div>
+              {/* Exact Clean Brand Emblem from Reference Image */}
+              <Link href="/" className="flex flex-col items-center group focus:outline-none select-none text-center">
+                {/* Two Organic Curved Leaves Sprout Logo Mark */}
+                <div className="flex items-center justify-center text-[#2D6A4F] dark:text-emerald-400 mb-0.5 group-hover:scale-105 transition-transform">
+                  <svg width="24" height="20" viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 18.5C12 18.5 10.8 12.8 6.5 9.8C2.5 7 1.8 2.5 1.8 2.5C1.8 2.5 6.4 2 9.5 6C11.5 8.7 12 12.5 12 18.5Z" opacity="0.95" />
+                    <path d="M12 18.5C12 18.5 13.2 12.8 17.5 9.8C21.5 7 22.2 2.5 22.2 2.5C22.2 2.5 17.6 2 14.5 6C12.5 8.7 12 12.5 12 18.5Z" />
+                  </svg>
                 </div>
-
-                <div className="flex flex-col">
-                  <div className="flex items-center">
-                    <span className="text-base sm:text-lg lg:text-xl font-black font-heading tracking-tight text-neutral-900 dark:text-white leading-none">
-                      {currentLang === 'ta' ? 'யாத்து ஆரோக்கியகம்' : 'YATHU AROKIYAGAM'}
-                    </span>
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500 ml-1 inline-block animate-pulse" />
-                  </div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-[9px] sm:text-[10px] font-extrabold uppercase tracking-widest text-emerald-700 dark:text-emerald-400 leading-none">
-                      {currentLang === 'ta' ? 'பாரம்பரிய இயற்கை அங்காடி' : 'Traditional Organic Store'}
-                    </span>
-                    <span className="hidden sm:inline-block text-[8px] font-bold px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20 leading-none">
-                      ESTD 2024
-                    </span>
-                  </div>
-                </div>
+                <span className="text-sm sm:text-base font-bold tracking-[0.18em] text-neutral-900 dark:text-white uppercase leading-tight font-sans">
+                  YATHU AROKIYAGAM
+                </span>
+                <span className="text-[7px] font-semibold tracking-[0.18em] text-neutral-500 dark:text-neutral-400 uppercase mt-0.5">
+                  PURE &amp; NATURAL FOODS
+                </span>
               </Link>
             </div>
 
-            {/* 2. Center: Luxury Navigation Bar with 4-Column Mega Menu (Desktop) */}
-            <nav className="hidden lg:flex items-center gap-1 xl:gap-2">
+            {/* 2. Center: Exact Clean Navigation Links from Reference Image */}
+            <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-neutral-800 dark:text-neutral-200">
               
-              {/* Home */}
+              {/* HOME */}
               <Link
                 href="/"
                 className={clsx(
-                  "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all",
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
                   pathname === '/'
-                    ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 shadow-xs"
-                    : "text-neutral-700 dark:text-neutral-300 hover:text-emerald-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800"
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
-                {t('nav.home', 'Home')}
+                HOME
               </Link>
 
-              {/* Shop Catalog with Pro Mega Menu Dropdown */}
+              {/* OUR STORY */}
+              <Link
+                href="/about"
+                className={clsx(
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  pathname === '/about'
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
+                )}
+              >
+                OUR STORY
+              </Link>
+
+              {/* PRODUCTS ˅ with Mega Menu Dropdown */}
               <div 
                 className="relative" 
                 ref={megaMenuRef}
@@ -258,18 +261,15 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               >
                 <Link
                   href="/shop"
-                  onClick={(e) => {
-                    // On hover it opens mega menu; clicking goes directly to shop
-                  }}
                   className={clsx(
-                    "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer",
-                    pathname.startsWith('/shop') || isMegaMenuOpen
-                      ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 shadow-xs"
-                      : "text-neutral-700 dark:text-neutral-300 hover:text-emerald-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800"
+                    "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors flex items-center gap-1 hover:text-[#2D6A4F] dark:hover:text-emerald-400 cursor-pointer",
+                    pathname.startsWith('/shop') && !pathname.includes('recipes')
+                      ? "text-neutral-900 dark:text-white font-bold"
+                      : "text-neutral-700 dark:text-neutral-300"
                   )}
                 >
-                  <span>{t('nav.shop', 'Shop Catalog')}</span>
-                  <ChevronDown className={clsx("w-3.5 h-3.5 transition-transform duration-200", isMegaMenuOpen && "rotate-180")} />
+                  <span>PRODUCTS</span>
+                  <ChevronDown className={clsx("w-3 h-3 transition-transform duration-200", isMegaMenuOpen && "rotate-180")} />
                 </Link>
 
                 {/* Floating 4-Column Luxury Mega Menu Flyout */}
@@ -405,152 +405,71 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 </AnimatePresence>
               </div>
 
-              {/* Our Story / About */}
+              {/* SHOP */}
               <Link
-                href="/about"
+                href="/shop"
                 className={clsx(
-                  "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all",
-                  pathname === '/about'
-                    ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 shadow-xs"
-                    : "text-neutral-700 dark:text-neutral-300 hover:text-emerald-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800"
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  pathname === '/shop'
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
-                {t('footer.about', 'Our Story')}
+                SHOP
               </Link>
 
-              {/* Track Order */}
+              {/* BLOGS */}
               <Link
-                href="/track-order"
+                href="/blog"
                 className={clsx(
-                  "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all",
-                  pathname === '/track-order'
-                    ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 shadow-xs"
-                    : "text-neutral-700 dark:text-neutral-300 hover:text-emerald-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800"
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  pathname.startsWith('/blog')
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
-                {t('nav.track_order', 'Track Order')}
+                BLOGS
               </Link>
 
-              {/* Contact */}
+
+
+              {/* CONTACT */}
               <Link
                 href="/contact"
                 className={clsx(
-                  "px-3.5 py-1.5 rounded-full text-xs font-bold transition-all",
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
                   pathname === '/contact'
-                    ? "text-emerald-800 dark:text-emerald-300 bg-emerald-500/10 border border-emerald-500/25 shadow-xs"
-                    : "text-neutral-700 dark:text-neutral-300 hover:text-emerald-600 hover:bg-neutral-100/80 dark:hover:bg-neutral-800"
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
-                {t('nav.contact', 'Contact')}
+                CONTACT
               </Link>
             </nav>
 
-            {/* 3. Center-Right: Omnipresent Spotlight Search Trigger Pill */}
-            <div className="flex-1 max-w-[210px] xl:max-w-[270px] hidden md:block">
-              <button
-                type="button"
-                onClick={() => setIsSpotlightOpen(true)}
-                className="w-full h-9 px-3 rounded-full bg-neutral-100/90 dark:bg-neutral-800/90 hover:bg-neutral-200/70 dark:hover:bg-neutral-750 border border-neutral-200/80 dark:border-neutral-750 flex items-center justify-between text-neutral-400 dark:text-neutral-500 hover:text-neutral-700 dark:hover:text-neutral-300 transition-all cursor-pointer shadow-inner group"
-                aria-label="Search catalog"
-              >
-                <div className="flex items-center gap-2 truncate">
-                  <Search className="w-3.5 h-3.5 text-neutral-400 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors shrink-0" />
-                  <span className="text-xs font-medium truncate">
-                    {currentLang === 'ta' ? 'தேடுக: நல்லெண்ணெய், அரிசி...' : 'Search pure oils, rice...'}
-                  </span>
-                </div>
-                <kbd className="hidden sm:inline-flex items-center gap-0.5 text-[10px] font-bold text-neutral-400 dark:text-neutral-400 bg-white dark:bg-neutral-700 border border-neutral-200 dark:border-neutral-600 px-1.5 py-0.5 rounded shadow-2xs shrink-0 select-none">
-                  ⌘K
-                </kbd>
-              </button>
-            </div>
-
-            {/* 4. Right: Language Pill, Wishlist, Cart & Profile CTA */}
-            <div className="flex items-center gap-1.5 sm:gap-2 lg:gap-2.5 shrink-0">
+            {/* 3. Right: Exact 3 Clean Outline Icons (Search, User, Cart) */}
+            <div className="flex items-center gap-4 sm:gap-6 text-neutral-800 dark:text-neutral-200">
               
-              {/* Tactile Language Pill Switcher */}
-              <div className="hidden sm:inline-flex items-center p-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-750 select-none">
-                <button
-                  type="button"
-                  onClick={() => i18n.changeLanguage('en')}
-                  className={clsx(
-                    "px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer",
-                    i18n.language === 'en'
-                      ? "bg-white dark:bg-neutral-700 text-emerald-700 dark:text-emerald-300 shadow-xs"
-                      : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                  )}
-                >
-                  EN
-                </button>
-                <button
-                  type="button"
-                  onClick={() => i18n.changeLanguage('ta')}
-                  className={clsx(
-                    "px-2.5 py-1 rounded-full text-[11px] font-bold transition-all cursor-pointer",
-                    i18n.language === 'ta'
-                      ? "bg-white dark:bg-neutral-700 text-emerald-700 dark:text-emerald-300 shadow-xs"
-                      : "text-neutral-500 hover:text-neutral-900 dark:hover:text-white"
-                  )}
-                >
-                  தமிழ்
-                </button>
-              </div>
-
-              {/* Mobile Spotlight Search Button */}
+              {/* 1. Search Icon Button */}
               <button
                 type="button"
                 onClick={() => setIsSpotlightOpen(true)}
-                className="md:hidden p-2 rounded-xl text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                className="p-1 text-neutral-800 dark:text-neutral-200 hover:text-[#2D6A4F] dark:hover:text-emerald-400 transition-colors cursor-pointer"
                 aria-label="Search"
               >
-                <Search className="w-5 h-5" />
+                <Search className="w-5 h-5 stroke-[1.6]" />
               </button>
 
-              {/* Wishlist Button */}
-              <Link
-                href="/wishlist"
-                className="p-2 rounded-xl text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors relative cursor-pointer"
-                aria-label={`Wishlist (${wishlistCount} items)`}
-              >
-                <Heart className="w-5 h-5" />
-                {wishlistCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-rose-500 text-white text-[10px] font-black flex items-center justify-center shadow-xs">
-                    {wishlistCount}
-                  </span>
-                )}
-              </Link>
-
-              {/* Pro Cart Capsule: Shows Bag Icon + Live Counter + Subtotal Preview */}
-              <button
-                type="button"
-                onClick={(e) => { e.preventDefault(); openMiniCart(); }}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-neutral-100 hover:bg-neutral-200/80 dark:bg-neutral-800 dark:hover:bg-neutral-750 border border-neutral-200/80 dark:border-neutral-700 transition-all cursor-pointer shadow-xs group"
-                aria-label={`View Cart (${cartCount} items)`}
-              >
-                <div className="relative">
-                  <ShoppingBag className="w-4 h-4 text-emerald-700 dark:text-emerald-400 group-hover:scale-110 transition-transform" />
-                  {cartCount > 0 && (
-                    <span className="absolute -top-2 -right-2 w-4 h-4 rounded-full bg-emerald-600 text-white text-[9px] font-black flex items-center justify-center animate-pulse shadow-xs">
-                      {cartCount}
-                    </span>
-                  )}
-                </div>
-                <span className="text-xs font-black text-neutral-900 dark:text-white hidden sm:inline-block">
-                  ₹{cartSubtotal}
-                </span>
-              </button>
-
-              {/* User Account / Profile */}
+              {/* 2. User Account Icon */}
               {isLoggedIn ? (
-                <div className="relative hidden sm:block" ref={userMenuRef}>
+                <div className="relative" ref={userMenuRef}>
                   <button
                     type="button"
                     onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                    className="flex items-center gap-1.5 p-1 rounded-full border border-neutral-200 dark:border-neutral-750 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
+                    className="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-[#2D6A4F] dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                    aria-label="Account menu"
                   >
-                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-bold text-xs flex items-center justify-center shadow-xs">
-                      {(user?.name || user?.email || 'U').charAt(0).toUpperCase()}
-                    </div>
+                    <User className="w-5 h-5 stroke-[1.6]" />
                   </button>
 
                   <AnimatePresence>
@@ -590,21 +509,25 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               ) : (
                 <Link
                   href="/login"
-                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+                  className="p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-[#2D6A4F] dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                  aria-label="Sign in"
                 >
-                  <User className="w-3.5 h-3.5" />
-                  <span>{currentLang === 'ta' ? 'உள்நுழைக' : 'Sign In'}</span>
+                  <User className="w-5 h-5 stroke-[1.6]" />
                 </Link>
               )}
 
-              {/* Glowing "Order Now" Liquid CTA Pill */}
-              <Link
-                href="/shop"
-                className="hidden lg:inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-gradient-to-r from-emerald-600 via-teal-600 to-amber-500 hover:from-emerald-700 hover:to-amber-600 text-white font-black text-xs shadow-md shadow-emerald-600/20 hover:scale-102 transition-all duration-300 cursor-pointer"
+              {/* 3. Shopping Cart Icon with Clean Circle Badge */}
+              <button
+                type="button"
+                onClick={(e) => { e.preventDefault(); openMiniCart(); }}
+                className="relative p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-[#2D6A4F] dark:hover:text-emerald-400 transition-colors cursor-pointer"
+                aria-label={`Shopping cart with ${cartCount} items`}
               >
-                <Zap className="w-3.5 h-3.5 fill-white" />
-                <span>{currentLang === 'ta' ? 'ஆர்டர் செய்க' : 'Order Now'}</span>
-              </Link>
+                <ShoppingBag className="w-5 h-5 stroke-[1.6]" />
+                <span className="absolute -top-1 -right-1 min-w-[17px] h-[17px] px-1 rounded-full bg-[#183F2D] text-white text-[9.5px] font-bold flex items-center justify-center shadow-xs">
+                  {cartCount}
+                </span>
+              </button>
 
             </div>
 

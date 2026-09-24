@@ -69,7 +69,7 @@ export const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ className }) =
     i18n.changeLanguage(nextLang);
   };
 
-  if (pathname?.startsWith('/admin')) {
+  if (pathname?.startsWith('/admin') || pathname === '/') {
     return null;
   }
 

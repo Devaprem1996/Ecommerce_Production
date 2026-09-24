@@ -43,7 +43,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
         }
       })
       .catch((err) => {
-        console.error("Failed to load new arrivals:", err);
+        console.warn("Backend new arrivals unavailable, using fallback:", err?.message || err);
         setProducts([...mockProducts].reverse().slice(0, 8));
       })
       .finally(() => {

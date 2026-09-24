@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Playfair_Display, Noto_Sans_Tamil } from "next/font/google";
+import { Inter, Playfair_Display, Noto_Sans_Tamil, Caveat } from "next/font/google";
 import "./globals.css";
 
 import { Toaster } from "@/components/ui/Toast";
@@ -24,6 +24,12 @@ const playfair = Playfair_Display({
   variable: "--font-playfair",
 });
 
+const caveat = Caveat({
+  subsets: ["latin"],
+  variable: "--font-script",
+  weight: ["400", "600", "700"],
+});
+
 const tamil = Noto_Sans_Tamil({
   subsets: ["tamil"],
   variable: "--font-tamil",
@@ -43,7 +49,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${playfair.variable} ${tamil.variable} h-full antialiased`}
+      className={`${inter.variable} ${playfair.variable} ${caveat.variable} ${tamil.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-neutral-50 dark:bg-neutral-905">
         <SmoothScrollProvider>

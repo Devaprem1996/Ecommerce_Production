@@ -119,7 +119,7 @@ export const CategorySection: React.FC = () => {
         }
       })
       .catch((err) => {
-        console.error("Failed to load backend categories:", err);
+        console.warn("Backend categories unavailable, using fallback:", err?.message || err);
       });
   }, []);
 

@@ -132,17 +132,14 @@ export default function Home() {
 
   return (
     <div className="flex flex-col flex-1 w-full bg-white dark:bg-neutral-950 font-sans transition-colors duration-normal">
-      {/* 1. Modern Split Hero */}
+      {/* 1. Full-Viewport Panoramic Hero with Integrated Trust Bar */}
       <HeroBanner />
 
-      {/* 2. Floating Stats Bar */}
-      <TrustBar />
-
-      {/* 2.5 Full-Bleed Drifting Live Ribbon */}
-      <InfiniteMarqueeRibbon />
-
-      {/* 3. Most Popular / Best Sellers Grid */}
+      {/* 2. Full-Viewport Bestsellers Showcase */}
       <BestSellers onQuickView={openQuickView} />
+
+      {/* 3.5 Full-Bleed Drifting Live Ribbon */}
+      <InfiniteMarqueeRibbon />
 
       {/* 4. High-Contrast Dark Showcase (Why Choose Us) */}
       <WhyChooseUs />
@@ -152,6 +149,9 @@ export default function Home() {
 
       {/* 6. Real Families Story Spotlight Banner (Warm Peach Cutout) */}
       <PromoBanner />
+
+      {/* 6.5 Live Catalog New Arrivals Carousel / Grid */}
+      <NewArrivals onQuickView={openQuickView} />
 
       {/* 7. Meet Our Traditional Artisans & Farmers (4 Solid Color Backdrops) */}
       <ArtisansSection />
@@ -302,10 +302,10 @@ export default function Home() {
                               setQuantity(1);
                             }}
                             className={`flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-badge border transition-all cursor-pointer ${isSelected
-                                ? 'bg-primary-500 text-white border-primary-500 shadow-sm ring-2 ring-primary-500/20'
-                                : isOutOfStock
-                                  ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 border-neutral-200 dark:border-neutral-700 opacity-60 line-through cursor-not-allowed'
-                                  : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-300 hover:border-primary-500/50'
+                              ? 'bg-primary-500 text-white border-primary-500 shadow-sm ring-2 ring-primary-500/20'
+                              : isOutOfStock
+                                ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-400 border-neutral-200 dark:border-neutral-700 opacity-60 line-through cursor-not-allowed'
+                                : 'bg-white dark:bg-neutral-850 border-neutral-200 dark:border-neutral-700 text-neutral-800 dark:text-neutral-300 hover:border-primary-500/50'
                               }`}
                           >
                             <span>{v.name}</span>
