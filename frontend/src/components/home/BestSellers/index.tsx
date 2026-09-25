@@ -5,6 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Check } from 'lucide-react';
+import { formatPrice } from '@/utils/formatPrice';
 import { ProductType } from '@/types';
 import { useCart } from '@/hooks/useCart';
 import { toast } from '@/components/ui/Toast';
@@ -24,8 +25,8 @@ const fallbackBestsellers: ProductType[] = [
     nameTamil: 'தூய மரச்செக்கு நல்லெண்ணெய்',
     description: 'Traditional wood-pressed golden sesame oil extracted from native heirloom sesame seeds. 100% natural, unrefined, zero chemical solvents.',
     descriptionTamil: 'வாகை மரச்செக்கில் பிழியப்பட்ட பாரம்பரிய நல்லெண்ணெய்.',
-    price: 8.99,
-    originalPrice: 10.99,
+    price: 449,
+    originalPrice: 549,
     images: ['/images/bestseller-sesame-oil.jpg'],
     category: 'Cold-Pressed Oils',
     stock: 40,
@@ -41,8 +42,8 @@ const fallbackBestsellers: ProductType[] = [
     nameTamil: 'தூய காட்டுத் தேன்',
     description: '100% pure raw mountain honey collected from wild deep forest hives. Naturally crystallized, rich in enzymes and antioxidants.',
     descriptionTamil: 'ஆழ்காட்டு மலை தேன்கூடுகளிலிருந்து சேகரிக்கப்பட்ட 100% தூய காட்டுத் தேன்.',
-    price: 9.49,
-    originalPrice: 12.00,
+    price: 499,
+    originalPrice: 649,
     images: ['/images/bestseller-raw-honey.jpg'],
     category: 'Raw Honey',
     stock: 30,
@@ -58,8 +59,8 @@ const fallbackBestsellers: ProductType[] = [
     nameTamil: 'மாம்பழ அமிர்த பானம்',
     description: 'Refreshing & energizing cold-pressed pure ripe mango & citrus juice with zero preservatives, zero added sugar, and high natural vitamin C.',
     descriptionTamil: 'தூய இயற்கை மாம்பழ சாறு, சர்க்கரை மற்றும் ரசாயனம் அற்றது.',
-    price: 4.99,
-    originalPrice: 6.49,
+    price: 249,
+    originalPrice: 329,
     images: ['/images/bestseller-mango-juice.jpg'],
     category: 'Cold-Pressed Juices',
     stock: 28,
@@ -75,8 +76,8 @@ const fallbackBestsellers: ProductType[] = [
     nameTamil: 'ஓட்ஸ் பேக்கரி குக்கீஸ்',
     description: 'Healthy & delicious. Golden-crisp oatmeal cookies baked with organic whole oats, raw country jaggery, and unbleached grain flours.',
     descriptionTamil: 'முழு ஓட்ஸ் மற்றும் நாட்டுச்சர்க்கரையால் சுடப்பட்ட ஆரோக்கியமான குக்கீஸ்.',
-    price: 5.49,
-    originalPrice: 6.99,
+    price: 299,
+    originalPrice: 379,
     images: ['/images/bestseller-oatmeal-cookies.jpg'],
     category: 'Bakes & Snacks',
     stock: 45,
@@ -121,7 +122,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
     e.stopPropagation();
     addItem(product, 1);
     const displayName = currentLang === 'ta' && product.nameTamil ? product.nameTamil : product.name;
-    toast.cart(`${displayName} ($${product.price.toFixed(2)})`);
+    toast.cart(`${displayName} (${formatPrice(product.price)})`);
 
     setAddedIds((prev) => ({ ...prev, [product.id]: true }));
     setTimeout(() => {
@@ -210,7 +211,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
                   {/* Bottom Row: Price on Left, Plus Icon Button on Right */}
                   <div className="flex items-center justify-between pt-2.5 border-t border-neutral-200/60 dark:border-neutral-800">
                     <span className="text-sm sm:text-base font-bold text-neutral-900 dark:text-white tracking-tight">
-                      ${product.price.toFixed(2)}
+                      {formatPrice(product.price)}
                     </span>
 
                     <button

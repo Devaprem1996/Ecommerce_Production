@@ -251,7 +251,7 @@ function ShopContent() {
   const hasActiveFilters = selectedCategory !== null || selectedPriceRangeIndex !== 0 || selectedRating !== null || inStockOnly;
 
   return (
-    <div className="min-h-screen bg-neutral-50 dark:bg-neutral-950 font-sans pb-20 transition-colors duration-normal">
+    <div className="min-h-screen bg-[#FEFCF8] dark:bg-neutral-950 font-sans pb-20 transition-colors duration-normal">
       
       {/* 1. Vibrant Top Hero Banner with Organic Gradient Atmosphere */}
       <div className="w-full bg-gradient-to-r from-emerald-800 via-teal-900 to-amber-900 text-white py-8 sm:py-12 relative overflow-hidden shadow-sm">
@@ -365,7 +365,7 @@ function ShopContent() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         
         {/* Toolbar Controls */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white dark:bg-neutral-900 border border-neutral-200/80 dark:border-neutral-800 rounded-3xl p-4 mb-6 shadow-xs">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#F8F6F0] dark:bg-neutral-900 border border-[#ECE6DC] dark:border-neutral-800 rounded-3xl p-4 mb-6 shadow-xs">
           
           {/* Left: Price Filter Pills */}
           <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -545,8 +545,14 @@ function ShopContent() {
                   : 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-5'
               )}
             >
-              {paginatedProducts.map(product => (
-                <div key={product.id} className="flex">
+              {paginatedProducts.map((product, index) => (
+                <motion.div
+                  key={product.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.35, delay: (index % 8) * 0.05 }}
+                  className="flex w-full"
+                >
                   <ProductCard
                     product={product}
                     onAddToCart={handleAddToCart}
@@ -554,7 +560,7 @@ function ShopContent() {
                     isWishlisted={hasItem(product.id)}
                     onClick={() => router.push(`/shop/${slugify(product.name)}`)}
                   />
-                </div>
+                </motion.div>
               ))}
             </motion.div>
 

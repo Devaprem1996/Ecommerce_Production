@@ -1,11 +1,14 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
-import Link from 'next/link';
+import Image from 'next/image';
 import { useTranslation } from 'react-i18next';
-import { useInView, motion } from 'framer-motion';
-import { Leaf, MapPin, Package, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { useInView, motion, AnimatePresence } from 'framer-motion';
+import { Play, Leaf, MapPin, ShieldCheck } from 'lucide-react';
 
+/* ──────────────────────────────────────────────
+   Animated Count-Up (triggers on scroll-into-view)
+   ────────────────────────────────────────────── */
 interface CountUpProps {
   end: number;
   duration?: number;
@@ -34,54 +37,74 @@ const CountUp: React.FC<CountUpProps> = ({ end, duration = 1200, suffix = "" }) 
   return <span ref={ref}>{count}{suffix}</span>;
 };
 
+/* ──────────────────────────────────────────────
+   Showcase Media — rotating images
+   ────────────────────────────────────────────── */
+const showcaseMedia = [
+  {
+    src: '/images/why-choose-wood-press.jpg',
+    alt: 'Traditional Marachekku wood-pressed oil extraction',
+    captionEn: 'Marachekku Cold-Press Process',
+    captionTa: 'மரச்செக்கு எண்ணெய் பிழிதல்',
+  },
+  {
+    src: '/images/why-choose-product-flatlay.jpg',
+    alt: 'Organic product collection flatlay',
+    captionEn: 'Our Pure Product Range',
+    captionTa: 'எங்கள் தூய தயாரிப்புகள்',
+  },
+  {
+    src: '/images/why-choose-organic-farm.jpg',
+    alt: 'Organic farmland in Tamil Nadu',
+    captionEn: 'Direct Farm Sourcing',
+    captionTa: 'நேரடி விவசாய கொள்முதல்',
+  },
+];
+
+/* ──────────────────────────────────────────────
+   Main Component
+   ────────────────────────────────────────────── */
 export const WhyChooseUs: React.FC = () => {
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const currentLang = i18n.language;
+  const [activeSlide, setActiveSlide] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActiveSlide(prev => (prev + 1) % showcaseMedia.length);
+    }, 5000);
+    return () => clearInterval(timer);
+  }, []);
 
   const features = [
     {
-      icon: <Leaf className="w-6 h-6 text-emerald-400" />,
-      iconBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-      titleEn: '100% Traditional Wood-Pressed',
-      titleTa: '100% மரச்செக்கு முறை',
-      descEn: 'Extracted slowly in Vaagai wood presses without heat or chemical solvents.',
-      descTa: 'வாகை மரச்செக்கில் மிதமான சுழற்சியில் ஊட்டச்சத்துக்கள் அழியாமல் பிழியப்படுகிறது.',
+      icon: <Leaf className="w-5 h-5" />,
+      titleEn: 'Pure Wood-Pressed, Chemical-Free',
+      titleTa: 'தூய மரச்செக்கு, ரசாயனம் இல்லை',
+      descEn: 'Our oils are extracted using centuries-old Vaagai wood-press method — zero heat, zero solvents, retaining every micronutrient.',
+      descTa: 'வாகை மரச்செக்கில் வெப்பமோ ரசாயனமோ இல்லாமல் பிழியப்படுகின்றன.',
       statVal: 100,
       statSuffix: '%',
-      statLabelEn: 'Pure & Cold Pressed',
+      statLabelEn: 'Pure Cold-Pressed',
       statLabelTa: 'தூய குளிர் முறை',
     },
     {
-      icon: <MapPin className="w-6 h-6 text-amber-400" />,
-      iconBg: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
-      titleEn: 'Direct Farm Sourcing',
-      titleTa: 'நேரடி பண்ணை கொள்முதல்',
-      descEn: 'Procured ethically from native Tamil Nadu and South Indian organic farmers.',
-      descTa: 'உள்ளூர் விவசாயிகளிடம் இருந்து தரமான விளைபொருட்கள் நேரடியாக பெறப்படுகின்றன.',
+      icon: <MapPin className="w-5 h-5" />,
+      titleEn: 'Direct From Native Tamil Nadu Farms',
+      titleTa: 'நேரடி தமிழ்நாடு பண்ணை கொள்முதல்',
+      descEn: 'We work with 50+ small-scale organic farmers ensuring fair trade and complete farm-to-table traceability.',
+      descTa: '50+ சிறு இயற்கை விவசாயிகளிடமிருந்து நேரடியாக, நியாயமான விலையில் பெறுகிறோம்.',
       statVal: 50,
       statSuffix: '+',
       statLabelEn: 'Partner Farms',
       statLabelTa: 'இணைந்த பண்ணைகள்',
     },
     {
-      icon: <Package className="w-6 h-6 text-sky-400" />,
-      iconBg: 'bg-sky-500/10 border-sky-500/20 text-sky-400',
-      titleEn: 'Eco-Friendly Packing',
-      titleTa: 'சுற்றுச்சூழல் நட்பு பேக்கிங்',
-      descEn: 'Food-grade tin cans and glass bottles that preserve aroma and freshness.',
-      descTa: 'மணமும் சுவையும் மாறாமல் பாதுகாக்க உணவு தர தகர டப்பாக்கள் மற்றும் கண்ணாடி பாட்டில்கள்.',
-      statVal: 15,
-      statSuffix: 'k+',
-      statLabelEn: 'Orders Delivered',
-      statLabelTa: 'விநியோகிக்கப்பட்டது',
-    },
-    {
-      icon: <ShieldCheck className="w-6 h-6 text-rose-400" />,
-      iconBg: 'bg-rose-500/10 border-rose-500/20 text-rose-400',
-      titleEn: 'Rigorous Lab Certified',
-      titleTa: 'ஆய்வக சான்றளிப்பு',
-      descEn: 'Every production batch is tested for zero aflatoxins, free fatty acids, and moisture.',
-      descTa: 'ஒவ்வொரு தயாரிப்பும் NABL சான்றளிக்கப்பட்ட ஆய்வகங்களில் கடுமையான தரப்பரிசோதனை செய்யப்படுகிறது.',
+      icon: <ShieldCheck className="w-5 h-5" />,
+      titleEn: 'NABL Lab Tested, Every Single Batch',
+      titleTa: 'ஒவ்வொரு தொகுதியும் NABL ஆய்வக சோதனை',
+      descEn: 'Every production batch undergoes rigorous NABL-certified lab testing for zero aflatoxins, free fatty acids and moisture.',
+      descTa: 'ஒவ்வொரு தயாரிப்பும் NABL சான்றளிக்கப்பட்ட ஆய்வகத்தில் கடுமையான தரப்பரிசோதனை.',
       statVal: 120,
       statSuffix: '+',
       statLabelEn: 'Lab Tests Passed',
@@ -90,105 +113,148 @@ export const WhyChooseUs: React.FC = () => {
   ];
 
   return (
-    <section className="relative w-full py-16 sm:py-20 lg:py-24 bg-gradient-to-b from-[#081C15] via-[#0A2218] to-[#081C15] text-white font-sans overflow-hidden">
-      {/* Ambient Radial Lighting Effects */}
-      <div 
-        className="absolute top-1/4 right-0 w-[500px] h-[500px] rounded-full bg-emerald-500/10 blur-[120px] pointer-events-none" 
-        aria-hidden="true" 
-      />
-      <div 
-        className="absolute bottom-10 left-10 w-96 h-96 rounded-full bg-amber-500/10 blur-[100px] pointer-events-none" 
-        aria-hidden="true" 
-      />
+    <section className="relative w-full min-h-screen bg-[#F5F2EC] dark:bg-neutral-950 font-sans overflow-hidden transition-colors duration-normal flex flex-col">
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
-          
-          {/* Left Column: Inspiring Headline & Action */}
-          <div className="lg:col-span-5 flex flex-col items-start text-left" data-aos="fade-up">
-            
-            {/* Pill Eyebrow */}
-            <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-emerald-500/15 border border-emerald-400/30 text-emerald-300 text-xs font-bold uppercase tracking-wider mb-5">
-              <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
-              <span>{currentLang === 'ta' ? 'எங்கள் தரம் மற்றும் உறுதிமொழி' : 'Why Choose Yathu Arokiyagam?'}</span>
-            </div>
+      {/* ─── Full-Viewport Image with Heading Overlay ─── */}
+      <div className="relative w-full flex-1 min-h-[60vh] lg:min-h-[70vh]">
 
-            {/* Headline */}
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold font-heading text-white leading-[1.18] tracking-tight mb-5">
-              {currentLang === 'ta' ? (
-                <>
-                  நாங்கள் உணவை விற்கவில்லை,{' '}
-                  <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-amber-300 bg-clip-text text-transparent">
-                    ஆரோக்கியத்தை
-                  </span>{' '}
-                  மீட்டெடுக்கிறோம்.
-                </>
-              ) : (
-                <>
-                  We Don&apos;t Just Sell Food.{' '}
-                  <span className="bg-gradient-to-r from-emerald-300 via-teal-300 to-amber-300 bg-clip-text text-transparent">
-                    We Revive Pure Living.
-                  </span>
-                </>
-              )}
-            </h2>
-
-            {/* Subtext */}
-            <p className="text-sm sm:text-base text-neutral-300 leading-relaxed max-w-lg mb-8 font-normal">
-              {currentLang === 'ta'
-                ? 'ரசாயனங்கள் மற்றும் கலப்படங்கள் இல்லாத பாரம்பரிய மரச்செக்கு உணவுமுறை உங்கள் குடும்பத்தை தலைமுறை தலைமுறையாக ஆரோக்கியமாக காக்கும்.'
-                : 'Honest, preservative-free traditional foods processed with ancient wood-pressing and native practices that safeguard essential micronutrients and genuine aroma.'}
-            </p>
-
-            {/* Action CTA */}
-            <Link
-              href="/shop"
-              className="group inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 hover:border-emerald-400 text-white font-bold text-sm shadow-md transition-all duration-normal hover:shadow-emerald-500/20"
+        {/* Full-bleed background image */}
+        <div className="absolute inset-0">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={activeSlide}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 1, ease: 'easeInOut' }}
+              className="absolute inset-0"
             >
-              <span>{currentLang === 'ta' ? 'எங்கள் தயாரிப்புகளை காண்க' : 'Explore Our Standards'}</span>
-              <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1 text-emerald-300" />
-            </Link>
+              <Image
+                src={showcaseMedia[activeSlide].src}
+                alt={showcaseMedia[activeSlide].alt}
+                fill
+                sizes="100vw"
+                className="object-cover object-center"
+                priority={activeSlide === 0}
+              />
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Left gradient: parchment fade for text legibility */}
+          <div className="absolute inset-0 bg-gradient-to-r from-[#F5F2EC] via-[#F5F2EC]/70 to-transparent dark:from-neutral-950 dark:via-neutral-950/70 z-10 pointer-events-none w-[55%] sm:w-[50%] lg:w-[45%]" />
+          {/* Bottom gradient for lower caption */}
+          <div className="absolute inset-x-0 bottom-0 h-32 bg-gradient-to-t from-[#F5F2EC]/80 dark:from-neutral-950/80 to-transparent z-10 pointer-events-none" />
+        </div>
+
+        {/* Heading positioned on the left over the gradient */}
+        <div className="relative z-20 h-full flex items-center">
+          <div className="w-full max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.7 }}
+              className="max-w-md lg:max-w-lg xl:max-w-xl"
+            >
+              <h2 className="text-[2rem] sm:text-[2.6rem] lg:text-[3.2rem] xl:text-[3.8rem] font-black font-heading text-neutral-900 dark:text-white leading-[1.06] tracking-tight">
+                {currentLang === 'ta' ? (
+                  <>
+                    யாது அரோக்கியகம்
+                    <br />
+                    ஏன் உங்கள்
+                    <br />
+                    குடும்பத்திற்கான{' '}
+                    <span className="italic font-serif font-normal">நம்பிக்கையான தேர்வு?</span>
+                  </>
+                ) : (
+                  <>
+                    Why Choose
+                    <br />
+                    Yathu Arokiyagam
+                    <br />
+                    <span className="italic font-serif font-normal">for Your Family?</span>
+                  </>
+                )}
+              </h2>
+            </motion.div>
           </div>
+        </div>
 
-          {/* Right Column: 2x2 Dark Glassmorphic Grid */}
-          <div className="lg:col-span-7">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
-              {features.map((feat, index) => (
-                <div
-                  key={index}
-                  data-aos="fade-up"
-                  data-aos-delay={index * 90}
-                  className="group relative bg-white/[0.04] hover:bg-white/[0.07] border border-white/10 hover:border-emerald-400/40 backdrop-blur-md rounded-2xl p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-xl hover:shadow-black/30 flex flex-col justify-between"
-                >
-                  <div>
-                    {/* Glowing Icon Badge */}
-                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center border mb-4 transition-transform duration-300 group-hover:scale-108 ${feat.iconBg}`}>
-                      {feat.icon}
-                    </div>
+        {/* Play button — centered on the image */}
+        <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+          <motion.div
+            initial={{ scale: 0.8, opacity: 0 }}
+            whileInView={{ scale: 1, opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5, delay: 0.3 }}
+            className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center shadow-2xl ml-[20%] sm:ml-[25%] lg:ml-[15%]"
+          >
+            <Play className="w-7 h-7 sm:w-8 sm:h-8 text-white fill-white ml-1" />
+          </motion.div>
+        </div>
 
-                    <h3 className="text-base sm:text-lg font-bold text-white mb-2 leading-snug">
-                      {currentLang === 'ta' ? feat.titleTa : feat.titleEn}
-                    </h3>
+        {/* Caption + slide dots at bottom right */}
+        <div className="absolute bottom-0 right-0 z-20 px-6 pb-5 sm:px-10 flex items-end gap-6">
+          <p className="text-xs sm:text-sm font-semibold text-neutral-800 dark:text-white/90">
+            {currentLang === 'ta'
+              ? showcaseMedia[activeSlide].captionTa
+              : showcaseMedia[activeSlide].captionEn}
+          </p>
+          <div className="flex items-center gap-1.5 shrink-0">
+            {showcaseMedia.map((_, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => setActiveSlide(idx)}
+                className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                  idx === activeSlide
+                    ? 'w-7 bg-neutral-900 dark:bg-white'
+                    : 'w-2.5 bg-neutral-400/50 hover:bg-neutral-500'
+                }`}
+                aria-label={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
 
-                    <p className="text-xs sm:text-sm text-neutral-350 leading-relaxed mb-5">
-                      {currentLang === 'ta' ? feat.descTa : feat.descEn}
-                    </p>
-                  </div>
-
-                  {/* Stat Counter at Bottom */}
-                  <div className="pt-3 border-t border-white/10 flex items-baseline justify-between mt-auto">
-                    <span className="text-2xl font-extrabold font-heading text-emerald-400">
-                      <CountUp end={feat.statVal} suffix={feat.statSuffix} />
-                    </span>
-                    <span className="text-[11px] font-semibold uppercase tracking-wider text-neutral-400">
-                      {currentLang === 'ta' ? feat.statLabelTa : feat.statLabelEn}
-                    </span>
-                  </div>
+      {/* ─── Bottom: Three Feature Pillars ─── */}
+      <div className="relative z-10 border-t border-neutral-300/60 dark:border-neutral-800 bg-[#F5F2EC] dark:bg-neutral-950">
+        <div className="max-w-[1400px] mx-auto px-6 sm:px-10 lg:px-14 xl:px-16">
+          <div className="grid grid-cols-1 md:grid-cols-3">
+            {features.map((feat, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+                className={`py-10 sm:py-12 lg:py-14 ${
+                  index < 2 ? 'md:border-r border-b md:border-b-0 border-neutral-300/60 dark:border-neutral-800' : 'border-b md:border-b-0 border-neutral-300/60 dark:border-neutral-800 last:border-b-0'
+                } ${index === 0 ? 'md:pr-8 lg:pr-10' : index === 1 ? 'md:px-8 lg:px-10' : 'md:pl-8 lg:pl-10'}`}
+              >
+                {/* Large stat number */}
+                <div className="flex items-baseline gap-2 mb-4">
+                  <span className="text-4xl sm:text-5xl font-black font-heading text-neutral-900 dark:text-white leading-none tracking-tight">
+                    <CountUp end={feat.statVal} suffix={feat.statSuffix} />
+                  </span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
+                    {currentLang === 'ta' ? feat.statLabelTa : feat.statLabelEn}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </div>
 
+                {/* Title */}
+                <h3 className="text-base sm:text-lg font-black text-neutral-900 dark:text-white leading-snug mb-3">
+                  {currentLang === 'ta' ? feat.titleTa : feat.titleEn}
+                </h3>
+
+                {/* Description */}
+                <p className="text-xs sm:text-[13px] text-neutral-600 dark:text-neutral-400 leading-relaxed">
+                  {currentLang === 'ta' ? feat.descTa : feat.descEn}
+                </p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

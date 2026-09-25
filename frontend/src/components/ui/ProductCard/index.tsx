@@ -62,15 +62,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({
       onClick={handleQuickView}
       className={twMerge(
         clsx(
-          // Liquid Glass Surface & Compact Proportions
-          'group relative flex flex-col w-full rounded-[18px] sm:rounded-[20px] p-2.5 sm:p-3 overflow-hidden font-sans cursor-pointer transition-all duration-300',
-          // Translucent Frosted Liquid Glass styling
-          'bg-white/80 dark:bg-neutral-900/80 backdrop-blur-xl',
-          'border border-white/80 dark:border-white/10',
-          // Specular Inner Light Highlight & Ambient Drop Shadow
-          'shadow-[0_4px_20px_rgba(0,0,0,0.03),inset_0_1px_1px_rgba(255,255,255,0.85)] dark:shadow-[0_4px_20px_rgba(0,0,0,0.35),inset_0_1px_1px_rgba(255,255,255,0.08)]',
-          // Liquid Glass Hover Lift & Specular Glow
-          'hover:-translate-y-1.5 hover:border-emerald-500/35 hover:shadow-[0_12px_28px_rgba(45,106,79,0.12),inset_0_1px_1px_rgba(255,255,255,0.95)] dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]'
+          // Warm Organic Surface & Compact Proportions
+          'group relative flex flex-col w-full rounded-2xl lg:rounded-3xl p-3 sm:p-4 overflow-hidden font-sans cursor-pointer transition-all duration-300',
+          // Warm earthy organic styling matching site theme
+          'bg-[#F8F6F0] dark:bg-neutral-900',
+          'border border-[#ECE6DC] dark:border-neutral-800',
+          // Subtle natural shadow
+          'shadow-[0_2px_12px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)]',
+          // Hover lift with warm glow
+          'hover:-translate-y-1.5 hover:shadow-xl hover:border-emerald-500/30 dark:hover:shadow-[0_12px_28px_rgba(0,0,0,0.55)]'
         ),
         className
       )}
@@ -82,8 +82,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         aria-hidden="true" 
       />
 
-      {/* Image Container with Crisp Compact Aspect Ratio */}
-      <div className="relative w-full aspect-square bg-[#F5F6F8] dark:bg-neutral-850 rounded-[14px] overflow-hidden flex items-center justify-center mb-2.5 border border-white/60 dark:border-neutral-800">
+      {/* Image Container */}
+      <div className="relative w-full aspect-square bg-white dark:bg-neutral-800 rounded-xl lg:rounded-2xl overflow-hidden flex items-center justify-center mb-3 shadow-2xs">
         
         {/* Product Image with Smooth Scale Zoom */}
         <Image
@@ -91,7 +91,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
           alt={displayName}
           fill
           sizes="(max-width: 576px) 160px, (max-width: 992px) 240px, 280px"
-          className="object-cover transition-transform duration-500 ease-out group-hover:scale-106"
+          className="object-contain p-3 transition-transform duration-500 ease-out group-hover:scale-105"
         />
 
         {/* Liquid Glass Badges (Top-Left Absolute) */}
@@ -179,7 +179,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({
         </Link>
 
         {/* Bottom Row: Price & Tactile Liquid Add Button */}
-        <div className="flex items-center justify-between gap-2 mt-auto pt-2 border-t border-neutral-100/90 dark:border-neutral-800/80">
+        <div className="flex items-center justify-between gap-2 mt-auto pt-2.5 border-t border-neutral-200/60 dark:border-neutral-800">
           
           {/* Price Stack */}
           <div className="flex flex-col min-w-0">
