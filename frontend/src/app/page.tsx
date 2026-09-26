@@ -135,43 +135,43 @@ export default function Home() {
       {/* 1. Full-Viewport Panoramic Hero with Integrated Trust Bar */}
       <HeroBanner />
 
-      {/* 2. Full-Viewport Bestsellers Showcase */}
+      {/* 2. Vibrant Category Section (Immediate Catalog Discovery) */}
+      <CategorySection />
+
+      {/* 3. NEW ARRIVAL PRODUCT Carousel Showcase */}
+      <NewArrivals onQuickView={openQuickView} />
+
+      {/* 4. BEST SELLER Carousel Showcase */}
       <BestSellers onQuickView={openQuickView} />
 
-      {/* 3.5 Full-Bleed Drifting Live Ribbon */}
+      {/* 5. Full-Bleed Drifting Live Ribbon */}
       <InfiniteMarqueeRibbon />
-
-      {/* 4. High-Contrast Dark Showcase (Why Choose Us) */}
-      <WhyChooseUs />
-
-      {/* 5. Vibrant Pastel Category Section */}
-      <CategorySection />
 
       {/* 6. Real Families Story Spotlight Banner (Warm Peach Cutout) */}
       <PromoBanner />
 
-      {/* 6.5 Live Catalog New Arrivals Carousel / Grid */}
-      <NewArrivals onQuickView={openQuickView} />
+      {/* 7. High-Contrast Dark Showcase (Why Choose Us) */}
+      <WhyChooseUs />
 
-      {/* 7. Meet Our Traditional Artisans & Farmers (4 Solid Color Backdrops) */}
+      {/* 8. Meet Our Traditional Artisans & Farmers (4 Solid Color Backdrops) */}
       <ArtisansSection />
 
-      {/* 8. 100% Lab Tested & Certified Callout (Dark Feature Banner) */}
+      {/* 9. 100% Lab Tested & Certified Callout (Dark Feature Banner) */}
       <CertificationBanner />
 
-      {/* 9. Customer Testimonials (3-Column Reviews) */}
+      {/* 10. Customer Testimonials (3-Column Reviews) */}
       <Testimonials />
 
-      {/* 10. From Our Wellness Blog (4-Column Insights) */}
+      {/* 11. From Our Wellness Blog (4-Column Insights) */}
       <BlogPreview />
 
-      {/* 11. Frequently Asked Questions (Interactive Accordion) */}
+      {/* 12. Frequently Asked Questions (Interactive Accordion) */}
       <FaqSection />
 
-      {/* 12. Newsletter & Farm Updates Subscription */}
+      {/* 13. Newsletter & Farm Updates Subscription */}
       <Newsletter />
 
-      {/* 13. Scenic Nature Pre-Footer Callout Banner */}
+      {/* 14. Scenic Nature Pre-Footer Callout Banner */}
       <PreFooterCallout />
 
       {/* Central Product Quick View Modal */}

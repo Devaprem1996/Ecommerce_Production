@@ -116,7 +116,6 @@ html.lenis, html.lenis body {
   }
 }
 
-/* Infinite Edge-to-Edge Marquee Ticker */
 @keyframes marquee {
   0% {
     transform: translateX(0%);
@@ -126,34 +125,105 @@ html.lenis, html.lenis body {
   }
 }
 
-.animate-float {
-  animation: float 4s ease-in-out infinite;
-}
-
-.animate-float-delayed {
-  animation: float 5s ease-in-out 1.5s infinite;
-}
-
-.animate-pulse-glow {
-  animation: pulseGlow 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
-}
-
-.animate-liquid-morph {
-  animation: liquidMorph 10s ease-in-out infinite;
-}
-
-.animate-liquid-morph-slow {
-  animation: liquidMorph 16s ease-in-out infinite alternate;
+@keyframes marqueeReverse {
+  0% {
+    transform: translateX(-50%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
 }
 
 .animate-marquee {
   display: flex;
   width: max-content;
   animation: marquee 28s linear infinite;
+  will-change: transform;
 }
 
-.animate-marquee:hover {
+.animate-marquee-slow {
+  display: flex;
+  width: max-content;
+  animation: marquee 38s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-reverse {
+  display: flex;
+  width: max-content;
+  animation: marqueeReverse 32s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-fast {
+  display: flex;
+  width: max-content;
+  animation: marquee 22s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee:hover,
+.animate-marquee-slow:hover,
+.animate-marquee-reverse:hover,
+.animate-marquee-fast:hover {
   animation-play-state: paused;
+}
+
+/* Vertical Infinite Marquee for Story Spotlight */
+@keyframes marqueeVertical {
+  0% {
+    transform: translateY(0%);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes marqueeVerticalReverse {
+  0% {
+    transform: translateY(-50%);
+  }
+  100% {
+    transform: translateY(0%);
+  }
+}
+
+.animate-marquee-vertical {
+  animation: marqueeVertical 26s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-vertical-slow {
+  animation: marqueeVertical 34s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-vertical-reverse {
+  animation: marqueeVerticalReverse 28s linear infinite;
+  will-change: transform;
+}
+
+.animate-marquee-vertical:hover,
+.animate-marquee-vertical-slow:hover,
+.animate-marquee-vertical-reverse:hover {
+  animation-play-state: paused;
+}
+
+.vertical-marquee-mask {
+  mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+}
+
+/* Kinetic Hollow Text Stroke */
+.kinetic-text-stroke {
+  -webkit-text-stroke: 1.5px rgba(255, 255, 255, 0.45);
+  color: transparent;
+  transition: -webkit-text-stroke 0.3s ease, color 0.3s ease;
+}
+
+.kinetic-text-stroke:hover {
+  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.85);
+  color: rgba(255, 255, 255, 0.12);
 }
 
 /* Kinetic Gradient Typography */
