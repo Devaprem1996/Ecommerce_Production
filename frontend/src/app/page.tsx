@@ -168,10 +168,7 @@ export default function Home() {
       {/* 12. Frequently Asked Questions (Interactive Accordion) */}
       <FaqSection />
 
-      {/* 13. Newsletter & Farm Updates Subscription */}
-      <Newsletter />
-
-      {/* 14. Scenic Nature Pre-Footer Callout Banner */}
+      {/* 13. Scenic Nature Pre-Footer Callout Banner & Integrated Footer */}
       <PreFooterCallout />
 
       {/* Central Product Quick View Modal */}

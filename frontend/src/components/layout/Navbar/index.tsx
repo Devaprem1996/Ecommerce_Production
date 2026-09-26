@@ -717,6 +717,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               {/* 3. Shopping Cart Icon with Clean Circle Badge */}
               <button
                 type="button"
+                id="header-cart-btn"
                 onClick={(e) => { e.preventDefault(); openMiniCart(); }}
                 className="relative p-1.5 text-neutral-800 dark:text-neutral-200 hover:text-[#2D6A4F] dark:hover:text-emerald-400 transition-colors cursor-pointer"
                 aria-label={`Shopping cart with ${cartCount} items`}
