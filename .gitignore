@@ -43,3 +43,7 @@ logs/
 Thumbs.db
 .vercel
 .env*
+
+# Reference & design assets
+website theme reference images/
+frontend/website theme reference images/

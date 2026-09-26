@@ -10,6 +10,7 @@ export interface ProductVariantType {
 
 export interface ProductType {
   id: string;
+  slug?: string;
   name: string;
   nameTamil?: string;
   description: string;

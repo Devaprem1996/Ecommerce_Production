@@ -16,109 +16,115 @@ interface BestSellersProps {
   onQuickView: (product: ProductType) => void;
 }
 
-// Rich fallback products for Best Sellers
+// Authentic database-backed best sellers with real slugs and studio photography
 const fallbackBestsellers: ProductType[] = [
   {
-    id: 'best-prod-oil',
-    name: 'Pure Cold-Pressed Sesame Oil',
-    nameTamil: 'தூய மரச்செக்கு நல்லெண்ணெய்',
+    id: 'prod-sesame-oil',
+    slug: 'wood-pressed-sesame-oil',
+    name: 'Wood Pressed Sesame Oil',
+    nameTamil: 'மரச்செக்கு நல்லெண்ணெய்',
     description: 'Traditional wood-pressed golden sesame oil extracted from native heirloom sesame seeds. 100% unrefined.',
-    descriptionTamil: 'வாகை மரச்செக்கில் பிழியப்பட்ட பாரம்பரிய நல்லெண்ணெய்.',
+    descriptionTamil: 'வாகை மரச்செக்கில் பிழியப்பட்ட பாரம்பரிய தூய நல்லெண்ணெய்.',
     price: 449,
     originalPrice: 549,
     images: ['/images/bestseller-sesame-oil.jpg'],
-    category: 'Cold-Pressed Oils',
+    category: 'Traditional Oils',
     stock: 40,
     rating: 5.0,
     reviewsCount: 240,
     isOrganic: true,
     isLabTested: true,
-    unit: '500ml Glass Bottle',
+    unit: '500ML',
   },
   {
-    id: 'best-prod-honey',
-    name: 'Raw Wild Mountain Honey',
-    nameTamil: 'தூய காட்டுத் தேன்',
+    id: 'prod-wild-honey',
+    slug: 'natural-wild-honey',
+    name: 'Natural Wild Honey',
+    nameTamil: 'சுத்தமான காட்டுத் தேன்',
     description: '100% pure raw mountain honey collected from wild deep forest hives. Naturally crystallized, enzyme-rich.',
     descriptionTamil: 'ஆழ்காட்டு மலை தேன்கூடுகளிலிருந்து சேகரிக்கப்பட்ட 100% தூய காட்டுத் தேன்.',
     price: 499,
     originalPrice: 649,
     images: ['/images/bestseller-raw-honey.jpg'],
-    category: 'Raw Honey',
+    category: 'Natural Sweeteners & Salts',
     stock: 30,
     rating: 4.9,
     reviewsCount: 195,
     isOrganic: true,
     isLabTested: true,
-    unit: '450g Glass Jar',
+    unit: '500GM',
   },
   {
-    id: 'best-prod-ghee',
-    name: 'Pure Desi A2 Cow Ghee',
-    nameTamil: 'நாட்டுப் பசு A2 நெய்',
-    description: 'Bilona churned golden ghee made from curd of grass-fed native Indian cows. Rich nutty aroma and vitality.',
-    descriptionTamil: 'பாரம்பரிய பிலோனா முறையில் தயிரைக் கடைந்து எடுக்கப்பட்ட தூய நாட்டுப்பசு A2 நெய்.',
-    price: 749,
-    originalPrice: 899,
-    images: ['/images/bestseller-a2-ghee.jpg'],
-    category: 'Traditional Ghee',
-    stock: 25,
-    rating: 5.0,
-    reviewsCount: 310,
-    isOrganic: true,
-    isLabTested: true,
-    unit: '500ml Glass Jar',
-  },
-  {
-    id: 'best-prod-cookies',
-    name: 'Artisanal Oatmeal Cookies',
-    nameTamil: 'ஓட்ஸ் பேக்கரி குக்கீஸ்',
-    description: 'Golden-crisp oatmeal cookies baked with organic whole oats, raw country jaggery, and cold-pressed butter.',
-    descriptionTamil: 'முழு ஓட்ஸ் மற்றும் நாட்டுச்சர்க்கரையால் சுடப்பட்ட ஆரோக்கியமான குக்கீஸ்.',
-    price: 299,
-    originalPrice: 379,
-    images: ['/images/bestseller-oatmeal-cookies.jpg'],
-    category: 'Bakes & Snacks',
-    stock: 45,
-    rating: 5.0,
-    reviewsCount: 210,
-    isOrganic: true,
-    isLabTested: true,
-    unit: '250g Glass Jar',
-  },
-  {
-    id: 'best-prod-juice',
-    name: 'Mango Bliss Cold-Pressed Juice',
-    nameTamil: 'மாம்பழ அமிர்த பானம்',
-    description: 'Refreshing cold-pressed pure ripe mango juice with zero added sugar, zero preservatives, and natural vitamins.',
-    descriptionTamil: 'தூய இயற்கை மாம்பழ சாறு, சர்க்கரை மற்றும் ரசாயனம் அற்றது.',
-    price: 249,
-    originalPrice: 329,
-    images: ['/images/bestseller-mango-juice.jpg'],
-    category: 'Cold-Pressed Juices',
-    stock: 28,
-    rating: 4.9,
-    reviewsCount: 182,
-    isOrganic: true,
-    isLabTested: true,
-    unit: '300ml Glass Bottle',
-  },
-  {
-    id: 'best-prod-pasta',
-    name: 'Traditional Pesto Pasta',
-    nameTamil: 'பாரம்பரிய பெஸ்டோ பாஸ்தா',
-    description: 'Artisanal durum wheat pasta blended with fresh garden basil, pine nuts, and extra virgin olive dressing.',
-    descriptionTamil: 'துளசி மற்றும் பாரம்பரிய மூலிகைகளுடன் சுவையான ஆரோக்கிய பாஸ்தா.',
-    price: 319,
-    originalPrice: 399,
-    images: ['/images/bestseller-pesto-pasta.jpg'],
-    category: 'Healthy Meals',
+    id: 'prod-groundnut-oil',
+    slug: 'wood-pressed-groundnut-oil',
+    name: 'Wood Pressed Groundnut Oil',
+    nameTamil: 'மரச்செக்கு கடலை எண்ணெய்',
+    description: 'Cold-pressed unrefined native peanut oil extracted in traditional Vaagai wood churner. Sweet aroma.',
+    descriptionTamil: 'பாரம்பரிய மரச்செக்கில் பிழியப்பட்ட மணம் நிறைந்த தூய கடலை எண்ணெய்.',
+    price: 399,
+    originalPrice: 489,
+    images: ['/images/bestseller-groundnut-oil.jpg'],
+    category: 'Traditional Oils',
     stock: 35,
-    rating: 4.8,
-    reviewsCount: 145,
+    rating: 5.0,
+    reviewsCount: 215,
     isOrganic: true,
     isLabTested: true,
-    unit: '400g Pack',
+    unit: '500ML',
+  },
+  {
+    id: 'prod-jaggery-powder',
+    slug: 'sugarcane-jaggery-powder',
+    name: 'Sugarcane Jaggery Powder',
+    nameTamil: 'நாட்டு சர்க்கரை',
+    description: 'Natural unrefined golden jaggery powder made from chemical-free organic sugarcane juice.',
+    descriptionTamil: 'ரசாயனம் சேர்க்காத கரும்புச்சாற்றில் தயாரிக்கப்பட்ட ஆரோக்கிய நாட்டுச்சர்க்கரை.',
+    price: 140,
+    originalPrice: 180,
+    images: ['/images/bestseller-jaggery-powder.jpg'],
+    category: 'Natural Sweeteners & Salts',
+    stock: 50,
+    rating: 4.9,
+    reviewsCount: 180,
+    isOrganic: true,
+    isLabTested: true,
+    unit: '1KG',
+  },
+  {
+    id: 'prod-palm-jaggery',
+    slug: 'palm-jaggery-round',
+    name: 'Palm Jaggery Round',
+    nameTamil: 'பனங்கருப்பட்டி',
+    description: 'Authentic traditional palm jaggery (Karupatti) cakes, rich in iron, minerals, and calcium.',
+    descriptionTamil: 'பாரம்பரிய தூய உடனே சுடப்பட்ட சத்துக்கள் நிறைந்த பனங்கருப்பட்டி.',
+    price: 320,
+    originalPrice: 390,
+    images: ['/images/bestseller-palm-jaggery.jpg'],
+    category: 'Natural Sweeteners & Salts',
+    stock: 28,
+    rating: 5.0,
+    reviewsCount: 165,
+    isOrganic: true,
+    isLabTested: true,
+    unit: '500GM',
+  },
+  {
+    id: 'prod-black-rice',
+    slug: 'karupu-kavuni-rice-boiled',
+    name: 'Karupu Kavuni Rice Boiled',
+    nameTamil: 'கருப்பு கவுனி அரிசி',
+    description: 'Ancient emperor black rice loaded with anthocyanin antioxidants and high fiber vitality.',
+    descriptionTamil: 'ஆரோக்கியமும் நோய் எதிர்ப்பு சக்தியும் தரும் பாரம்பரிய கருப்பு கவுனி அரிசி.',
+    price: 210,
+    originalPrice: 260,
+    images: ['/images/bestseller-karupu-kavuni.jpg'],
+    category: 'Traditional Heritage Rices',
+    stock: 45,
+    rating: 4.9,
+    reviewsCount: 142,
+    isOrganic: true,
+    isLabTested: true,
+    unit: '1KG',
   },
 ];
 
@@ -169,7 +175,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
 
   useEffect(() => {
     apiClient
-      .get('/api/v1/cms/products?limit=8&sortBy=rating&sortOrder=desc')
+      .get('/api/v1/cms/products?limit=50')
       .then((res) => {
         if (
           res?.data?.products &&
@@ -177,16 +183,32 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
           res.data.products.length > 0
         ) {
           const mapped = res.data.products.map(mapProductToFrontend);
-          setProducts(mapped);
+          // Match real best-seller slugs from DB
+          const bestSellerSlugs = [
+            'wood-pressed-sesame-oil',
+            'natural-wild-honey',
+            'wood-pressed-groundnut-oil',
+            'sugarcane-jaggery-powder',
+            'palm-jaggery-round',
+            'karupu-kavuni-rice-boiled',
+            'wood-pressed-coconut-oil',
+            'seeraga-samba-fully-polished-boiled',
+          ];
+          const matched = bestSellerSlugs
+            .map((slug) => mapped.find((p: ProductType) => p.slug === slug))
+            .filter((p): p is ProductType => Boolean(p));
+
+          if (matched.length >= 4) {
+            setProducts(matched);
+          } else {
+            setProducts(mapped.slice(0, 8));
+          }
         } else {
           setProducts(fallbackBestsellers);
         }
       })
       .catch((err) => {
-        console.warn(
-          'Backend bestsellers unavailable, using fallback:',
-          err?.message || err
-        );
+        console.warn('Backend products unavailable, using authentic fallback:', err?.message || err);
         setProducts(fallbackBestsellers);
       })
       .finally(() => {
@@ -226,7 +248,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
   const sectionSubtitle =
     currentLang === 'ta'
       ? 'வாடிக்கையாளர்களால் அதிகம் விரும்பப்பட்ட சிறந்த தேர்வுகள்'
-      : 'Hand-picked to blend form, function, and inspiration';
+      : 'Hand-picked authentic farm essentials direct from ethical growers';
 
   return (
     <section

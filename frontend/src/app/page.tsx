@@ -328,7 +328,7 @@ export default function Home() {
                 {/* Link to Full Product Page */}
                 <div className="pt-0.5">
                   <Link
-                    href={`/shop/${slugify(selectedProduct.name)}`}
+                    href={`/shop/${selectedProduct.slug || slugify(selectedProduct.name)}`}
                     onClick={closeQuickView}
                     className="inline-flex items-center gap-1.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline"
                   >

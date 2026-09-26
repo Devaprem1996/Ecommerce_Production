@@ -2,10 +2,12 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { Heart, ShoppingBag, Check } from 'lucide-react';
 import { ProductType } from '@/types';
 import { formatPrice } from '@/utils/formatPrice';
+import { slugify } from '@/utils/slugify';
 
 export interface ProductShowcaseCardProps {
   product: ProductType;
@@ -86,9 +88,15 @@ export const ProductShowcaseCard: React.FC<ProductShowcaseCardProps> = ({
       <div className="flex items-end justify-between gap-2 pt-2">
         {/* Product Details (Left Column) */}
         <div className="flex flex-col min-w-0 pr-1">
-          <h3 className="text-sm sm:text-base font-semibold text-neutral-900 dark:text-white truncate leading-snug">
-            {displayName}
-          </h3>
+          <Link
+            href={`/shop/${product.slug || slugify(product.name)}`}
+            onClick={(e) => e.stopPropagation()}
+            className="hover:text-primary-600 dark:hover:text-primary-400 transition-colors"
+          >
+            <h3 className="text-sm sm:text-base font-semibold text-neutral-900 dark:text-white truncate leading-snug">
+              {displayName}
+            </h3>
+          </Link>
           <div className="flex items-baseline gap-2 mt-1">
             <span className="text-xs sm:text-sm text-neutral-400 dark:text-neutral-500 line-through font-normal">
               {formatPrice(originalPrice)}

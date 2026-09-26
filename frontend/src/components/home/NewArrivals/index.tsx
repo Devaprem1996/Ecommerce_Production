@@ -16,18 +16,19 @@ interface NewArrivalsProps {
   onQuickView: (product: ProductType) => void;
 }
 
-// Rich fallback products for New Arrivals
+// Authentic database-backed new arrivals with real slugs and studio photography
 const fallbackNewArrivals: ProductType[] = [
   {
-    id: 'new-prod-murukku',
-    name: 'Artisanal Achu Murukku',
+    id: 'prod-achu-murukku',
+    slug: 'achu-murukku',
+    name: 'Achu Murukku',
     nameTamil: 'பாரம்பரிய அச்சு முறுக்கு',
     description: 'Crisp, delicate traditional rosette cookies made with organic rice flour and coconut milk.',
     descriptionTamil: 'தேங்காய்ப்பால் மற்றும் பாரம்பரிய பச்சரிசி மாவில் சுடப்பட்ட சுவையான அச்சு முறுக்கு.',
     price: 175,
     originalPrice: 220,
     images: ['/images/prod-achu-murukku.jpg'],
-    category: 'Traditional Snacks',
+    category: 'Traditional Healthy Snacks & Sweets',
     stock: 35,
     rating: 4.9,
     reviewsCount: 112,
@@ -36,49 +37,52 @@ const fallbackNewArrivals: ProductType[] = [
     unit: '200g Pack',
   },
   {
-    id: 'new-prod-ginger',
-    name: 'Handmade Ginger Candy Chews',
+    id: 'prod-groundnut-chikki',
+    slug: 'groundnut-chikki',
+    name: 'Groundnut Chikki',
+    nameTamil: 'கடலை மிட்டாய்',
+    description: 'Crunchy Kovilpatti peanut brittle made with slow-roasted peanuts and natural jaggery syrup.',
+    descriptionTamil: 'கோவில்பட்டி பாரம்பரிய மணமுள்ள மொறுமொறு கடலை மிட்டாய்.',
+    price: 160,
+    originalPrice: 200,
+    images: ['/images/prod-groundnut-chikki.jpg'],
+    category: 'Traditional Healthy Snacks & Sweets',
+    stock: 45,
+    rating: 5.0,
+    reviewsCount: 154,
+    isOrganic: true,
+    isLabTested: true,
+    unit: '250GM',
+  },
+  {
+    id: 'prod-ginger-candy',
+    slug: 'ginger-candy',
+    name: 'Ginger Candy',
     nameTamil: 'இயற்கை இஞ்சி மரப்பா',
     description: 'Slow-cooked native ginger infused with pure country jaggery. Soothing digestion booster.',
     descriptionTamil: 'நாட்டு இஞ்சி மற்றும் தூய நாட்டுச் சர்க்கரையில் செய்யப்பட்ட பாரம்பரிய இஞ்சி மரப்பா.',
     price: 140,
     originalPrice: 180,
     images: ['/images/prod-ginger-candy.jpg'],
-    category: 'Healthy Snacks',
+    category: 'Traditional Healthy Snacks & Sweets',
     stock: 40,
     rating: 4.8,
     reviewsCount: 94,
     isOrganic: true,
     isLabTested: true,
-    unit: '150g Glass Jar',
+    unit: '150g Jar',
   },
   {
-    id: 'new-prod-groundnuts',
-    name: 'Slow-Roasted Native Groundnuts',
-    nameTamil: 'வறுத்த நாட்டு நிலக்கடலை',
-    description: 'Heirloom Sirumani groundnuts, sand-roasted to crunchy golden perfection with pink rock salt.',
-    descriptionTamil: 'பாரம்பரிய மணல் வறுவல் முறையில் வறுத்த சுவையான சிறுமணி நாட்டு நிலக்கடலை.',
-    price: 190,
-    originalPrice: 240,
-    images: ['/images/prod-roasted-groundnuts.jpg'],
-    category: 'Healthy Snacks',
-    stock: 50,
-    rating: 5.0,
-    reviewsCount: 140,
-    isOrganic: true,
-    isLabTested: true,
-    unit: '250g Pack',
-  },
-  {
-    id: 'new-prod-seedai',
-    name: 'Traditional Sesame Seedai',
+    id: 'prod-sesame-seedai',
+    slug: 'sesame-seedai',
+    name: 'Sesame Seedai',
     nameTamil: 'கைவினை எள் சீடை',
     description: 'Golden crunchy bite-sized festive savory snack prepared with roasted sesame and cold-pressed oil.',
     descriptionTamil: 'மரச்செக்கு நல்லெண்ணெய் மற்றும் எள்ளில் சுடப்பட்ட பாரம்பரிய மொறுமொறு சீடை.',
     price: 165,
     originalPrice: 210,
     images: ['/images/prod-sesame-seedai.jpg'],
-    category: 'Traditional Snacks',
+    category: 'Traditional Healthy Snacks & Sweets',
     stock: 30,
     rating: 4.9,
     reviewsCount: 88,
@@ -87,14 +91,15 @@ const fallbackNewArrivals: ProductType[] = [
     unit: '200g Pack',
   },
   {
-    id: 'new-prod-noodles',
-    name: 'Heritage Kodo Millet Noodles',
-    nameTamil: 'பாரம்பரிய வரகு நூடுல்ஸ்',
+    id: 'prod-kodo-noodles',
+    slug: 'kodo-millet-noodles',
+    name: 'Kodo Millet Noodles',
+    nameTamil: 'வரகு நூடுல்ஸ்',
     description: 'Zero maida, sun-dried noodles crafted from stone-ground kodo millet grains with natural seasoning.',
     descriptionTamil: 'மைதா இல்லாத, தூய வரகு அரிசியில் செய்யப்பட்ட சத்தான இயற்கை நூடுல்ஸ்.',
     price: 149,
     originalPrice: 199,
-    images: ['/images/category-noodles.png'],
+    images: ['/images/prod-millet-noodles.jpg'],
     category: 'Millet Noodles',
     stock: 45,
     rating: 4.8,
@@ -104,21 +109,22 @@ const fallbackNewArrivals: ProductType[] = [
     unit: '180g Pack',
   },
   {
-    id: 'new-prod-millets',
-    name: 'Unpolished Foxtail Millet',
-    nameTamil: 'தீட்டப்படாத தினை அரிசி',
-    description: 'High-fiber heirloom foxtail millets, rich in copper and magnesium. Direct from sustainable tribal farms.',
-    descriptionTamil: 'இயற்கை முறையில் விளைவிக்கப்பட்ட சத்து நிறைந்த தீட்டப்படாத தினை அரிசி.',
-    price: 160,
-    originalPrice: 210,
-    images: ['/images/category-millets.png'],
-    category: 'Millets & Grains',
-    stock: 38,
-    rating: 4.9,
-    reviewsCount: 76,
+    id: 'prod-roasted-groundnuts',
+    slug: 'native-sirumani-groundnut',
+    name: 'Native Sirumani Groundnut',
+    nameTamil: 'வறுத்த சிறுமணி நாட்டு நிலக்கடலை',
+    description: 'Heirloom Sirumani groundnuts, sand-roasted to crunchy golden perfection with pink rock salt.',
+    descriptionTamil: 'பாரம்பரிய மணல் வறுவல் முறையில் வறுத்த சுவையான சிறுமணி நாட்டு நிலக்கடலை.',
+    price: 190,
+    originalPrice: 240,
+    images: ['/images/prod-roasted-groundnuts.jpg'],
+    category: 'Organic Pulses & Dals',
+    stock: 50,
+    rating: 5.0,
+    reviewsCount: 140,
     isOrganic: true,
     isLabTested: true,
-    unit: '500g Eco Pouch',
+    unit: '250GM',
   },
 ];
 
@@ -169,7 +175,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
 
   useEffect(() => {
     apiClient
-      .get('/api/v1/cms/products?limit=8&sortBy=createdAt&sortOrder=desc')
+      .get('/api/v1/cms/products?limit=50&sortBy=createdAt&sortOrder=desc')
       .then((res) => {
         if (
           res?.data?.products &&
@@ -177,16 +183,32 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
           res.data.products.length > 0
         ) {
           const mapped = res.data.products.map(mapProductToFrontend);
-          setProducts(mapped);
+          // Match real new arrival slugs from DB
+          const newArrivalSlugs = [
+            'achu-murukku',
+            'groundnut-chikki',
+            'ginger-candy',
+            'sesame-seedai',
+            'kodo-millet-noodles',
+            'native-sirumani-groundnut',
+            'foxtail-millet-noodles',
+            'black-sesame-chikki',
+          ];
+          const matched = newArrivalSlugs
+            .map((slug) => mapped.find((p: ProductType) => p.slug === slug))
+            .filter((p): p is ProductType => Boolean(p));
+
+          if (matched.length >= 4) {
+            setProducts(matched);
+          } else {
+            setProducts(mapped.slice(0, 8));
+          }
         } else {
           setProducts(fallbackNewArrivals);
         }
       })
       .catch((err) => {
-        console.warn(
-          'Backend new arrivals unavailable, using fallback:',
-          err?.message || err
-        );
+        console.warn('Backend products unavailable, using authentic fallback:', err?.message || err);
         setProducts(fallbackNewArrivals);
       })
       .finally(() => {
@@ -222,16 +244,16 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
   };
 
   const sectionTitle =
-    currentLang === 'ta' ? 'புதிய தயாரிப்புகள்' : 'NEW ARRIVAL PRODUCT';
+    currentLang === 'ta' ? 'புதிய வரவுகள்' : 'NEW ARRIVAL PRODUCT';
   const sectionSubtitle =
     currentLang === 'ta'
-      ? 'வடிவமும், செயல்பாடும் மற்றும் உத்வேகமும் இணைந்த புதிய தேர்வுகள்'
-      : 'Hand-picked to blend form, function, and inspiration';
+      ? 'புதிதாக அறுவடை செய்யப்பட்டு தயார் செய்யப்பட்ட பாரம்பரிய உணவுப் பொருட்கள்'
+      : 'Freshly harvested, stone-ground, and prepared traditional batches';
 
   return (
     <section
       id="new-arrivals"
-      className="w-full py-12 lg:py-16 bg-white dark:bg-neutral-950 font-sans transition-colors duration-normal"
+      className="w-full py-12 lg:py-16 bg-[#FAFAF8] dark:bg-neutral-900/60 font-sans transition-colors duration-normal border-t border-neutral-100/80 dark:border-neutral-800/40"
     >
       <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
         {/* Section Header */}
@@ -292,7 +314,7 @@ export const NewArrivals: React.FC<NewArrivalsProps> = ({ onQuickView }) => {
                 >
                   <ProductShowcaseCard
                     product={product}
-                    badgeText="New Arrival"
+                    badgeText="New Harvest"
                     badgeTamilText="புதிய வரவு"
                     onQuickView={onQuickView}
                     onAddToCart={handleAddToCart}
