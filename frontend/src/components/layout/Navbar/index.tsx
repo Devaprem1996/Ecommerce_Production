@@ -35,47 +35,165 @@ import { clsx } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { useAuthStore } from '@/store/auth-store';
 import { SignOutModal } from '@/components/auth/SignOutModal';
+import apiClient from '@/lib/apiClient';
 
-// Authentic South Indian Category Pillars for Mega Dropdown
-const megaMenuCategories = [
+// Authentic South Indian Category Pillars & Real Products from Catalog
+interface MegaMenuProduct {
+  nameEn: string;
+  nameTa: string;
+  slug: string;
+  highlight?: string;
+}
+
+interface MegaMenuCategory {
+  slug: string;
+  nameEn: string;
+  nameTa: string;
+  icon: string;
+  fallbackCount: number;
+  items: MegaMenuProduct[];
+}
+
+interface MegaMenuColumn {
+  titleEn: string;
+  titleTa: string;
+  tag: string;
+  tagColor: string;
+  categories: MegaMenuCategory[];
+}
+
+const realMegaMenuColumns: MegaMenuColumn[] = [
   {
-    titleEn: 'Wood-Pressed Oils & Ghee',
-    titleTa: 'மரச்செக்கு எண்ணெய் & நெய்',
-    tag: 'Cold-Pressed • 0% Chemicals',
+    titleEn: 'Oils, Flours & Noodles',
+    titleTa: 'எண்ணெய், மாவு & நூடுல்ஸ்',
+    tag: 'Cold-Pressed • Unrefined',
     tagColor: 'text-amber-700 bg-amber-50 dark:bg-amber-950/40 dark:text-amber-300',
-    items: [
-      { nameEn: 'Vaagai Wood-Pressed Sesame Oil', nameTa: 'வாகை மரச்செக்கு நல்லெண்ணெய்', slug: 'cold-pressed-oils', icon: '🫒', highlight: 'Bestseller' },
-      { nameEn: 'Wood-Pressed Groundnut Oil', nameTa: 'மரச்செக்கு கடலை எண்ணெய்', slug: 'cold-pressed-oils', icon: '🥜' },
-      { nameEn: 'Cold-Pressed Virgin Coconut Oil', nameTa: 'மரச்செக்கு தேங்காய் எண்ணெய்', slug: 'cold-pressed-oils', icon: '🥥' },
-      { nameEn: 'Pure Native A2 Cow Ghee', nameTa: 'தூய நாட்டு மாட்டு நெய்', slug: 'pure-ghee-honey', icon: '🧈', highlight: 'Pure Desi' },
-      { nameEn: 'Authentic Pure Castor Oil', nameTa: 'இயற்கை ஆமணக்கு எண்ணெய்', slug: 'cold-pressed-oils', icon: '🌿' },
-    ]
+    categories: [
+      {
+        slug: 'traditional-oils',
+        nameEn: 'Traditional Oils',
+        nameTa: 'பாரம்பரிய எண்ணெய்கள்',
+        icon: '🫒',
+        fallbackCount: 4,
+        items: [
+          { nameEn: 'Wood Pressed Sesame Oil', nameTa: 'மரச்செக்கு நல்லெண்ணெய்', slug: 'wood-pressed-sesame-oil', highlight: 'Bestseller' },
+          { nameEn: 'Wood Pressed Groundnut Oil', nameTa: 'மரச்செக்கு கடலை எண்ணெய்', slug: 'wood-pressed-groundnut-oil' },
+          { nameEn: 'Wood Pressed Coconut Oil', nameTa: 'மரச்செக்கு தேங்காய் எண்ணெய்', slug: 'wood-pressed-coconut-oil' },
+          { nameEn: 'Pure Castor Oil', nameTa: 'ஆமணக்கு எண்ணெய்', slug: 'castor-oil' },
+        ],
+      },
+      {
+        slug: 'healthy-flours',
+        nameEn: 'Healthy Grain Flours',
+        nameTa: 'தானிய மாவுகள்',
+        icon: '🌾',
+        fallbackCount: 2,
+        items: [
+          { nameEn: 'Finger Millet Flour', nameTa: 'ராகி மாவு', slug: 'finger-millet-flour' },
+          { nameEn: 'Stone-Ground Wheat Flour', nameTa: 'கோதுமை மாவு', slug: 'wheat-flour' },
+        ],
+      },
+      {
+        slug: 'millet-noodles',
+        nameEn: 'Millet Noodles & Vermicelli',
+        nameTa: 'நூடுல்ஸ் & சேமியா',
+        icon: '🍜',
+        fallbackCount: 11,
+        items: [
+          { nameEn: 'Karupu Kavuni Rice Noodles', nameTa: 'கருப்பு கவுனி நூடுல்ஸ்', slug: 'karupu-kavuni-rice-noodles' },
+          { nameEn: 'Pearl Millet Vermicelli', nameTa: 'கம்பு சேமியா', slug: 'pearl-millet-vermicelli' },
+        ],
+      },
+    ],
   },
   {
     titleEn: 'Heritage Rice & Millets',
     titleTa: 'பாரம்பரிய அரிசி & சிறுதானியங்கள்',
     tag: 'Low GI • High Immunity',
     tagColor: 'text-emerald-700 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-300',
-    items: [
-      { nameEn: 'Karuppu Kavuni Black Rice', nameTa: 'கருப்பு கவுனி அரிசி', slug: 'traditional-rices', icon: '🌾', highlight: 'Royal Grain' },
-      { nameEn: 'Mappillai Samba Red Rice', nameTa: 'மாப்பிள்ளை சம்பா அரிசி', slug: 'traditional-rices', icon: '🍚', highlight: 'High Stamina' },
-      { nameEn: 'Poongar Traditional Rice', nameTa: 'பூங்கார் பாரம்பரிய அரிசி', slug: 'traditional-rices', icon: '🌾' },
-      { nameEn: 'Kodo & Barnyard Millet', nameTa: 'வரகு & குதிரைவாலி தினை', slug: 'organic-millets', icon: '🥣' },
-      { nameEn: 'Sprouted Herbal Porridge Mix', nameTa: 'முளைகட்டிய சத்துமாவு கஞ்சி', slug: 'herbal-health-mix', icon: '🌿' },
-    ]
+    categories: [
+      {
+        slug: 'traditional-rices',
+        nameEn: 'Traditional Heritage Rices',
+        nameTa: 'பாரம்பரிய அரிசி வகைகள்',
+        icon: '🌾',
+        fallbackCount: 12,
+        items: [
+          { nameEn: 'Karupu Kavuni Rice Boiled', nameTa: 'கருப்பு கவுனி அரிசி', slug: 'karupu-kavuni-rice-boiled', highlight: 'Royal Grain' },
+          { nameEn: 'Mappillai Samba Rice Boiled', nameTa: 'மாப்பிள்ளை சம்பா அரிசி', slug: 'mappillai-samba-rice-boiled', highlight: 'Stamina' },
+          { nameEn: 'Poongar Traditional Rice', nameTa: 'பூங்கார் பாரம்பரிய அரிசி', slug: 'poongar-rice-boiled' },
+          { nameEn: 'Rathasali Heritage Rice', nameTa: 'ரத்தசாலி அரிசி', slug: 'rathasali-rice-boiled' },
+        ],
+      },
+      {
+        slug: 'organic-millets',
+        nameEn: 'Organic Native Millets',
+        nameTa: 'இயற்கை சிறுதானியங்கள்',
+        icon: '🥣',
+        fallbackCount: 8,
+        items: [
+          { nameEn: 'Native Finger Millet', nameTa: 'நாட்டு ராகி', slug: 'native-finger-millet' },
+          { nameEn: 'Native Pearl Millet', nameTa: 'நாட்டு கம்பு', slug: 'native-pearl-millet' },
+          { nameEn: 'White Sorghum', nameTa: 'வெள்ளை சோளம்', slug: 'white-sorghum' },
+        ],
+      },
+      {
+        slug: 'millet-rice-flakes',
+        nameEn: 'Millet & Rice Flakes (Aval)',
+        nameTa: 'சிறுதானிய & அரிசி அவல்',
+        icon: '🥣',
+        fallbackCount: 5,
+        items: [
+          { nameEn: 'Pearl Millet Flakes', nameTa: 'கம்பு அவல்', slug: 'pearl-millet-flakes' },
+          { nameEn: 'White Sorghum Flakes', nameTa: 'சோள அவல்', slug: 'white-sorghum-flakes' },
+        ],
+      },
+    ],
   },
   {
-    titleEn: 'Natural Sweets & Pantry',
-    titleTa: 'இயற்கை இனிப்புகள் & மசாலா',
-    tag: 'Unrefined • Pure Jaggery',
+    titleEn: 'Natural Sweets, Snacks & Dals',
+    titleTa: 'இனிப்புகள், தின்பண்டங்கள் & பருப்பு',
+    tag: 'Pure Palm • Chemical Free',
     tagColor: 'text-orange-700 bg-orange-50 dark:bg-orange-950/40 dark:text-orange-300',
-    items: [
-      { nameEn: 'Udangudi Palm Jaggery (Karupatti)', nameTa: 'உடன்குடி பனை கருப்பட்டி', slug: 'natural-sweeteners', icon: '🍯', highlight: 'Direct Palm' },
-      { nameEn: 'Native Country Sugar (Nattu Sakkarai)', nameTa: 'இயற்கை நாட்டு சர்க்கரை', slug: 'natural-sweeteners', icon: '✨' },
-      { nameEn: 'Stone-Ground Idli Podi & Masala', nameTa: 'கைக்குத்தல் இட்லி பொடி', slug: 'authentic-podi-masala', icon: '🌶️' },
-      { nameEn: 'Traditional Achu Murukku & Mittai', nameTa: 'பாரம்பரிய தின்பண்டங்கள்', slug: 'traditional-snacks-sweets', icon: '🍘' },
-      { nameEn: 'Ancient Stone Ground Flours', nameTa: 'பாரம்பரிய தானிய மாவு', slug: 'healthy-flours', icon: '🌾' },
-    ]
+    categories: [
+      {
+        slug: 'natural-sweeteners',
+        nameEn: 'Natural Sweeteners & Salts',
+        nameTa: 'இயற்கை இனிப்புகள் & உப்பு',
+        icon: '🍯',
+        fallbackCount: 7,
+        items: [
+          { nameEn: 'Natural Wild Honey', nameTa: 'சுத்தமான காட்டு தேன்', slug: 'natural-wild-honey', highlight: 'Wild Forest' },
+          { nameEn: 'Palm Jaggery Round', nameTa: 'பனங்கருப்பட்டி', slug: 'palm-jaggery-round', highlight: 'Pure Palm' },
+          { nameEn: 'Sugarcane Jaggery Powder', nameTa: 'நாட்டு சர்க்கரை', slug: 'sugarcane-jaggery-powder' },
+          { nameEn: 'Himalayan Crystal Salt', nameTa: 'இமாலயன் கல் உப்பு', slug: 'himalayan-crystal-salt' },
+        ],
+      },
+      {
+        slug: 'traditional-snacks-sweets',
+        nameEn: 'Traditional Snacks & Sweets',
+        nameTa: 'பாரம்பரிய தின்பண்டங்கள்',
+        icon: '🍘',
+        fallbackCount: 26,
+        items: [
+          { nameEn: 'Fried Native Groundnut', nameTa: 'வறுத்த சிறுமணி நிலக்கடலை', slug: 'fried-native-sirumani-groundnut', highlight: 'Fresh' },
+          { nameEn: 'Traditional Achu Murukku', nameTa: 'பாரம்பரிய அச்சு முறுக்கு', slug: 'achu-murukku' },
+          { nameEn: 'Crispy Sesame Seedai', nameTa: 'எள்ளு சீடை', slug: 'sesame-seedai' },
+        ],
+      },
+      {
+        slug: 'organic-pulses-dals',
+        nameEn: 'Organic Pulses & Dals',
+        nameTa: 'இயற்கை பருப்பு வகைகள்',
+        icon: '🌱',
+        fallbackCount: 10,
+        items: [
+          { nameEn: 'Mud-Packed Toor Dal', nameTa: 'மண் பக்குவ துவரம் பருப்பு', slug: 'mud-packed-toor-dal' },
+          { nameEn: 'Native Moong Dal', nameTa: 'பாசிப்பருப்பு', slug: 'moong-dal' },
+          { nameEn: 'Black Urad Dal', nameTa: 'கருப்பு உளுந்து', slug: 'black-urad-dal' },
+        ],
+      },
+    ],
   },
 ];
 
@@ -104,6 +222,64 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
   const wishlistCount = useWishlist((state) => state.items.length);
   const { user, isLoggedIn, role } = useAuthStore();
   const isAdmin = role === 'admin' || user?.role?.toLowerCase() === 'admin';
+
+  // Live category counts & spotlight data from catalog API
+  const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
+  const [spotlightProduct, setSpotlightProduct] = useState<{
+    nameEn: string;
+    nameTa: string;
+    slug: string;
+    price: number;
+    originalPrice: number;
+    imageUrl: string;
+    rating: number;
+    reviewsCount: number;
+  }>({
+    nameEn: 'Wood Pressed Sesame Oil',
+    nameTa: 'மரச்செக்கு நல்லெண்ணெய்',
+    slug: 'wood-pressed-sesame-oil',
+    price: 350,
+    originalPrice: 380,
+    imageUrl: 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Sesame_oil_label.jpg/960px-Sesame_oil_label.jpg',
+    rating: 5.0,
+    reviewsCount: 240,
+  });
+
+  useEffect(() => {
+    // 1. Fetch live categories to sync counts
+    apiClient.get('/api/v1/cms/categories')
+      .then((res) => {
+        if (res?.data?.categories && Array.isArray(res.data.categories)) {
+          const map: Record<string, number> = {};
+          res.data.categories.forEach((cat: any) => {
+            if (cat.slug) {
+              map[cat.slug] = cat._count?.products ?? 0;
+            }
+          });
+          setCategoryCounts(map);
+        }
+      })
+      .catch(() => {});
+
+    // 2. Fetch live top-rated product for spotlight
+    apiClient.get('/api/v1/cms/products?limit=1&sortBy=rating&sortOrder=desc')
+      .then((res) => {
+        if (res?.data?.products && res.data.products.length > 0) {
+          const top = res.data.products[0];
+          setSpotlightProduct({
+            nameEn: top.nameEn,
+            nameTa: top.nameTa || top.nameEn,
+            slug: top.slug,
+            price: Number(top.variants?.[0]?.discountPrice || top.variants?.[0]?.price || 350),
+            originalPrice: Number(top.variants?.[0]?.price || 380),
+            imageUrl: top.thumbnailUrl || 'https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Sesame_oil_label.jpg/960px-Sesame_oil_label.jpg',
+            rating: top.rating || 5.0,
+            reviewsCount: top.reviewsCount || 240,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Language switch
   const toggleLanguage = () => {
@@ -280,15 +456,15 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                       animate={{ opacity: 1, y: 0, scale: 1 }}
                       exit={{ opacity: 0, y: 12, scale: 0.98 }}
                       transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
-                      className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 w-[860px] rounded-3xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-neutral-200/80 dark:border-neutral-800 shadow-[0_24px_60px_rgba(0,0,0,0.18)] p-6 z-50 font-sans"
+                      className="absolute left-1/2 -translate-x-1/2 top-full mt-2.5 w-[920px] rounded-3xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-2xl border border-neutral-200/80 dark:border-neutral-800 shadow-[0_24px_60px_rgba(0,0,0,0.18)] p-6 z-50 font-sans"
                     >
                       {/* 4 Columns Grid */}
                       <div className="grid grid-cols-4 gap-6">
                         
-                        {/* 3 Categories Columns */}
-                        {megaMenuCategories.map((col, idx) => (
-                          <div key={idx} className="space-y-3">
-                            <div>
+                        {/* 3 Real Categories Columns */}
+                        {realMegaMenuColumns.map((col, idx) => (
+                          <div key={idx} className="space-y-4">
+                            <div className="pb-1 border-b border-neutral-100 dark:border-neutral-800">
                               <span className="text-[11px] font-black uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block line-clamp-1">
                                 {currentLang === 'ta' ? col.titleTa : col.titleEn}
                               </span>
@@ -297,32 +473,52 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                               </span>
                             </div>
 
-                            <div className="flex flex-col gap-1 pt-1 border-t border-neutral-100 dark:border-neutral-800">
-                              {col.items.map((sub, sIdx) => (
-                                <Link
-                                  key={sIdx}
-                                  href={`/shop?category=${sub.slug}`}
-                                  onClick={() => setIsMegaMenuOpen(false)}
-                                  className="group flex items-center justify-between p-1.5 rounded-xl hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors text-left"
-                                >
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <span className="text-base shrink-0">{sub.icon}</span>
-                                    <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors truncate">
-                                      {currentLang === 'ta' ? sub.nameTa : sub.nameEn}
+                            <div className="space-y-3.5">
+                              {col.categories.map((cat, cIdx) => (
+                                <div key={cIdx} className="space-y-1">
+                                  {/* Category Header */}
+                                  <div className="flex items-center justify-between group/cat">
+                                    <Link
+                                      href={`/shop?category=${cat.slug}`}
+                                      onClick={() => setIsMegaMenuOpen(false)}
+                                      className="flex items-center gap-1.5 text-xs font-bold text-neutral-900 dark:text-white hover:text-emerald-700 dark:hover:text-emerald-400 transition-colors"
+                                    >
+                                      <span className="text-sm shrink-0">{cat.icon}</span>
+                                      <span className="truncate">{currentLang === 'ta' ? cat.nameTa : cat.nameEn}</span>
+                                      <ArrowRight className="w-3 h-3 opacity-0 -translate-x-1 group-hover/cat:opacity-100 group-hover/cat:translate-x-0 transition-all text-emerald-600 dark:text-emerald-400 shrink-0" />
+                                    </Link>
+                                    <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 shrink-0 ml-1">
+                                      {categoryCounts[cat.slug] ?? cat.fallbackCount}
                                     </span>
                                   </div>
-                                  {sub.highlight && (
-                                    <span className="text-[9px] font-extrabold uppercase px-1 py-0.2 rounded bg-amber-400/20 text-amber-800 dark:text-amber-300 shrink-0 ml-1">
-                                      {sub.highlight}
-                                    </span>
-                                  )}
-                                </Link>
+
+                                  {/* Real Products in this Category */}
+                                  <div className="flex flex-col gap-0.5 pl-5 border-l border-neutral-100 dark:border-neutral-800/80">
+                                    {cat.items.map((sub, sIdx) => (
+                                      <Link
+                                        key={sIdx}
+                                        href={`/shop/${sub.slug}`}
+                                        onClick={() => setIsMegaMenuOpen(false)}
+                                        className="group/item flex items-center justify-between py-0.5 px-1 rounded hover:bg-neutral-100/80 dark:hover:bg-neutral-800/80 transition-colors text-left"
+                                      >
+                                        <span className="text-[11px] text-neutral-600 dark:text-neutral-400 group-hover/item:text-emerald-700 dark:group-hover/item:text-emerald-300 transition-colors truncate">
+                                          {currentLang === 'ta' ? sub.nameTa : sub.nameEn}
+                                        </span>
+                                        {sub.highlight && (
+                                          <span className="text-[8px] font-extrabold uppercase px-1 py-0.2 rounded bg-amber-400/20 text-amber-800 dark:text-amber-300 shrink-0 ml-1">
+                                            {sub.highlight}
+                                          </span>
+                                        )}
+                                      </Link>
+                                    ))}
+                                  </div>
+                                </div>
                               ))}
                             </div>
                           </div>
                         ))}
 
-                        {/* Column 4: Today's Harvest Spotlight Card */}
+                        {/* Column 4: Today's Harvest Spotlight Card (Real Product) */}
                         <div className="rounded-2xl bg-gradient-to-br from-emerald-950 via-neutral-900 to-teal-950 text-white p-4 flex flex-col justify-between relative overflow-hidden shadow-lg border border-emerald-500/30">
                           <div className="absolute -top-10 -right-10 w-24 h-24 bg-emerald-500/20 rounded-full blur-xl pointer-events-none" />
                           
@@ -339,15 +535,15 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
                             <div className="w-full h-24 rounded-xl overflow-hidden mb-3 bg-neutral-800 border border-white/10 relative">
                               <img
-                                src="https://thumb.wikimedia.org/wikipedia/commons/thumb/2/22/Sesame_oil_label.jpg/960px-Sesame_oil_label.jpg"
-                                alt="Vaagai Wood-Pressed Sesame Oil"
+                                src={spotlightProduct.imageUrl}
+                                alt={currentLang === 'ta' ? spotlightProduct.nameTa : spotlightProduct.nameEn}
                                 className="w-full h-full object-cover group-hover:scale-105 transition-transform"
                               />
                               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                             </div>
 
                             <h4 className="text-xs font-bold text-white line-clamp-1">
-                              {currentLang === 'ta' ? 'வாகை மரச்செக்கு நல்லெண்ணெய்' : 'Vaagai Wood-Pressed Sesame Oil'}
+                              {currentLang === 'ta' ? spotlightProduct.nameTa : spotlightProduct.nameEn}
                             </h4>
                             <p className="text-[10px] text-neutral-300 line-clamp-2 mt-0.5">
                               {currentLang === 'ta' ? '100% தூய முதல் தரம், எந்தவித ரசாயனமும் அற்றது.' : 'Single-origin traditional cold-pressed, zero hexane.'}
@@ -355,17 +551,19 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
 
                             <div className="flex items-center gap-1 text-amber-400 text-[10px] font-bold mt-1.5">
                               <Star className="w-3 h-3 fill-amber-400" />
-                              <span>4.9 (1,280+ ratings)</span>
+                              <span>{spotlightProduct.rating.toFixed(1)} ({spotlightProduct.reviewsCount}+ ratings)</span>
                             </div>
                           </div>
 
                           <div className="mt-3 pt-2.5 border-t border-white/10 flex items-center justify-between">
                             <div>
-                              <span className="text-xs font-black text-white">₹350</span>
-                              <span className="text-[10px] text-neutral-400 line-through ml-1">₹380</span>
+                              <span className="text-xs font-black text-white">₹{spotlightProduct.price}</span>
+                              {spotlightProduct.originalPrice > spotlightProduct.price && (
+                                <span className="text-[10px] text-neutral-400 line-through ml-1">₹{spotlightProduct.originalPrice}</span>
+                              )}
                             </div>
                             <Link
-                              href="/shop?category=cold-pressed-oils"
+                              href={`/shop/${spotlightProduct.slug}`}
                               onClick={() => setIsMegaMenuOpen(false)}
                               className="px-2.5 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white text-[11px] font-bold inline-flex items-center gap-1 transition-colors"
                             >
@@ -396,7 +594,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                           onClick={() => setIsMegaMenuOpen(false)}
                           className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer"
                         >
-                          <span>{currentLang === 'ta' ? 'அனைத்து பொருட்களும்' : 'Explore All 85+ Staples'}</span>
+                          <span>{currentLang === 'ta' ? 'அனைத்து 85+ பொருட்களும்' : 'Explore All 85+ Staples'}</span>
                           <ArrowRight className="w-3.5 h-3.5" />
                         </Link>
                       </div>

@@ -29,18 +29,18 @@ interface SpotlightSearchModalProps {
 }
 
 const trendingTerms = [
-  { term: 'Vaagai Sesame Oil', termTa: 'மரச்செக்கு நல்லெண்ணெய்', slug: 'cold-pressed-oils' },
-  { term: 'Karuppu Kavuni Rice', termTa: 'கருப்பு கவுனி அரிசி', slug: 'traditional-rices' },
-  { term: 'Udangudi Karupatti', termTa: 'உடன்குடி பனை கருப்பட்டி', slug: 'natural-sweeteners' },
-  { term: 'Native A2 Cow Ghee', termTa: 'நாட்டு மாட்டு நெய்', slug: 'pure-ghee-honey' },
-  { term: 'Mappillai Samba', termTa: 'மாப்பிள்ளை சம்பா அரிசி', slug: 'traditional-rices' },
-  { term: 'Traditional Idli Podi', termTa: 'கைக்குத்தல் இட்லி பொடி', slug: 'authentic-podi-masala' },
+  { term: 'Wood Pressed Sesame Oil', termTa: 'மரச்செக்கு நல்லெண்ணெய்', slug: 'traditional-oils' },
+  { term: 'Karupu Kavuni Rice', termTa: 'கருப்பு கவுனி அரிசி', slug: 'traditional-rices' },
+  { term: 'Natural Wild Honey', termTa: 'சுத்தமான தேன்', slug: 'natural-sweeteners' },
+  { term: 'Mappillai Samba Rice', termTa: 'மாப்பிள்ளை சம்பா அரிசி', slug: 'traditional-rices' },
+  { term: 'Fried Native Groundnut', termTa: 'வறுத்த நிலக்கடலை', slug: 'traditional-snacks-sweets' },
+  { term: 'Native Finger Millet', termTa: 'நாட்டு ராகி', slug: 'organic-millets' },
 ];
 
 const categoryShortcuts = [
-  { nameEn: 'Wood-Pressed Oils', nameTa: 'மரச்செக்கு எண்ணெய்', slug: 'cold-pressed-oils', icon: '🫒' },
+  { nameEn: 'Traditional Oils', nameTa: 'பாரம்பரிய எண்ணெய்கள்', slug: 'traditional-oils', icon: '🫒' },
   { nameEn: 'Heritage Rice', nameTa: 'பாரம்பரிய அரிசி', slug: 'traditional-rices', icon: '🌾' },
-  { nameEn: 'Natural Sweeteners', nameTa: 'பனை கருப்பட்டி', slug: 'natural-sweeteners', icon: '🍯' },
+  { nameEn: 'Natural Sweeteners', nameTa: 'இயற்கை இனிப்புகள்', slug: 'natural-sweeteners', icon: '🍯' },
   { nameEn: 'Native Millets', nameTa: 'சிறுதானியங்கள்', slug: 'organic-millets', icon: '🥣' },
   { nameEn: 'Healthy Snacks', nameTa: 'தின்பண்டங்கள்', slug: 'traditional-snacks-sweets', icon: '🍘' },
   { nameEn: 'Traditional Flours', nameTa: 'தானிய மாவு', slug: 'healthy-flours', icon: '🌾' },

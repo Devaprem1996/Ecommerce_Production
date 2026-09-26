@@ -30,16 +30,16 @@ import { useAuthStore } from '@/store/auth-store';
 import { SignOutModal } from '@/components/auth/SignOutModal';
 
 const realCategories = [
-  { labelEn: 'Wood-Pressed Oils', labelTa: 'மரச்செக்கு எண்ணெய்', path: '/shop?category=cold-pressed-oils', icon: '🫒', count: '4 Oils' },
-  { labelEn: 'Heritage Ancient Rice', labelTa: 'பாரம்பரிய அரிசி', path: '/shop?category=traditional-rices', icon: '🌾', count: '12 Rice' },
-  { labelEn: 'Palm Jaggery & Sweeteners', labelTa: 'பனை கருப்பட்டி & நாட்டு சர்க்கரை', path: '/shop?category=natural-sweeteners', icon: '🍯', count: '7 Sweeteners' },
-  { labelEn: 'Native Millets', labelTa: 'பாரம்பரிய சிறுதானியங்கள்', path: '/shop?category=organic-millets', icon: '🥣', count: '8 Millets' },
-  { labelEn: 'Herbal Health Mix Porridge', labelTa: 'மூலிகை கஞ்சி & சத்துமாவு', path: '/shop?category=herbal-health-mix', icon: '🌿', count: 'Pure Mix' },
-  { labelEn: 'Pure Cow Ghee & Honey', labelTa: 'நாட்டு மாட்டு நெய் & தேன்', path: '/shop?category=pure-ghee-honey', icon: '🧈', count: 'A2 Native' },
-  { labelEn: 'Traditional Healthy Snacks', labelTa: 'ஆரோக்கிய தின்பண்டங்கள்', path: '/shop?category=traditional-snacks-sweets', icon: '🍘', count: '26 Snacks' },
-  { labelEn: 'Stone Ground Grain Flours', labelTa: 'கல் அரைத்த தானிய மாவு', path: '/shop?category=healthy-flours', icon: '🌾', count: 'Stone-Milled' },
-  { labelEn: 'Organic Pulses & Dals', labelTa: 'இயற்கை பருப்பு வகைகள்', path: '/shop?category=organic-pulses-dals', icon: '🌱', count: '10 Dals' },
-  { labelEn: 'Millet Noodles & Flakes', labelTa: 'சிறுதானிய நூடுல்ஸ் & அவல்', path: '/shop?category=millet-noodles', icon: '🍜', count: '11 Varieties' },
+  { labelEn: 'Traditional Oils', labelTa: 'பாரம்பரிய எண்ணெய்கள்', path: '/shop?category=traditional-oils', icon: '🫒', count: '4 Products' },
+  { labelEn: 'Heritage Ancient Rice', labelTa: 'பாரம்பரிய அரிசி', path: '/shop?category=traditional-rices', icon: '🌾', count: '12 Products' },
+  { labelEn: 'Natural Sweeteners & Salts', labelTa: 'இயற்கை இனிப்புகள் & உப்பு', path: '/shop?category=natural-sweeteners', icon: '🍯', count: '7 Products' },
+  { labelEn: 'Organic Native Millets', labelTa: 'பாரம்பரிய சிறுதானியங்கள்', path: '/shop?category=organic-millets', icon: '🥣', count: '8 Products' },
+  { labelEn: 'Organic Pulses & Dals', labelTa: 'இயற்கை பருப்பு வகைகள்', path: '/shop?category=organic-pulses-dals', icon: '🌱', count: '10 Products' },
+  { labelEn: 'Traditional Healthy Snacks', labelTa: 'ஆரோக்கிய தின்பண்டங்கள்', path: '/shop?category=traditional-snacks-sweets', icon: '🍘', count: '26 Products' },
+  { labelEn: 'Millet Noodles', labelTa: 'சிறுதானிய நூடுல்ஸ்', path: '/shop?category=millet-noodles', icon: '🍜', count: '6 Products' },
+  { labelEn: 'Millet Vermicelli', labelTa: 'சிறுதானிய சேமியா', path: '/shop?category=millet-vermicelli', icon: '🥢', count: '5 Products' },
+  { labelEn: 'Millet & Rice Flakes', labelTa: 'சிறுதானிய & அரிசி அவல்', path: '/shop?category=millet-rice-flakes', icon: '🥣', count: '5 Products' },
+  { labelEn: 'Stone Ground Grain Flours', labelTa: 'தானிய மாவுகள்', path: '/shop?category=healthy-flours', icon: '🌾', count: '2 Products' },
 ];
 
 export const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose }) => {
