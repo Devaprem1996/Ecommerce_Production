@@ -32,6 +32,10 @@ export interface SendDeliverySmsOptions {
   trackingUrl?: string;
 }
 
+// Default production Fast2SMS Quick Route API key (backed by wallet credits)
+const DEFAULT_FAST2SMS_KEY =
+  "AvI5Y2Qyp7MXKEz1oxSZtaL8qOuRmrfb6Ns4U9gCDGPBHkdTcjtpZvBguoeFUKJ9bTGnLDPxCa1k068c";
+
 export class SmsService {
   /**
    * Send 6-digit OTP to mobile number via Fast2SMS Quick SMS / OTP route
@@ -41,8 +45,8 @@ export class SmsService {
     const { phone, otp, purpose = "Verification" } = options;
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
 
-    const apiKey = process.env.FAST2SMS_API_KEY;
-    const isMock = !apiKey || apiKey.toLowerCase() === "mock" || apiKey.trim() === "";
+    const apiKey = (process.env.FAST2SMS_API_KEY || DEFAULT_FAST2SMS_KEY).trim();
+    const isMock = apiKey.toLowerCase() === "mock";
 
     // Standard GSM-7 English message (70 characters, strictly 1 segment = Rs. 5)
     const rawMessage = `Your Yathu Arokiyagam verification code is ${otp}. Valid for 5 minutes.`;
@@ -133,8 +137,8 @@ export class SmsService {
     label = "SMS"
   ): Promise<boolean> {
     const cleanPhone = phone.replace(/\D/g, "").slice(-10);
-    const apiKey = process.env.FAST2SMS_API_KEY;
-    const isMock = !apiKey || apiKey.toLowerCase() === "mock" || apiKey.trim() === "";
+    const apiKey = (process.env.FAST2SMS_API_KEY || DEFAULT_FAST2SMS_KEY).trim();
+    const isMock = apiKey.toLowerCase() === "mock";
 
     // Guarantee GSM-7 compliance and <= 160 character ceiling
     const message = enforceSingleSegmentLimit(rawMessage);

@@ -66,11 +66,17 @@ export class OtpController {
       });
 
       // Dispatch SMS
-      await SmsService.sendOtp({
+      const smsSent = await SmsService.sendOtp({
         phone: cleanPhone,
         otp,
         purpose,
       });
+
+      if (!smsSent) {
+        throw ApiError.badRequest(
+          `Unable to deliver SMS verification code to +91 ${cleanPhone}. Please check if the number is active or try again.`
+        );
+      }
 
       return res.status(200).json({
         success: true,

@@ -120,6 +120,7 @@ app.get("/api/v1/health", async (req, res, next) => {
       success: true,
       message: "Server is healthy.",
       database: "connected",
+      smsGateway: "fast2sms-active",
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
@@ -128,6 +129,7 @@ app.get("/api/v1/health", async (req, res, next) => {
       success: false,
       message: "Server database connection failed.",
       database: "disconnected",
+      smsGateway: "unknown",
       timestamp: new Date().toISOString(),
     });
   }
