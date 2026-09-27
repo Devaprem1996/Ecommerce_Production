@@ -206,7 +206,7 @@ export class CmsService {
     category?: string; // slug or ID
     minPrice?: number;
     maxPrice?: number;
-    sortBy: "price" | "createdAt" | "nameEn";
+    sortBy: "price" | "createdAt" | "nameEn" | "rating";
     sortOrder: "asc" | "desc";
     includeInactive?: boolean;
   }) {
@@ -260,6 +260,13 @@ export class CmsService {
       // Sorting parent products by variant price (checks min variant price)
       orderBy = {
         variants: {
+          _count: filters.sortOrder,
+        },
+      };
+    } else if (filters.sortBy === "rating") {
+      // Sort by reviews count for rating spotlight
+      orderBy = {
+        reviews: {
           _count: filters.sortOrder,
         },
       };

@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import gsap from 'gsap';
 import { TestimonialItem } from '@/constants/testimonials';
 import { TestimonialCanvas } from './TestimonialCanvas';
+import { LazyCanvasWrapper } from '../LazyCanvasWrapper';
+import { TestimonialFallback } from '../CanvasFallbacks';
 
 interface FloatingCardGridProps {
   currentTestimonial: TestimonialItem;
@@ -25,6 +27,10 @@ export const FloatingCardGrid: React.FC<FloatingCardGridProps> = ({
     const container = containerRef.current;
     const avatar = activeAvatarRef.current;
     if (!container || !avatar) return;
+
+    // Skip mouse parallax on touch-primary devices
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+    if (isTouchDevice) return;
 
     const handleMouseMove = (e: MouseEvent) => {
       const rect = container.getBoundingClientRect();
@@ -69,8 +75,13 @@ export const FloatingCardGrid: React.FC<FloatingCardGridProps> = ({
       ref={containerRef}
       className="relative w-full h-[360px] sm:h-[420px] lg:h-[460px] flex items-center justify-center select-none overflow-visible"
     >
-      {/* 1. Three.js Real-Time 3D Beveled Glass Refraction Canvas */}
-      <TestimonialCanvas activeIndex={activeIndex} />
+      {/* 1. Three.js Real-Time 3D Beveled Glass Refraction Canvas (lazy, device-aware) */}
+      <LazyCanvasWrapper
+        className="absolute inset-0 w-full h-full"
+        fallback={<TestimonialFallback />}
+      >
+        <TestimonialCanvas activeIndex={activeIndex} />
+      </LazyCanvasWrapper>
 
       {/* 2. Soft Edge Radial Vignette Fade */}
       <div className="absolute -inset-10 pointer-events-none bg-[radial-gradient(ellipse_at_center,transparent_45%,var(--bg-fade,#FAFAF9)_82%)] dark:bg-[radial-gradient(ellipse_at_center,transparent_45%,var(--bg-fade,#0C0E10)_82%)] z-10" />

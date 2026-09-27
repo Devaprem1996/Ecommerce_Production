@@ -113,7 +113,7 @@ export const WhyChooseUs: React.FC = () => {
   ];
 
   return (
-    <section className="relative w-full min-h-screen bg-[#F5F2EC] dark:bg-neutral-950 font-sans overflow-hidden transition-colors duration-normal flex flex-col">
+    <section className="relative w-full min-h-0 lg:min-h-screen bg-[#F5F2EC] dark:bg-neutral-950 font-sans overflow-hidden transition-colors duration-normal flex flex-col">
 
       {/* ─── Full-Viewport Image with Heading Overlay ─── */}
       <div className="relative w-full flex-1 min-h-[60vh] lg:min-h-[70vh]">
@@ -206,13 +206,15 @@ export const WhyChooseUs: React.FC = () => {
                 key={idx}
                 type="button"
                 onClick={() => setActiveSlide(idx)}
-                className={`h-1.5 rounded-full transition-all duration-500 cursor-pointer ${
+                className="p-2 -m-1.5 cursor-pointer"
+                aria-label={`Slide ${idx + 1}`}
+              >
+                <span className={`block h-1.5 rounded-full transition-all duration-500 ${
                   idx === activeSlide
                     ? 'w-7 bg-neutral-900 dark:bg-white'
                     : 'w-2.5 bg-neutral-400/50 hover:bg-neutral-500'
-                }`}
-                aria-label={`Slide ${idx + 1}`}
-              />
+                }`} />
+              </button>
             ))}
           </div>
         </div>

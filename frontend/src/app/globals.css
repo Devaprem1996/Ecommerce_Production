@@ -285,6 +285,46 @@ html.lenis, html.lenis body {
   background-size: 24px 24px;
 }
 
+/* ─── Canvas CSS Fallback Animations ─── */
+@keyframes floatUp {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-120vh) scale(0.6);
+    opacity: 0;
+  }
+}
+
+/* ─── Mobile Touch-Friendly Active / Tap States ─── */
+@media (hover: none) and (pointer: coarse) {
+  /* Category cards, product cards — tap feedback */
+  a[class*="group"]:active,
+  button:active {
+    transform: scale(0.97);
+    transition: transform 0.1s ease;
+  }
+
+  /* Prevent sticky hover states on mobile */
+  a:hover,
+  button:hover {
+    transition: none;
+  }
+
+  /* Carousel product cards */
+  [class*="ProductShowcaseCard"]:active {
+    transform: scale(0.98);
+    transition: transform 0.1s ease;
+  }
+}
+
 /* Accessibility: prefers-reduced-motion rules as per agent rules */
 @media (prefers-reduced-motion: reduce) {
   * {

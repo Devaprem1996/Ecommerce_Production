@@ -25,6 +25,10 @@ export const MagneticButton: React.FC<MagneticButtonProps> = ({
     const button = buttonRef.current;
     if (!button || disabled) return;
 
+    // Skip magnetic mouse-pull effect on touch-primary devices (no cursor)
+    const isTouchDevice = window.matchMedia('(pointer: coarse)').matches;
+    if (isTouchDevice) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       const rect = button.getBoundingClientRect();
       const centerX = rect.left + rect.width / 2;

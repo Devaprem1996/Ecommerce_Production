@@ -104,7 +104,7 @@ export const listProductsQuerySchema = z.object({
     category: z.string().trim().optional(), // slug or uuid
     minPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, "minPrice must be a valid number").optional(),
     maxPrice: z.string().regex(/^\d+(\.\d{1,2})?$/, "maxPrice must be a valid number").optional(),
-    sortBy: z.enum(["price", "createdAt", "nameEn"]).optional().default("createdAt"),
+    sortBy: z.enum(["price", "createdAt", "nameEn", "rating"]).optional().default("createdAt"),
     sortOrder: z.enum(["asc", "desc"]).optional().default("desc"),
     includeInactive: z.string().optional(),
   }),

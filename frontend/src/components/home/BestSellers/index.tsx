@@ -244,7 +244,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
   };
 
   const sectionTitle =
-    currentLang === 'ta' ? 'அதிகம் விற்பனையாகும் தயாரிப்புகள்' : 'BEST SELLER';
+    currentLang === 'ta' ? 'அதிகம் விரும்பப்படும் தயாரிப்புகள்' : 'Most Loved Essentials';
   const sectionSubtitle =
     currentLang === 'ta'
       ? 'வாடிக்கையாளர்களால் அதிகம் விரும்பப்பட்ட சிறந்த தேர்வுகள்'
@@ -259,7 +259,7 @@ export const BestSellers: React.FC<BestSellersProps> = ({ onQuickView }) => {
         {/* Section Header */}
         <div className="flex items-center justify-between mb-8 sm:mb-10">
           <div className="flex flex-col">
-            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-black uppercase tracking-tight text-neutral-900 dark:text-white leading-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-[34px] font-heading font-extrabold text-neutral-900 dark:text-white tracking-tight leading-tight">
               {sectionTitle}
             </h2>
             <p className="text-xs sm:text-sm text-neutral-500 dark:text-neutral-400 mt-1 font-normal">

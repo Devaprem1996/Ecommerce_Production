@@ -261,8 +261,9 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
       })
       .catch(() => {});
 
-    // 2. Fetch live top-rated product for spotlight
+    // 2. Fetch live top-rated product for spotlight (with fallback to latest if needed)
     apiClient.get('/api/v1/cms/products?limit=1&sortBy=rating&sortOrder=desc')
+      .catch(() => apiClient.get('/api/v1/cms/products?limit=1&sortBy=createdAt&sortOrder=desc'))
       .then((res) => {
         if (res?.data?.products && res.data.products.length > 0) {
           const top = res.data.products[0];

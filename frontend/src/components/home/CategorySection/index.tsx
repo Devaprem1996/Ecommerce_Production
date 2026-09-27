@@ -187,10 +187,13 @@ export const CategorySection: React.FC = () => {
   return (
     <section
       id="categories"
-      className="relative w-full min-h-screen bg-[#111111] font-sans overflow-hidden flex flex-col"
+      className="relative w-full min-h-0 lg:min-h-screen bg-[#0B130E] font-sans overflow-hidden flex flex-col transition-colors duration-normal"
     >
+      {/* Soft Top Ambient Blend */}
+      <div className="absolute top-0 inset-x-0 h-12 sm:h-16 bg-gradient-to-b from-black/30 via-transparent to-transparent pointer-events-none" aria-hidden="true" />
+
       {/* ─── Section Header ─── */}
-      <div className="w-full px-5 sm:px-8 lg:px-12 xl:px-16 pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-10">
+      <div className="w-full px-5 sm:px-8 lg:px-12 xl:px-16 pt-14 sm:pt-16 lg:pt-20 pb-8 sm:pb-10 relative z-10">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 max-w-[1600px] mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -198,7 +201,7 @@ export const CategorySection: React.FC = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
           >
-            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-neutral-500 mb-2 block">
+            <span className="text-[11px] font-bold uppercase tracking-[0.25em] text-emerald-400/80 mb-2 block">
               {currentLang === 'ta' ? 'வகைகளை ஆராயுங்கள்' : 'Explore by Category'}
             </span>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-heading text-white tracking-tight leading-[1.08]">
@@ -218,7 +221,7 @@ export const CategorySection: React.FC = () => {
           >
             <Link
               href="/shop"
-              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.06] hover:bg-white/[0.12] border border-white/10 hover:border-white/25 text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300"
+              className="group inline-flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/[0.08] hover:bg-white/[0.15] border border-white/15 hover:border-white/30 text-white text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-300"
             >
               <span>{currentLang === 'ta' ? 'அனைத்தும் காண்க' : 'View All'}</span>
               <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
@@ -228,7 +231,7 @@ export const CategorySection: React.FC = () => {
       </div>
 
       {/* ─── Bento Grid ─── */}
-      <div className="flex-1 w-full px-3 sm:px-5 lg:px-8 xl:px-12 pb-10 sm:pb-14 lg:pb-16">
+      <div className="flex-1 w-full px-3 sm:px-5 lg:px-8 xl:px-12 pb-10 sm:pb-14 lg:pb-16 relative z-10">
         <div className="max-w-[1600px] mx-auto h-full">
 
           {/* Desktop / Tablet: asymmetric bento grid */}
@@ -245,18 +248,21 @@ export const CategorySection: React.FC = () => {
             ))}
           </div>
 
-          {/* Mobile: stacked cards with alternating aspect ratios */}
+          {/* Mobile: symmetrical grid with top & bottom widescreen anchors */}
           <div className="grid sm:hidden grid-cols-2 gap-2.5">
-            {displayCells.map((cat, idx) => (
-              <BentoCell
-                key={cat.id}
-                category={cat}
-                index={idx}
-                currentLang={currentLang}
-                span={idx === 0 ? 'col-span-2' : 'col-span-1'}
-                aspectClass={idx === 0 ? 'aspect-[16/9]' : 'aspect-[3/4]'}
-              />
-            ))}
+            {displayCells.map((cat, idx) => {
+              const isHeroCard = idx === 0 || (idx === displayCells.length - 1 && displayCells.length % 2 === 0);
+              return (
+                <BentoCell
+                  key={cat.id}
+                  category={cat}
+                  index={idx}
+                  currentLang={currentLang}
+                  span={isHeroCard ? 'col-span-2' : 'col-span-1'}
+                  aspectClass={isHeroCard ? 'aspect-[16/9]' : 'aspect-square'}
+                />
+              );
+            })}
           </div>
         </div>
       </div>

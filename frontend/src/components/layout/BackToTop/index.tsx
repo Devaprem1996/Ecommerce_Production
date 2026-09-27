@@ -52,8 +52,8 @@ export const BackToTop: React.FC<BackToTopProps> = ({ threshold = 300, className
           className={twMerge(
             clsx(
               'fixed z-[990] w-10 sm:w-12 h-10 sm:h-12 bg-white dark:bg-neutral-800 text-neutral-800 dark:text-white rounded-full shadow-lg border border-neutral-100 dark:border-neutral-700 flex items-center justify-center cursor-pointer transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-700 focus:outline-none',
-              // Stacked safely above WhatsApp float: WhatsApp is bottom-24/bottom-8, BackToTop is bottom-38/bottom-24
-              'bottom-38 sm:bottom-24 right-5 sm:right-9'
+              // Stacked safely above WhatsApp float: WhatsApp is bottom-24/bottom-8, BackToTop is bottom-40/bottom-24
+              'bottom-40 sm:bottom-24 right-4 sm:right-8'
             ),
             className
           )}

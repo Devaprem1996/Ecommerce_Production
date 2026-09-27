@@ -25,7 +25,7 @@ export const HeroBanner: React.FC = () => {
           className="object-cover object-[78%_center] lg:object-right select-none"
         />
         {/* Pristine Left Side White Wash for Crisp Editorial Legibility */}
-        <div className="absolute inset-y-0 left-0 w-full sm:w-[65%] lg:w-[48%] bg-gradient-to-r from-white via-white/85 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 sm:inset-y-0 sm:left-0 sm:w-[65%] lg:w-[52%] bg-gradient-to-b from-white/95 via-white/85 to-white/60 sm:bg-gradient-to-r sm:from-white sm:via-white/95 sm:to-transparent pointer-events-none" />
       </div>
 
       {/* 2. Overlaid Hero Content Planned on Left Side */}
@@ -53,16 +53,16 @@ export const HeroBanner: React.FC = () => {
               <>
                 நல்ல உணவு.<br />
                 உண்மையான பொருட்கள்.<br />
-                <span className="font-script font-normal text-[#23583C] text-4xl sm:text-5xl lg:text-[66px] xl:text-[72px] inline-flex items-center gap-3">
-                  சிறந்த வாழ்க்கை. <span className="inline-block w-10 sm:w-14 h-[2.5px] bg-[#23583C] align-middle"></span>
+                <span className="font-script font-normal text-[#23583C] text-4xl sm:text-5xl lg:text-[66px] xl:text-[72px] inline-block">
+                  சிறந்த வாழ்க்கை.
                 </span>
               </>
             ) : (
               <>
                 Good Food.<br />
                 Real Ingredients.<br />
-                <span className="font-script font-normal text-[#23583C] text-4xl sm:text-5xl lg:text-[66px] xl:text-[72px] inline-flex items-center gap-3">
-                  Better Life. <span className="inline-block w-10 sm:w-14 h-[2.5px] bg-[#23583C] align-middle"></span>
+                <span className="font-script font-normal text-[#23583C] text-4xl sm:text-5xl lg:text-[66px] xl:text-[72px] inline-block">
+                  Better Life.
                 </span>
               </>
             )}

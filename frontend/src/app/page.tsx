@@ -30,7 +30,6 @@ import { ProductType, ProductVariantType } from '@/types';
 import { slugify } from '@/utils/slugify';
 import { Leaf, ShieldCheck, Heart, ShoppingBag, Minus, Plus, ExternalLink } from 'lucide-react';
 import clsx from 'clsx';
-import 'aos/dist/aos.css';
 
 export default function Home() {
   const { t, i18n } = useTranslation();
@@ -46,16 +45,7 @@ export default function Home() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [quantity, setQuantity] = useState(1);
 
-  // Initialize AOS client-side
-  useEffect(() => {
-    import('aos').then((AOS) => {
-      AOS.init({
-        duration: 800,
-        easing: 'ease-out-cubic',
-        once: true,
-      });
-    });
-  }, []);
+
 
   const openQuickView = (product: ProductType) => {
     setSelectedProduct(product);
@@ -352,7 +342,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                        className="p-2 hover:text-primary-500 text-neutral-600 dark:text-neutral-400 transition-colors focus:outline-none cursor-pointer min-w-[36px] flex items-center justify-center"
+                        className="p-2.5 hover:text-primary-500 text-neutral-600 dark:text-neutral-400 transition-colors focus:outline-none cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                         aria-label="Decrease quantity"
                       >
                         <Minus className="w-4 h-4" />
@@ -363,7 +353,7 @@ export default function Home() {
                       <button
                         type="button"
                         onClick={() => setQuantity(q => Math.min(activeStock, q + 1))}
-                        className="p-2 hover:text-primary-500 text-neutral-600 dark:text-neutral-400 transition-colors focus:outline-none cursor-pointer min-w-[36px] flex items-center justify-center"
+                        className="p-2.5 hover:text-primary-500 text-neutral-600 dark:text-neutral-400 transition-colors focus:outline-none cursor-pointer min-w-[44px] min-h-[44px] flex items-center justify-center"
                         aria-label="Increase quantity"
                       >
                         <Plus className="w-4 h-4" />

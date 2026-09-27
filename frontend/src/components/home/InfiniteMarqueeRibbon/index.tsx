@@ -3,6 +3,8 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { TorusCanvas } from './TorusCanvas';
+import { LazyCanvasWrapper } from '../LazyCanvasWrapper';
+import { TorusFallback } from '../CanvasFallbacks';
 
 export const InfiniteMarqueeRibbon: React.FC = () => {
   const { i18n } = useTranslation();
@@ -61,44 +63,47 @@ export const InfiniteMarqueeRibbon: React.FC = () => {
   return (
     <section
       id="brand-manifesto-ribbon"
-      className="relative w-full overflow-hidden select-none py-16 sm:py-24 lg:py-32 min-h-[75vh] sm:min-h-[82vh] lg:min-h-[88vh] flex flex-col justify-center items-center font-sans shadow-2xl"
+      className="relative w-full overflow-hidden select-none py-12 sm:py-24 lg:py-32 min-h-[40vh] sm:min-h-[70vh] lg:min-h-[88vh] flex flex-col justify-center items-center font-sans shadow-2xl"
       style={{
         background:
-          'radial-gradient(ellipse at 50% 50%, #FF8238 0%, #F56314 36%, #E04800 68%, #B83200 100%)',
+          'radial-gradient(ellipse at 50% 50%, #A1440A 0%, #853307 38%, #571C03 72%, #2B0D02 100%)',
       }}
     >
-      {/* 1. Luminous Peach-Amber Ambient Glow Matching Reference GIF */}
+      {/* 1. Warm Earth-Amber Ambient Glow */}
       <div
-        className="absolute inset-0 pointer-events-none mix-blend-screen opacity-65 z-1"
+        className="absolute inset-0 pointer-events-none mix-blend-screen opacity-50 z-1"
         style={{
           background:
-            'radial-gradient(circle at 50% 50%, rgba(255, 220, 180, 0.5) 0%, transparent 68%)',
+            'radial-gradient(circle at 50% 50%, rgba(255, 190, 130, 0.35) 0%, transparent 68%)',
         }}
         aria-hidden="true"
       />
 
-      {/* 2. Three.js Interactive 3D Torus Ring Backdrop */}
-      <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center">
+      {/* 2. Three.js Interactive 3D Torus Ring Backdrop (lazy, device-aware) */}
+      <LazyCanvasWrapper
+        className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center opacity-85"
+        fallback={<TorusFallback />}
+      >
         <TorusCanvas />
-      </div>
+      </LazyCanvasWrapper>
 
       {/* 3. Soft Top & Bottom Vignettes (Gentle Transition, No Harsh Black) */}
       <div
-        className="absolute top-0 inset-x-0 h-16 sm:h-24 bg-gradient-to-b from-black/20 via-black/5 to-transparent z-20 pointer-events-none"
+        className="absolute top-0 inset-x-0 h-16 sm:h-24 bg-gradient-to-b from-black/35 via-black/10 to-transparent z-20 pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className="absolute bottom-0 inset-x-0 h-16 sm:h-24 bg-gradient-to-t from-black/25 via-black/8 to-transparent z-20 pointer-events-none"
+        className="absolute bottom-0 inset-x-0 h-16 sm:h-24 bg-gradient-to-t from-black/40 via-black/15 to-transparent z-20 pointer-events-none"
         aria-hidden="true"
       />
 
       {/* 4. Left & Right Warm Vignette Fades */}
       <div
-        className="absolute inset-y-0 left-0 w-16 sm:w-28 lg:w-44 bg-gradient-to-r from-[#B83200]/80 via-[#B83200]/30 to-transparent z-25 pointer-events-none"
+        className="absolute inset-y-0 left-0 w-16 sm:w-28 lg:w-44 bg-gradient-to-r from-[#2B0D02]/90 via-[#2B0D02]/40 to-transparent z-25 pointer-events-none"
         aria-hidden="true"
       />
       <div
-        className="absolute inset-y-0 right-0 w-16 sm:w-28 lg:w-44 bg-gradient-to-l from-[#B83200]/80 via-[#B83200]/30 to-transparent z-25 pointer-events-none"
+        className="absolute inset-y-0 right-0 w-16 sm:w-28 lg:w-44 bg-gradient-to-l from-[#2B0D02]/90 via-[#2B0D02]/40 to-transparent z-25 pointer-events-none"
         aria-hidden="true"
       />
 

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import { customerTestimonials } from '@/constants/testimonials';
@@ -41,6 +41,20 @@ export const Testimonials: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [handlePrev, handleNext]);
 
+  // Touch swipe support for mobile testimonial navigation
+  const touchStartX = useRef<number | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    const SWIPE_THRESHOLD = 50;
+    if (diff > SWIPE_THRESHOLD) handlePrev();
+    else if (diff < -SWIPE_THRESHOLD) handleNext();
+    touchStartX.current = null;
+  };
+
   const displayQuote = currentLang === 'ta' && current.quoteTamil ? current.quoteTamil : current.quote;
 
   return (
@@ -61,7 +75,11 @@ export const Testimonials: React.FC = () => {
 
       {/* 3. Main Testimonial Content Container */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 sm:py-16 lg:py-20">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        <div
+          className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           
           {/* Left Column: 3D Floating Beveled Glass Slabs & Centerpiece Avatar Grid */}
           <div className="lg:col-span-5 flex items-center justify-center order-2 lg:order-1">
@@ -177,7 +195,7 @@ export const Testimonials: React.FC = () => {
               <MagneticButton
                 onClick={handlePrev}
                 ariaLabel="Previous testimonial"
-                className="w-10 h-10 rounded-full border border-neutral-300/80 dark:border-neutral-700 bg-white/90 dark:bg-neutral-900/90 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-500 shadow-xs hover:shadow-md transition-shadow"
+                className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-neutral-300/80 dark:border-neutral-700 bg-white/90 dark:bg-neutral-900/90 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-500 shadow-xs hover:shadow-md transition-shadow"
               >
                 <ArrowLeft className="w-4 h-4" />
               </MagneticButton>
@@ -185,7 +203,7 @@ export const Testimonials: React.FC = () => {
               <MagneticButton
                 onClick={handleNext}
                 ariaLabel="Next testimonial"
-                className="w-10 h-10 rounded-full border border-neutral-300/80 dark:border-neutral-700 bg-white/90 dark:bg-neutral-900/90 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-500 shadow-xs hover:shadow-md transition-shadow"
+                className="w-11 h-11 sm:w-10 sm:h-10 rounded-full border border-neutral-300/80 dark:border-neutral-700 bg-white/90 dark:bg-neutral-900/90 text-neutral-700 dark:text-neutral-200 hover:text-neutral-900 dark:hover:text-white hover:border-neutral-400 dark:hover:border-neutral-500 shadow-xs hover:shadow-md transition-shadow"
               >
                 <ArrowRight className="w-4 h-4" />
               </MagneticButton>
@@ -200,13 +218,19 @@ export const Testimonials: React.FC = () => {
                       setDirection(idx > currentIndex ? 1 : -1);
                       setCurrentIndex(idx);
                     }}
-                    className={`h-1.5 rounded-full transition-all duration-300 cursor-pointer ${
+                    className={`rounded-full transition-all duration-300 cursor-pointer p-2 -m-2 ${
                       currentIndex === idx
-                        ? 'w-6 bg-primary-600 dark:bg-primary-400'
-                        : 'w-1.5 bg-neutral-300 dark:bg-neutral-700 hover:bg-neutral-400'
+                        ? 'w-6 h-1.5'
+                        : 'w-1.5 h-1.5'
                     }`}
                     aria-label={`Go to slide ${idx + 1}`}
-                  />
+                  >
+                    <span className={`block rounded-full h-1.5 transition-all duration-300 ${
+                      currentIndex === idx
+                        ? 'w-full bg-primary-600 dark:bg-primary-400'
+                        : 'w-1.5 bg-neutral-300 dark:bg-neutral-700 hover:bg-neutral-400'
+                    }`} />
+                  </button>
                 ))}
               </div>
             </div>

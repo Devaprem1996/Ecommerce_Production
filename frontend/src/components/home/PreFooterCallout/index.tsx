@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { useTranslation } from 'react-i18next';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import { PreFooterCanvas } from './PreFooterCanvas';
+import { LazyCanvasWrapper } from '../LazyCanvasWrapper';
+import { PreFooterFallback } from '../CanvasFallbacks';
 import { BrandWatermarkLoop } from './BrandWatermarkLoop';
 import { toast } from '@/components/ui/Toast';
 import { ArrowUpRight } from 'lucide-react';
@@ -82,7 +84,7 @@ export const PreFooterCallout: React.FC = () => {
   return (
     <section
       ref={containerRef}
-      className="relative w-full min-h-screen lg:h-screen flex flex-col justify-between overflow-hidden bg-neutral-950 font-sans select-none text-white z-20"
+      className="relative w-full min-h-0 lg:h-screen flex flex-col justify-between overflow-hidden bg-neutral-950 font-sans select-none text-white z-20"
       aria-label="Scenic Nature Callout and Footer"
     >
       {/* 1. Background Panoramic Landscape with Scroll Parallax */}
@@ -91,15 +93,15 @@ export const PreFooterCallout: React.FC = () => {
         className="absolute -top-[8%] -bottom-[8%] inset-x-0 z-0 will-change-transform pointer-events-none"
       >
         <Image
-          src="/images/scenic-nature-prefooter.jpg"
-          alt="Majestic panoramic misty mountain wilderness and South Indian organic hillside farmlands"
+          src="/images/why-choose-organic-farm.jpg"
+          alt="Lush traditional South Indian organic terrace farmlands and hillside harvest"
           fill
           priority
           sizes="100vw"
-          className="object-cover object-center filter contrast-[1.08] brightness-[0.98]"
+          className="object-cover object-center filter contrast-[1.05] brightness-[0.92]"
         />
         {/* Soft daylight sky balance vignette */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/45 via-transparent to-black/85" />
+        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/20 to-black/90" />
       </motion.div>
 
       {/* 2. Top Running Monospace Marquee Ribbon (Matching Reference Design) */}
@@ -120,13 +122,18 @@ export const PreFooterCallout: React.FC = () => {
         </div>
       </div>
 
-      {/* 3. Three.js 3D Interactive WebGL Canvas (Floating Honey Drops, Botanical Leaves, Golden Pollen) */}
-      <PreFooterCanvas />
+      {/* 3. Three.js 3D Interactive WebGL Canvas (lazy, device-aware) */}
+      <LazyCanvasWrapper
+        className="absolute inset-0 w-full h-full"
+        fallback={<PreFooterFallback />}
+      >
+        <PreFooterCanvas />
+      </LazyCanvasWrapper>
 
       {/* 4. Cinematic Brand Watermark Loop */}
       <BrandWatermarkLoop />
 
-      {/* 5. Center Heroic Scenic Callout (ADVENTURE IS CALLING style) */}
+      {/* 5. Center Heroic Scenic Callout */}
       <motion.div
         style={{ y: textY }}
         className="relative z-25 flex-1 flex flex-col items-center justify-center text-center px-4 sm:px-6 pt-12 pb-16 lg:py-0"
@@ -143,11 +150,11 @@ export const PreFooterCallout: React.FC = () => {
             : 'Traditional Wood-Pressed Oils & Organic Mountain Harvests'}
         </p>
 
-        {/* Central Callout CTA Button (Electric Royal Accent matching Reference) */}
+        {/* Central Callout CTA Button (Brand Forest Green with Gold Border) */}
         <div className="mt-6 sm:mt-8">
           <Link
             href="/shop"
-            className="inline-flex items-center justify-center px-8 sm:px-10 py-3 sm:py-3.5 rounded-md bg-[#2528E5] hover:bg-[#1E21BF] active:scale-95 text-white font-bold text-xs sm:text-sm uppercase tracking-wider shadow-[0_10px_30px_rgba(37,40,229,0.5)] transition-all duration-200 cursor-pointer"
+            className="inline-flex items-center justify-center px-8 sm:px-10 py-3.5 sm:py-4 rounded-full bg-[#1E4D38] hover:bg-[#163A2A] border border-emerald-400/40 active:scale-95 text-white font-bold text-xs sm:text-sm uppercase tracking-widest shadow-[0_10px_30px_rgba(15,40,28,0.7)] transition-all duration-300 cursor-pointer hover:shadow-emerald-900/50"
           >
             <span>{currentLang === 'ta' ? 'யாத்து உடன் இணையுங்கள்' : 'JOIN YATHU'}</span>
           </Link>
@@ -155,10 +162,10 @@ export const PreFooterCallout: React.FC = () => {
       </motion.div>
 
       {/* 6. Integrated Footer Section (Directly Overlaid on Landscape Foreground) */}
-      <div className="relative z-30 w-full bg-gradient-to-t from-black via-black/90 to-transparent pt-20 sm:pt-28 pb-8 sm:pb-10 px-4 sm:px-8 lg:px-16 border-t border-white/5">
+      <div className="relative z-30 w-full bg-gradient-to-t from-neutral-950 via-neutral-950/95 to-neutral-950/85 backdrop-blur-md pt-16 sm:pt-20 pb-20 sm:pb-12 px-4 sm:px-8 lg:px-16 border-t border-white/10">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start">
           
-          {/* Left Column: Newsletter Subscription Box (Exact Reference Recreation) */}
+          {/* Left Column: Newsletter Subscription Box */}
           <div className="lg:col-span-5 flex flex-col items-start">
             <h3 className="text-xl sm:text-2xl font-bold uppercase tracking-tight text-white mb-2">
               {currentLang === 'ta' ? 'எங்கள் செய்திமடலில் இணையுங்கள்' : 'SUBSCRIBE TO OUR NEWSLETTER'}
@@ -169,8 +176,8 @@ export const PreFooterCallout: React.FC = () => {
                 : 'Stay in the know of all the Yathu Arokiyagam seasonal harvests and community initiatives.'}
             </p>
 
-            {/* Newsletter Input Box matching reference design */}
-            <form onSubmit={handleSubscribe} className="w-full max-w-md flex flex-col sm:flex-row items-stretch border border-white/40 focus-within:border-white transition-colors bg-black/40 backdrop-blur-md">
+            {/* Newsletter Input Box with Warm Honey Gold Button */}
+            <form onSubmit={handleSubscribe} className="w-full max-w-md flex flex-col sm:flex-row items-stretch border border-white/40 focus-within:border-white transition-colors bg-black/40 backdrop-blur-md rounded-md overflow-hidden">
               <input
                 type="email"
                 value={email}
@@ -182,16 +189,11 @@ export const PreFooterCallout: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubscribing}
-                className="px-6 py-3 bg-[#93C5FD] hover:bg-[#BFDBFE] active:bg-[#60A5FA] text-neutral-950 font-bold text-xs uppercase tracking-wider transition-colors shrink-0 cursor-pointer disabled:opacity-50"
+                className="px-6 py-3 bg-[#C88A35] hover:bg-[#B37829] active:bg-[#9B651F] text-neutral-950 font-bold text-xs uppercase tracking-wider transition-colors shrink-0 cursor-pointer disabled:opacity-50"
               >
                 {isSubscribing ? '...' : currentLang === 'ta' ? 'பதிவுசெய்க' : 'SUBSCRIBE'}
               </button>
             </form>
-
-            {/* Copyright */}
-            <div className="mt-8 text-[11px] sm:text-xs text-neutral-400 uppercase tracking-widest font-mono">
-              © COPYRIGHT YATHU AROKIYAGAM {new Date().getFullYear()}. ALL RIGHTS RESERVED.
-            </div>
           </div>
 
           {/* Center Column: Explore Links Grid */}
@@ -253,9 +255,11 @@ export const PreFooterCallout: React.FC = () => {
             </div>
           </div>
 
-          {/* Right Column: Social Rounded Icons & Legal Links */}
-          <div className="lg:col-span-3 flex flex-col lg:items-end justify-between h-full gap-8">
-            {/* Social Icons in rounded square boxes (matching reference) */}
+          {/* Right Column: Social Rounded Icons */}
+          <div className="lg:col-span-3 flex flex-col lg:items-end justify-start gap-4">
+            <span className="block text-xs font-bold uppercase tracking-widest text-neutral-300">
+              {currentLang === 'ta' ? 'சமூக வலைத்தளங்கள்' : 'CONNECT WITH US'}
+            </span>
             <div className="flex items-center gap-3">
               <a
                 href="https://facebook.com"
@@ -287,23 +291,28 @@ export const PreFooterCallout: React.FC = () => {
                 <TikTokIcon />
               </a>
             </div>
-
-            {/* Legal Links */}
-            <div className="flex items-center flex-wrap gap-4 text-[10px] sm:text-xs text-neutral-400 uppercase tracking-wider font-mono">
-              <Link href="/privacy" className="hover:text-white transition-colors">
-                {currentLang === 'ta' ? 'தனியுரிமைக் கொள்கை' : 'PRIVACY POLICY'}
-              </Link>
-              <span>•</span>
-              <Link href="/terms" className="hover:text-white transition-colors">
-                {currentLang === 'ta' ? 'விதிமுறைகள்' : 'TERMS OF USE'}
-              </Link>
-              <span>•</span>
-              <Link href="/faq" className="hover:text-white transition-colors">
-                {currentLang === 'ta' ? 'உதவி' : 'ACCESSIBILITY'}
-              </Link>
-            </div>
           </div>
 
+        </div>
+
+        {/* Bottom Legal & Copyright Bar */}
+        <div className="mt-12 pt-6 border-t border-white/10 max-w-7xl mx-auto flex flex-col-reverse sm:flex-row items-center justify-between gap-4 w-full">
+          <div className="text-[11px] sm:text-xs text-neutral-400 uppercase tracking-widest font-mono text-center sm:text-left">
+            © COPYRIGHT YATHU AROKIYAGAM {new Date().getFullYear()}. ALL RIGHTS RESERVED.
+          </div>
+          <div className="flex items-center flex-wrap justify-center gap-4 text-[10px] sm:text-xs text-neutral-400 uppercase tracking-wider font-mono">
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              {currentLang === 'ta' ? 'தனியுரிமைக் கொள்கை' : 'PRIVACY POLICY'}
+            </Link>
+            <span>•</span>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              {currentLang === 'ta' ? 'விதிமுறைகள்' : 'TERMS OF USE'}
+            </Link>
+            <span>•</span>
+            <Link href="/faq" className="hover:text-white transition-colors">
+              {currentLang === 'ta' ? 'உதவி' : 'ACCESSIBILITY'}
+            </Link>
+          </div>
         </div>
       </div>
     </section>

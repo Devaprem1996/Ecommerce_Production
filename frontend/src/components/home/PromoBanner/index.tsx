@@ -91,19 +91,19 @@ export const PromoBanner: React.FC = () => {
                 {currentLang === 'ta' ? 'பாரம்பரியத்தின் சுவை' : 'Rooted in Heritage'}
               </span>
 
-              <h2 className="text-3xl sm:text-4xl lg:text-[44px] font-black uppercase tracking-tight text-neutral-900 dark:text-white leading-[1.08]">
+              <h2 className="text-3xl sm:text-4xl lg:text-[42px] font-heading font-extrabold tracking-tight text-neutral-900 dark:text-white leading-[1.12]">
                 {currentLang === 'ta' ? (
                   <>
-                    பாரம்பரிய உணவு.{' '}
-                    <span className="text-[#D9481E] dark:text-[#FF7A1A]">
-                      நலமான குடும்பம்.
+                    பாரம்பரிய உணவு,{' '}
+                    <span className="text-[#C86A2E] dark:text-[#FFA24C]">
+                      நலமான குடும்பம்
                     </span>
                   </>
                 ) : (
                   <>
-                    NOURISH YOUR HOME WITH{' '}
-                    <span className="text-[#D9481E] dark:text-[#FF7A1A]">
-                      PURE TRADITION.
+                    Nourish Your Home With{' '}
+                    <span className="text-[#C86A2E] dark:text-[#FFA24C]">
+                      Pure Tradition
                     </span>
                   </>
                 )}
@@ -237,7 +237,7 @@ export const PromoBanner: React.FC = () => {
               <span className="text-xs font-bold uppercase tracking-widest text-neutral-800 dark:text-neutral-200">
                 {currentLang === 'ta' ? 'நேரலை வாடிக்கையாளர் கருத்துகள்' : 'Verified Community Reviews'}
               </span>
-              <span className="text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
+              <span className="hidden sm:inline text-[11px] text-amber-700 dark:text-amber-400 font-semibold">
                 {currentLang === 'ta' ? 'நிறுத்த தொடவும்' : 'Hover to pause'}
               </span>
             </div>
