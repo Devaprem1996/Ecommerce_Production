@@ -11,6 +11,7 @@ const client_1 = require("@prisma/client");
 const sms_service_js_1 = require("./sms.service.js");
 const email_service_js_1 = require("./email.service.js");
 const payment_service_js_1 = require("./payment.service.js");
+const auth_service_js_1 = require("./auth.service.js");
 const index_js_1 = __importDefault(require("../logger/index.js"));
 class UserService {
     /**
@@ -69,9 +70,16 @@ class UserService {
      * Get all orders placed by the customer
      */
     static async getOrders(userId) {
+        const user = await db_js_1.default.user.findUnique({
+            where: { id: userId },
+            select: { id: true, phone: true },
+        });
         const orders = await db_js_1.default.order.findMany({
             where: {
-                userId,
+                OR: [
+                    { userId },
+                    ...(user?.phone ? [{ address: { phone: user.phone } }] : []),
+                ],
                 deletedAt: null,
             },
             include: {
@@ -107,10 +115,17 @@ class UserService {
      * Get detailed order by ID for the customer
      */
     static async getOrderById(userId, orderId) {
+        const user = await db_js_1.default.user.findUnique({
+            where: { id: userId },
+            select: { id: true, phone: true },
+        });
         const order = await db_js_1.default.order.findFirst({
             where: {
                 id: orderId,
-                userId,
+                OR: [
+                    { userId },
+                    ...(user?.phone ? [{ address: { phone: user.phone } }] : []),
+                ],
                 deletedAt: null,
             },
             include: {
@@ -671,15 +686,16 @@ class UserService {
         }
     }
     /**
-     * Track orders for guest or unauthenticated user using Phone + OTP verification
+     * Track orders for guest or unauthenticated user using Phone + OTP verification.
+     * Also ensures customer data is saved in database and orders are linked.
      */
     static async trackOrdersByOtp(phone, otp) {
         const cleanPhone = phone.replace(/\D/g, "").slice(-10);
-        // 1. Verify OTP in database
+        // 1. Verify OTP in database (support both ORDER_TRACKING and LOGIN purposes)
         const otpRecord = await db_js_1.default.otpVerification.findFirst({
             where: {
                 phone: cleanPhone,
-                purpose: "ORDER_TRACKING",
+                purpose: { in: ["ORDER_TRACKING", "LOGIN"] },
                 isVerified: false,
                 expiresAt: { gt: new Date() },
             },
@@ -701,18 +717,82 @@ class UserService {
             where: { id: otpRecord.id },
             data: { isVerified: true },
         });
-        // 2. Find all orders associated with this phone (via User.phone OR Address.phone)
-        const matchingUsers = await db_js_1.default.user.findMany({
+        // 2. Ensure customer user record is saved into database
+        let customerUser = await db_js_1.default.user.findFirst({
+            where: { phone: cleanPhone },
+            include: { profile: true },
+        });
+        if (!customerUser) {
+            customerUser = await db_js_1.default.$transaction(async (tx) => {
+                const newUser = await tx.user.create({
+                    data: {
+                        phone: cleanPhone,
+                        email: `customer_${cleanPhone}@customer.yathu.local`,
+                        role: "CUSTOMER",
+                        isGuest: false,
+                        isVerified: true,
+                        lastLoginAt: new Date(),
+                    },
+                });
+                await tx.userProfile.create({
+                    data: {
+                        userId: newUser.id,
+                        firstName: "Customer",
+                        lastName: "",
+                        phone: cleanPhone,
+                    },
+                });
+                return (await tx.user.findUnique({
+                    where: { id: newUser.id },
+                    include: { profile: true },
+                }));
+            });
+        }
+        else {
+            await db_js_1.default.user.update({
+                where: { id: customerUser.id },
+                data: {
+                    isVerified: true,
+                    isGuest: false,
+                    lastLoginAt: new Date(),
+                },
+            });
+            if (!customerUser.profile) {
+                await db_js_1.default.userProfile.create({
+                    data: {
+                        userId: customerUser.id,
+                        firstName: "Customer",
+                        lastName: "",
+                        phone: cleanPhone,
+                    },
+                });
+            }
+        }
+        // 3. Link past orders placed with this phone number to this verified user in DB
+        const matchingAddresses = await db_js_1.default.address.findMany({
             where: { phone: cleanPhone },
             select: { id: true },
         });
-        const userIds = matchingUsers.map((u) => u.id);
+        const addressIds = matchingAddresses.map((a) => a.id);
+        if (addressIds.length > 0 && customerUser) {
+            await db_js_1.default.order.updateMany({
+                where: {
+                    addressId: { in: addressIds },
+                    userId: { not: customerUser.id },
+                },
+                data: {
+                    userId: customerUser.id,
+                },
+            });
+        }
+        // 4. Find all orders associated with this phone (via User ID OR Address phone)
         const orders = await db_js_1.default.order.findMany({
             where: {
                 OR: [
-                    ...(userIds.length > 0 ? [{ userId: { in: userIds } }] : []),
+                    ...(customerUser ? [{ userId: customerUser.id }] : []),
                     { address: { phone: cleanPhone } },
                 ],
+                deletedAt: null,
             },
             include: {
                 orderItems: {
@@ -727,32 +807,49 @@ class UserService {
             },
             orderBy: { createdAt: "desc" },
         });
-        // 3. Return sanitized order tracking data (Read-only, no sensitive profile data)
-        return orders.map((o) => ({
-            id: o.id,
-            orderNumber: o.orderNumber,
-            status: o.status,
-            orderedAt: o.orderedAt || o.createdAt,
-            subtotal: Number(o.subtotal),
-            shippingCharge: Number(o.shippingCharge),
-            grandTotal: Number(o.grandTotal),
-            deliveryAddress: o.address
-                ? `${o.address.fullName}, ${o.address.addressLine1}, ${o.address.city} - ${o.address.postalCode}`
-                : null,
-            shippingCity: o.address?.city,
-            carrierName: "Delhivery",
-            trackingNumber: `DEL-${o.orderNumber.replace(/\D/g, "")}`,
-            items: o.orderItems.map((item) => ({
-                id: item.id,
-                name: item.productName,
-                sku: item.sku,
-                quantity: item.quantity,
-                price: Number(item.unitPrice),
-                image: item.variant?.product?.thumbnailUrl || null,
+        // 5. Generate authentication session tokens so customer is authenticated
+        const { accessToken, refreshToken } = auth_service_js_1.AuthService.generateTokens({
+            userId: customerUser.id,
+            email: customerUser.email || `phone_${cleanPhone}`,
+            role: customerUser.role,
+        });
+        const userProfile = customerUser.profile;
+        const displayName = userProfile?.firstName || `Customer ${cleanPhone.slice(-4)}`;
+        const { passwordHash: _, ...userWithoutPassword } = customerUser;
+        // 6. Return sanitized order tracking data and customer credentials
+        return {
+            orders: orders.map((o) => ({
+                id: o.id,
+                orderNumber: o.orderNumber,
+                status: o.status,
+                orderedAt: o.orderedAt || o.createdAt,
+                subtotal: Number(o.subtotal),
+                shippingCharge: Number(o.shippingCharge),
+                grandTotal: Number(o.grandTotal),
+                deliveryAddress: o.address
+                    ? `${o.address.fullName}, ${o.address.addressLine1}, ${o.address.city} - ${o.address.postalCode}`
+                    : null,
+                shippingCity: o.address?.city,
+                carrierName: "Delhivery",
+                trackingNumber: `DEL-${o.orderNumber.replace(/\D/g, "")}`,
+                items: o.orderItems.map((item) => ({
+                    id: item.id,
+                    name: item.productName,
+                    sku: item.sku,
+                    quantity: item.quantity,
+                    price: Number(item.unitPrice),
+                    image: item.variant?.product?.thumbnailUrl || null,
+                })),
+                paymentMethod: o.payments?.[0]?.provider || "upi",
+                paymentStatus: o.payments?.[0]?.status || "PENDING",
             })),
-            paymentMethod: o.payments?.[0]?.provider || "upi",
-            paymentStatus: o.payments?.[0]?.status || "PENDING",
-        }));
+            user: {
+                ...userWithoutPassword,
+                name: displayName,
+            },
+            accessToken,
+            refreshToken,
+        };
     }
 }
 exports.UserService = UserService;

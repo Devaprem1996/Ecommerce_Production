@@ -630,7 +630,19 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 BLOGS
               </Link>
 
-
+              {/* TRACK ORDER */}
+              <Link
+                href="/track-order"
+                className={clsx(
+                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 inline-flex items-center gap-1",
+                  pathname.startsWith('/track-order')
+                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
+                    : "text-neutral-700 dark:text-neutral-300"
+                )}
+              >
+                <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>TRACK ORDER</span>
+              </Link>
 
               {/* CONTACT */}
               <Link
@@ -646,9 +658,19 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               </Link>
             </nav>
 
-            {/* 3. Right: Exact 3 Clean Outline Icons (Search, User, Cart) */}
-            <div className="flex items-center gap-4 sm:gap-6 text-neutral-800 dark:text-neutral-200">
+            {/* 3. Right: Clean Outline Icons (Search, Track Order, User, Cart) */}
+            <div className="flex items-center gap-3 sm:gap-5 text-neutral-800 dark:text-neutral-200">
               
+              {/* Quick Track Order Pill (Desktop) */}
+              <Link
+                href="/track-order"
+                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-neutral-700 dark:text-neutral-300 hover:text-emerald-700 dark:hover:text-emerald-400 bg-neutral-100/80 dark:bg-neutral-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-neutral-200/80 dark:border-neutral-750 transition-all cursor-pointer"
+                title="Track order status & history"
+              >
+                <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>Track Order</span>
+              </Link>
+
               {/* 1. Search Icon Button */}
               <button
                 type="button"
@@ -677,19 +699,27 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: 8 }}
-                        className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl p-2 z-50 font-sans"
+                        className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 shadow-xl p-2 z-50 font-sans"
                       >
                         <div className="px-3 py-2 border-b border-neutral-100 dark:border-neutral-800">
                           <p className="text-xs font-bold text-neutral-900 dark:text-white truncate">{user?.name || 'Customer'}</p>
-                          <p className="text-[10px] text-neutral-500 truncate">{user?.email || user?.mobile}</p>
+                          <p className="text-[10px] text-neutral-500 truncate">{user?.email || user?.mobile || ''}</p>
                         </div>
                         {isAdmin && (
-                          <Link href="/admin" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
+                          <Link href="/admin" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-amber-600 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
                             <ShieldCheck className="w-3.5 h-3.5" />
                             <span>Admin Portal</span>
                           </Link>
                         )}
-                        <Link href="/account" className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
+                        <Link href="/track-order" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-emerald-700 dark:text-emerald-400 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
+                          <Truck className="w-3.5 h-3.5" />
+                          <span>Track Live Orders</span>
+                        </Link>
+                        <Link href="/account/orders" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
+                          <PackageCheck className="w-3.5 h-3.5" />
+                          <span>Order History</span>
+                        </Link>
+                        <Link href="/account" onClick={() => setIsUserMenuOpen(false)} className="flex items-center gap-2 px-3 py-2 text-xs font-bold text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-xl transition-colors">
                           <User className="w-3.5 h-3.5" />
                           <span>My Account</span>
                         </Link>

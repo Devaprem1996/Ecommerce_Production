@@ -78,11 +78,16 @@ export class OtpController {
         );
       }
 
+      const allowDevOtp =
+        !isProduction ||
+        process.env.ALLOW_DEV_OTP === "true" ||
+        process.env.DEV_OTP_ENABLED === "true";
+
       return res.status(200).json({
         success: true,
         message: `OTP sent successfully to +91 ${cleanPhone}.`,
         resendAfterSeconds: 30,
-        devOtp: !isProduction ? otp : undefined,
+        devOtp: allowDevOtp ? otp : undefined,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

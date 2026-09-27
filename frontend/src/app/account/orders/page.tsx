@@ -302,15 +302,13 @@ export default function OrdersListPage() {
                     </button>
                   )}
 
-                  {/* Track Trigger */}
-                  {(upperStatus === 'SHIPPED' || upperStatus === 'PROCESSING' || upperStatus === 'OUT_FOR_DELIVERY') && (
-                    <Link href={`/account/orders/${order.id}#tracker`}>
-                      <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/30 dark:border-neutral-750 bg-transparent text-xs font-bold text-neutral-750 dark:text-neutral-355 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-800 cursor-pointer">
-                        <Truck className="w-3.5 h-3.5 text-primary-500 animate-pulse" />
-                        <span>Track Order</span>
-                      </button>
-                    </Link>
-                  )}
+                  {/* Track Order Trigger - Always enabled for all orders */}
+                  <Link href={`/track-order?orderId=${order.orderNumber || order.id}`}>
+                    <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/50 dark:border-neutral-750 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs font-bold text-emerald-700 dark:text-emerald-400 rounded-card hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer shadow-2xs">
+                      <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
+                      <span>Track Order</span>
+                    </button>
+                  </Link>
 
                   {/* View Details Trigger */}
                   <Link href={`/account/orders/${order.id}`}>

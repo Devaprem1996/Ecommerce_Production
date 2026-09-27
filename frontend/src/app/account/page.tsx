@@ -16,6 +16,7 @@ import {
   TrendingUp, 
   Package, 
   Compass, 
+  Truck,
   Loader2 
 } from 'lucide-react';
 import { formatPrice } from '@/utils/formatPrice';
@@ -273,12 +274,22 @@ export default function AccountDashboard() {
                           {getStatusBadge(order.status)}
                         </td>
                         <td className="px-6 py-4 text-right">
-                          <Link 
-                            href={`/account/orders/${order.id}`} 
-                            className="text-xs font-bold text-primary-500 hover:text-primary-600 transition-colors inline-block"
-                          >
-                            View Details
-                          </Link>
+                          <div className="flex items-center justify-end gap-3">
+                            <Link 
+                              href={`/track-order?orderId=${order.orderNumber || order.id}`} 
+                              className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1"
+                              title="Track live shipment"
+                            >
+                              <Truck className="w-3.5 h-3.5" />
+                              <span>Track</span>
+                            </Link>
+                            <Link 
+                              href={`/account/orders/${order.id}`} 
+                              className="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-primary-500 transition-colors inline-block"
+                            >
+                              View Details
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     );

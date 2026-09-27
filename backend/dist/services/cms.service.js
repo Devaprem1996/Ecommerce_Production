@@ -209,6 +209,14 @@ class CmsService {
                 },
             };
         }
+        else if (filters.sortBy === "rating") {
+            // Sort by reviews count for rating spotlight
+            orderBy = {
+                reviews: {
+                    _count: filters.sortOrder,
+                },
+            };
+        }
         else {
             orderBy = { [filters.sortBy]: filters.sortOrder };
         }
