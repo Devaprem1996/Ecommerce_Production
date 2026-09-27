@@ -66,7 +66,7 @@ interface TrackingData {
 export default function TrackOrderPage() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
-  const { isLoggedIn, user } = useAuthStore();
+  const { isLoggedIn, user, login } = useAuthStore();
 
   // Guest Phone OTP States
   const [mobileInput, setMobileInput] = useState('');
@@ -300,11 +300,20 @@ export default function TrackOrderPage() {
         const orders = res.data.orders;
         setFetchedOrders(orders);
 
+        // Auto-login customer with returned token and user data
+        if (res.data?.accessToken && res.data?.user) {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('access_token', res.data.accessToken);
+            document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          }
+          login(res.data.user, res.data.accessToken);
+        }
+
         if (orders.length === 0) {
           toast.info(`No orders found associated with +91 ${cleanMobile}.`);
           setActiveTracking(null);
         } else {
-          toast.success(`Found ${orders.length} order(s)!`);
+          toast.success(`Found ${orders.length} order(s)! Logged in securely.`);
           setSelectedOrderIndex(0);
           setActiveTracking(formatOrderToTrackingData(orders[0]));
         }
@@ -774,9 +783,25 @@ export default function TrackOrderPage() {
                 {!isLoggedIn && (
                   <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 flex items-center gap-1.5 text-[11px] text-neutral-400">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-500" />
-                    <span>Viewing in guest read-only tracking mode. Your profile remains protected.</span>
+                    <span>Viewing in secure verified mode. Order history automatically linked to your mobile.</span>
                   </div>
                 )}
+              </div>
+
+              {/* Link to Full Order History in Customer Account */}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 rounded-card bg-emerald-500/5 dark:bg-emerald-500/10 border border-emerald-500/20 shadow-2xs">
+                <div className="flex items-center gap-2.5">
+                  <ClipboardList className="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0" />
+                  <span className="text-xs font-semibold text-neutral-800 dark:text-neutral-200">
+                    Want to manage returns, download invoice, or view past purchases?
+                  </span>
+                </div>
+                <Link
+                  href="/account/orders"
+                  className="px-4 py-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs tracking-wide transition-colors whitespace-nowrap"
+                >
+                  View Order History &rarr;
+                </Link>
               </div>
             </motion.div>
           )}

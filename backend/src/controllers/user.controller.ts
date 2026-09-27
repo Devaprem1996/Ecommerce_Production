@@ -377,17 +377,33 @@ export class UserController {
 
   /**
    * POST /api/v1/user/orders/track-by-otp
-   * Public endpoint for guest order tracking via phone OTP
+   * Public endpoint for order tracking via phone OTP
+   * Authenticates customer and links orders into database
    */
   static async trackOrdersByOtp(req: Request, res: Response, next: NextFunction) {
     try {
       const { phone, otp } = req.body;
-      const orders = await UserService.trackOrdersByOtp(phone, otp);
+      const result = await UserService.trackOrdersByOtp(phone, otp);
+
+      if (result.refreshToken) {
+        const isProduction = process.env.NODE_ENV === "production";
+        res.cookie("refreshToken", result.refreshToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? "strict" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          path: "/api/v1/auth/refresh",
+        });
+      }
 
       return res.status(200).json({
         success: true,
-        message: `Retrieved ${orders.length} order(s).`,
-        data: { orders },
+        message: `Retrieved ${result.orders.length} order(s). Customer authenticated successfully.`,
+        data: {
+          orders: result.orders,
+          user: result.user,
+          accessToken: result.accessToken,
+        },
         timestamp: new Date().toISOString(),
         requestId: req.headers["x-request-id"],
       });

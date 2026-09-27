@@ -128,19 +128,7 @@ export class OtpController {
         data: { isVerified: true },
       });
 
-      // If purpose is ORDER_TRACKING only, return success without logging in
-      if (purpose === "ORDER_TRACKING") {
-        return res.status(200).json({
-          success: true,
-          message: "Mobile number verified successfully.",
-          data: {
-            phone: cleanPhone,
-            verified: true,
-          },
-        });
-      }
-
-      // For CHECKOUT or LOGIN: find or create User record
+      // For CHECKOUT, LOGIN, or ORDER_TRACKING: find or create customer User record
       let user = await prisma.user.findFirst({
         where: {
           OR: [
@@ -152,12 +140,12 @@ export class OtpController {
       });
 
       if (!user) {
-        // Create lightweight phone-verified user (isGuest if checkout)
+        // Save new verified customer to database
         user = await prisma.$transaction(async (tx) => {
           const newUser = await tx.user.create({
             data: {
               phone: cleanPhone,
-              email: email ? email.trim().toLowerCase() : `guest_${cleanPhone}@customer.yathu.local`,
+              email: email ? email.trim().toLowerCase() : `customer_${cleanPhone}@customer.yathu.local`,
               role: "CUSTOMER",
               isGuest: purpose === "CHECKOUT",
               isVerified: true,
@@ -181,24 +169,55 @@ export class OtpController {
         });
 
         if (!user) {
-          throw ApiError.internal("Failed to provision guest user.");
+          throw ApiError.internal("Failed to provision customer user.");
         }
 
-        logger.info(`Provisioned guest customer: +91${cleanPhone} (${user.id})`);
+        logger.info(`Provisioned customer: +91${cleanPhone} (${user.id})`);
       } else {
-        // Update user phone / login timestamp
+        // Update user phone / login timestamp and promote guest to full customer
         await prisma.user.update({
           where: { id: user.id },
           data: {
             phone: user.phone || cleanPhone,
             isVerified: true,
+            isGuest: purpose === "CHECKOUT" ? user.isGuest : false,
             lastLoginAt: new Date(),
           },
         });
+
+        if (!user.profile) {
+          await prisma.userProfile.create({
+            data: {
+              userId: user.id,
+              firstName: name || "Customer",
+              lastName: "",
+              phone: cleanPhone,
+            },
+          });
+        }
       }
 
       if (!user) {
         throw ApiError.internal("User account not accessible.");
+      }
+
+      // Link any past orders placed with this phone number to this verified user in DB
+      const matchingAddresses = await prisma.address.findMany({
+        where: { phone: cleanPhone },
+        select: { id: true },
+      });
+      const addressIds = matchingAddresses.map((a) => a.id);
+
+      if (addressIds.length > 0) {
+        await prisma.order.updateMany({
+          where: {
+            addressId: { in: addressIds },
+            userId: { not: user.id },
+          },
+          data: {
+            userId: user.id,
+          },
+        });
       }
 
       // Generate JWT Access & Refresh Token
