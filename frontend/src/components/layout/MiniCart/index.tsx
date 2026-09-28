@@ -249,10 +249,10 @@ export const MiniCart: React.FC = () => {
                     Proceed to Checkout
                   </Button>
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="md"
                     onClick={() => handleNavigate('/cart')}
-                    className="w-full font-bold text-xs border border-neutral-200 dark:border-neutral-800 hover:bg-neutral-100 dark:hover:bg-neutral-800 cursor-pointer"
+                    className="w-full font-bold text-xs border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-850 text-neutral-800 dark:text-neutral-100 hover:bg-emerald-50 dark:hover:bg-neutral-800 hover:text-emerald-800 dark:hover:text-emerald-300 hover:border-emerald-600/50 transition-all cursor-pointer shadow-2xs"
                   >
                     {t('cart.view_bag', 'View Cart Page')}
                   </Button>

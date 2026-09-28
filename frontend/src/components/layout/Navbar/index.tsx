@@ -363,11 +363,11 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
         {/* Subtle specular top highlight line */}
         <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-emerald-500/25 to-transparent pointer-events-none" />
 
-        <div className="w-full px-6 sm:px-10 lg:px-16 xl:px-24">
-          <div className="flex items-center justify-between gap-2 sm:gap-4 lg:gap-6">
+        <div className="w-full max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 xl:px-10">
+          <div className="flex items-center justify-between gap-3 sm:gap-4 lg:gap-6">
             
-            {/* 1. Left: Mobile Hamburger & Nourish Clean Brand Emblem */}
-            <div className="flex items-center gap-3 shrink-0">
+            {/* 1. Left: Mobile Hamburger & Brand Emblem */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               {/* Mobile Hamburger Button */}
               <button
                 type="button"
@@ -382,32 +382,33 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 </div>
               </button>
 
-              {/* Exact Clean Brand Emblem from Reference Image */}
-              <Link href="/" className="flex flex-col items-center group focus:outline-none select-none text-center">
-                {/* Two Organic Curved Leaves Sprout Logo Mark */}
-                <div className="flex items-center justify-center text-[#2D6A4F] dark:text-emerald-400 mb-0.5 group-hover:scale-105 transition-transform">
-                  <svg width="24" height="20" viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              {/* Refined Brand Emblem */}
+              <Link href="/" className="flex items-center gap-2.5 sm:gap-3 group focus:outline-none select-none shrink-0">
+                <div className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#2D6A4F] dark:text-emerald-400 group-hover:scale-105 transition-transform shrink-0 border border-emerald-100/80 dark:border-emerald-900/40">
+                  <svg width="20" height="17" viewBox="0 0 24 20" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
                     <path d="M12 18.5C12 18.5 10.8 12.8 6.5 9.8C2.5 7 1.8 2.5 1.8 2.5C1.8 2.5 6.4 2 9.5 6C11.5 8.7 12 12.5 12 18.5Z" opacity="0.95" />
                     <path d="M12 18.5C12 18.5 13.2 12.8 17.5 9.8C21.5 7 22.2 2.5 22.2 2.5C22.2 2.5 17.6 2 14.5 6C12.5 8.7 12 12.5 12 18.5Z" />
                   </svg>
                 </div>
-                <span className="text-sm sm:text-base font-bold tracking-[0.18em] text-neutral-900 dark:text-white uppercase leading-tight font-sans">
-                  YATHU AROKIYAGAM
-                </span>
-                <span className="text-[7px] font-semibold tracking-[0.18em] text-neutral-500 dark:text-neutral-400 uppercase mt-0.5">
-                  PURE &amp; NATURAL FOODS
-                </span>
+                <div className="flex flex-col text-left">
+                  <span className="text-[13px] sm:text-sm font-bold tracking-[0.14em] text-neutral-900 dark:text-white uppercase leading-tight font-sans whitespace-nowrap">
+                    YATHU AROKIYAGAM
+                  </span>
+                  <span className="text-[7.5px] font-bold tracking-[0.18em] text-emerald-800/80 dark:text-emerald-400/90 uppercase whitespace-nowrap">
+                    PURE &amp; NATURAL FOODS
+                  </span>
+                </div>
               </Link>
             </div>
 
-            {/* 2. Center: Exact Clean Navigation Links from Reference Image */}
-            <nav className="hidden lg:flex items-center gap-6 xl:gap-8 text-neutral-800 dark:text-neutral-200">
+            {/* 2. Center: Clean Navigation Links */}
+            <nav className="hidden lg:flex items-center gap-4 lg:gap-5 xl:gap-7 text-neutral-800 dark:text-neutral-200">
               
               {/* HOME */}
               <Link
                 href="/"
                 className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 whitespace-nowrap",
                   pathname === '/'
                     ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
                     : "text-neutral-700 dark:text-neutral-300"
@@ -420,7 +421,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               <Link
                 href="/about"
                 className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 whitespace-nowrap",
                   pathname === '/about'
                     ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
                     : "text-neutral-700 dark:text-neutral-300"
@@ -439,7 +440,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 <Link
                   href="/shop"
                   className={clsx(
-                    "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors flex items-center gap-1 hover:text-[#2D6A4F] dark:hover:text-emerald-400 cursor-pointer",
+                    "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors flex items-center gap-1 hover:text-[#2D6A4F] dark:hover:text-emerald-400 cursor-pointer whitespace-nowrap",
                     pathname.startsWith('/shop') && !pathname.includes('recipes')
                       ? "text-neutral-900 dark:text-white font-bold"
                       : "text-neutral-700 dark:text-neutral-300"
@@ -604,24 +605,11 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
                 </AnimatePresence>
               </div>
 
-              {/* SHOP */}
-              <Link
-                href="/shop"
-                className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
-                  pathname === '/shop'
-                    ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
-                    : "text-neutral-700 dark:text-neutral-300"
-                )}
-              >
-                SHOP
-              </Link>
-
               {/* BLOGS */}
               <Link
                 href="/blog"
                 className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 whitespace-nowrap",
                   pathname.startsWith('/blog')
                     ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
                     : "text-neutral-700 dark:text-neutral-300"
@@ -634,13 +622,13 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               <Link
                 href="/track-order"
                 className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 inline-flex items-center gap-1",
+                  "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 inline-flex items-center gap-1.5 whitespace-nowrap",
                   pathname.startsWith('/track-order')
                     ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
                     : "text-neutral-700 dark:text-neutral-300"
                 )}
               >
-                <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>TRACK ORDER</span>
               </Link>
 
@@ -648,7 +636,7 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               <Link
                 href="/contact"
                 className={clsx(
-                  "relative text-xs font-semibold tracking-[0.16em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400",
+                  "relative text-[11.5px] xl:text-xs font-semibold tracking-[0.12em] xl:tracking-[0.14em] uppercase py-2 transition-colors hover:text-[#2D6A4F] dark:hover:text-emerald-400 whitespace-nowrap",
                   pathname === '/contact'
                     ? "text-neutral-900 dark:text-white font-bold after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-5 after:h-[2px] after:bg-neutral-900 dark:after:bg-white"
                     : "text-neutral-700 dark:text-neutral-300"
@@ -658,18 +646,8 @@ export const Navbar: React.FC<NavbarProps> = ({ className }) => {
               </Link>
             </nav>
 
-            {/* 3. Right: Clean Outline Icons (Search, Track Order, User, Cart) */}
-            <div className="flex items-center gap-3 sm:gap-5 text-neutral-800 dark:text-neutral-200">
-              
-              {/* Quick Track Order Pill (Desktop) */}
-              <Link
-                href="/track-order"
-                className="hidden lg:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-bold text-neutral-700 dark:text-neutral-300 hover:text-emerald-700 dark:hover:text-emerald-400 bg-neutral-100/80 dark:bg-neutral-800/80 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 border border-neutral-200/80 dark:border-neutral-750 transition-all cursor-pointer"
-                title="Track order status & history"
-              >
-                <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
-                <span>Track Order</span>
-              </Link>
+            {/* 3. Right: Clean Outline Icons (Search, User, Cart) */}
+            <div className="flex items-center gap-2 sm:gap-3 lg:gap-3.5 text-neutral-800 dark:text-neutral-200 shrink-0">
 
               {/* 1. Search Icon Button */}
               <button
