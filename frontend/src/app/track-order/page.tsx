@@ -69,7 +69,13 @@ function TrackOrderContent() {
   const currentLang = i18n.language;
   const { isLoggedIn, user, login } = useAuthStore();
   const searchParams = useSearchParams();
-  const queryOrderId = (searchParams?.get('orderId') || '').trim();
+  const queryOrderId = (searchParams?.get('orderId') || searchParams?.get('id') || '').trim();
+  const queryToken = (searchParams?.get('token') || searchParams?.get('t') || '').trim();
+
+  // Direct SMS / Email Token Verification States
+  const [isTokenVerifying, setIsTokenVerifying] = useState(false);
+  const [isTokenVerified, setIsTokenVerified] = useState(false);
+  const [tokenError, setTokenError] = useState<string | null>(null);
 
   // Guest Phone OTP States
   const [mobileInput, setMobileInput] = useState('');
@@ -83,6 +89,49 @@ function TrackOrderContent() {
   const [fetchedOrders, setFetchedOrders] = useState<any[]>([]);
   const [selectedOrderIndex, setSelectedOrderIndex] = useState(0);
   const [activeTracking, setActiveTracking] = useState<TrackingData | null>(null);
+
+  // Automatically verify secure tracking token from SMS or Email link
+  useEffect(() => {
+    if (queryOrderId && queryToken) {
+      setIsTokenVerifying(true);
+      setTokenError(null);
+
+      apiClient
+        .get('/user/orders/track-by-token', {
+          params: { orderId: queryOrderId, token: queryToken },
+        })
+        .then((res: any) => {
+          if (res?.success && res.data?.order) {
+            const order = res.data.order;
+            setFetchedOrders([order]);
+            setSelectedOrderIndex(0);
+            setActiveTracking(formatOrderToTrackingData(order));
+            setIsTokenVerified(true);
+
+            // Auto-login customer with session credentials if returned
+            if (res.data?.accessToken && res.data?.user) {
+              if (typeof window !== 'undefined') {
+                localStorage.setItem('access_token', res.data.accessToken);
+                document.cookie = `access_token=${res.data.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+              }
+              login(res.data.user, res.data.accessToken);
+            }
+          } else {
+            setTokenError(res?.message || 'Invalid or expired tracking link.');
+          }
+        })
+        .catch((err: any) => {
+          const errMsg =
+            err?.response?.data?.message ||
+            err?.message ||
+            'Failed to verify tracking link.';
+          setTokenError(errMsg);
+        })
+        .finally(() => {
+          setIsTokenVerifying(false);
+        });
+    }
+  }, [queryOrderId, queryToken]);
 
   // Logged-in Customer orders
   const [userOrders, setUserOrders] = useState<CustomerOrder[]>([]);
@@ -451,8 +500,50 @@ function TrackOrderContent() {
       </div>
 
       <div className="max-w-3xl mx-auto px-4 pt-8 space-y-6">
-        {/* LOGGED-IN CUSTOMER VIEW */}
-        {isLoggedIn ? (
+        {/* 0. TOKEN VERIFICATION LOADING STATE */}
+        {isTokenVerifying ? (
+          <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-8 text-center space-y-4 shadow-sm">
+            <Loader2 className="w-8 h-8 animate-spin text-primary-500 mx-auto" />
+            <div className="space-y-1">
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">
+                Verifying Tracking Link...
+              </h3>
+              <p className="text-xs text-neutral-500">
+                Opening shipment details for Order #{queryOrderId} without OTP
+              </p>
+            </div>
+          </div>
+        ) : isTokenVerified && activeTracking ? (
+          /* 1. DIRECT SMS / EMAIL TOKEN VERIFIED BANNER */
+          <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-feature p-5 sm:p-6 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2">
+                  Order #{activeTracking.orderId} Verified
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 uppercase">
+                    SMS Direct Link
+                  </span>
+                </h3>
+                <p className="text-xs text-neutral-500 mt-0.5">
+                  Authenticated directly via SMS confirmation link. Complete live timeline is shown below.
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsTokenVerified(false);
+                setActiveTracking(null);
+              }}
+              className="text-xs font-bold text-neutral-600 dark:text-neutral-400 hover:text-primary-500 dark:hover:text-primary-400 underline self-start sm:self-center transition-colors"
+            >
+              Track Another Order
+            </button>
+          </div>
+        ) : isLoggedIn ? (
           <div className="bg-white dark:bg-neutral-900 border border-neutral-100 dark:border-neutral-800 rounded-feature p-6 sm:p-7 shadow-sm space-y-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-neutral-100 dark:border-neutral-800 pb-3">
               <div>
@@ -526,7 +617,14 @@ function TrackOrderContent() {
               </span>
             </div>
 
-            {queryOrderId && (
+            {tokenError && (
+              <div className="p-3 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800/40 rounded-card flex items-center gap-2 text-xs font-semibold text-amber-900 dark:text-amber-200">
+                <AlertTriangle className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                <span>{tokenError} Please verify your order using your 10-digit mobile number below.</span>
+              </div>
+            )}
+
+            {queryOrderId && !tokenError && (
               <div className="p-3 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800/40 rounded-card flex items-center gap-2 text-xs font-semibold text-emerald-900 dark:text-emerald-200">
                 <Truck className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <span>Tracking Order: <strong>#{queryOrderId}</strong>. Enter the mobile number used when placing this order.</span>

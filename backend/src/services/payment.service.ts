@@ -284,6 +284,7 @@ export class PaymentService {
               phone: phoneToNotify,
               orderNumber: orderRecord.orderNumber,
               grandTotal: Number(orderRecord.grandTotal),
+              orderId: orderRecord.id,
             }).catch((err) =>
               logger.error("Failed to send payment verified SMS:", err)
             );

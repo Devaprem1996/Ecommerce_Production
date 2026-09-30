@@ -1,5 +1,6 @@
 import nodemailer, { type Transporter } from "nodemailer";
 import logger from "../logger/index.js";
+import { generateOrderTrackingToken } from "./sms.service.js";
 
 export interface SendEmailOptions {
   to: string;
@@ -114,7 +115,7 @@ export class EmailService {
         </div>
 
         <div style="text-align: center; margin: 28px 0;">
-          <a href="${frontendUrl}/track-order" style="display: inline-block; background-color: #15803d; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">
+          <a href="${frontendUrl}/track-order?id=${orderNumber}&t=${generateOrderTrackingToken(orderNumber)}" style="display: inline-block; background-color: #15803d; color: #ffffff; padding: 12px 28px; text-decoration: none; border-radius: 6px; font-weight: bold;">
             Track Your Order Live
           </a>
         </div>

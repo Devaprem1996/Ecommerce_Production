@@ -435,5 +435,57 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * GET /api/v1/user/orders/track-by-token
+   * Direct tracking endpoint via secure HMAC token sent in SMS/Email
+   * Opens the order screen directly without requiring OTP verification
+   */
+  static async trackOrderByToken(req: Request, res: Response, next: NextFunction) {
+    try {
+      const orderId = (
+        (req.query.orderId as string) ||
+        (req.query.id as string) ||
+        ""
+      ).trim();
+      const token = (
+        (req.query.token as string) ||
+        (req.query.t as string) ||
+        ""
+      ).trim();
+
+      if (!orderId || !token) {
+        throw ApiError.badRequest("Order reference and secure tracking token are required.");
+      }
+
+      const result = await UserService.trackOrderByToken(orderId, token);
+
+      if (result.refreshToken) {
+        const isProduction = process.env.NODE_ENV === "production";
+        res.cookie("refreshToken", result.refreshToken, {
+          httpOnly: true,
+          secure: isProduction,
+          sameSite: isProduction ? "strict" : "lax",
+          maxAge: 7 * 24 * 60 * 60 * 1000,
+          path: "/api/v1/auth/refresh",
+        });
+      }
+
+      return res.status(200).json({
+        success: true,
+        message: "Order tracking details fetched successfully.",
+        data: {
+          order: result.order,
+          orders: [result.order],
+          user: result.user,
+          accessToken: result.accessToken,
+        },
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

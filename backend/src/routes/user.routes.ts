@@ -21,6 +21,9 @@ router.post(
   UserController.trackOrdersByOtp
 );
 
+// Public Direct Order Tracking Route (No auth token or OTP required, verified via SMS cryptographic tracking token)
+router.get("/orders/track-by-token", UserController.trackOrderByToken);
+
 // All subsequent user routes require customer or admin authentication
 router.use(requireAuth);
 

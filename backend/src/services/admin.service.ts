@@ -431,6 +431,7 @@ export class AdminService {
         SmsService.sendOrderDelivered({
           phone: customerPhone,
           orderNumber: order.orderNumber,
+          orderId: order.id,
         }).catch((err) => logger.error("Failed to send delivery SMS:", err));
       } else if (
         upperStatus === OrderStatus.PAYMENT_VERIFIED ||
@@ -440,6 +441,7 @@ export class AdminService {
           phone: customerPhone,
           orderNumber: order.orderNumber,
           amount: Number(order.grandTotal),
+          orderId: order.id,
         }).catch((err) => logger.error("Failed to send payment confirmation SMS:", err));
       }
     }

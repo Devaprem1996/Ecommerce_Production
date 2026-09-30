@@ -2,7 +2,7 @@ import bcrypt from "bcryptjs";
 import prisma from "../config/db.js";
 import { ApiError } from "../exceptions/api-error.js";
 import { OrderStatus, PaymentStatus } from "@prisma/client";
-import { SmsService } from "./sms.service.js";
+import { SmsService, verifyOrderTrackingToken } from "./sms.service.js";
 import { EmailService } from "./email.service.js";
 import { PaymentService } from "./payment.service.js";
 import { AuthService } from "./auth.service.js";
@@ -779,6 +779,7 @@ export class UserService {
           phone: phoneToNotify,
           orderNumber: createdOrder.orderNumber,
           grandTotal: Number(createdOrder.grandTotal),
+          orderId: createdOrder.id,
         }).catch((err) => logger.error("Failed to send order SMS:", err));
       }
 
@@ -1131,6 +1132,108 @@ export class UserService {
     });
 
     return { success: true, message: "Password updated successfully." };
+  }
+
+  /**
+   * Direct Order Tracking via Secure HMAC Token
+   * Bypasses SMS OTP verification and opens the order screen directly
+   * Also authenticates customer and returns session tokens
+   */
+  static async trackOrderByToken(orderId: string, token: string) {
+    const cleanOrderId = (orderId || "").trim();
+    const cleanToken = (token || "").trim();
+
+    if (!cleanOrderId || !cleanToken) {
+      throw ApiError.badRequest("Order reference and secure tracking token are required.");
+    }
+
+    const order = await prisma.order.findFirst({
+      where: {
+        OR: [
+          { orderNumber: cleanOrderId },
+          { id: cleanOrderId },
+        ],
+        deletedAt: null,
+      },
+      include: {
+        orderItems: {
+          include: {
+            variant: {
+              include: { product: true },
+            },
+          },
+        },
+        address: true,
+        payments: true,
+        user: {
+          include: { profile: true },
+        },
+      },
+    });
+
+    if (!order) {
+      throw ApiError.notFound("Order not found. Please verify the order number.");
+    }
+
+    const isValidToken = verifyOrderTrackingToken(order.orderNumber, order.id, cleanToken);
+    if (!isValidToken) {
+      throw ApiError.unauthorized("Invalid or expired tracking link. Please verify with phone OTP.");
+    }
+
+    // Generate authenticated session for this customer
+    let tokens: { accessToken?: string; refreshToken?: string } = {};
+    let userResponse: any = null;
+
+    if (order.user) {
+      const generated = AuthService.generateTokens({
+        userId: order.user.id,
+        email: order.user.email || `customer_${order.address?.phone || ""}`,
+        role: order.user.role,
+      });
+      tokens = generated;
+
+      const userProfile = order.user.profile;
+      const displayName =
+        userProfile?.firstName || `Customer ${(order.address?.phone || "").slice(-4)}`;
+      const { passwordHash: _, ...userWithoutPassword } = order.user as any;
+      userResponse = {
+        ...userWithoutPassword,
+        name: displayName,
+      };
+    }
+
+    const formattedOrder = {
+      id: order.id,
+      orderNumber: order.orderNumber,
+      status: order.status,
+      orderedAt: order.orderedAt || order.createdAt,
+      subtotal: Number(order.subtotal),
+      shippingCharge: Number(order.shippingCharge),
+      grandTotal: Number(order.grandTotal),
+      deliveryAddress: order.address
+        ? `${order.address.fullName}, ${order.address.addressLine1}, ${order.address.city} - ${order.address.postalCode}`
+        : null,
+      shippingCity: order.address?.city,
+      carrierName: "Delhivery",
+      trackingNumber: `DEL-${order.orderNumber.replace(/\D/g, "")}`,
+      items: order.orderItems.map((item) => ({
+        id: item.id,
+        name: item.productName,
+        sku: item.sku,
+        quantity: item.quantity,
+        price: Number(item.unitPrice),
+        image: item.variant?.product?.thumbnailUrl || null,
+      })),
+      paymentMethod: order.payments?.[0]?.provider || "upi",
+      paymentStatus: order.payments?.[0]?.status || "PENDING",
+    };
+
+    return {
+      order: formattedOrder,
+      user: userResponse,
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    };
   }
 }
 

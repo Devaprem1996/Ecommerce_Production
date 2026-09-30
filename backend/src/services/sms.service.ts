@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import logger from "../logger/index.js";
 import {
   analyzeSms,
@@ -15,6 +16,7 @@ export interface SendOrderSmsOptions {
   phone: string;
   orderNumber: string;
   grandTotal: string | number;
+  orderId?: string;
   trackingUrl?: string;
 }
 
@@ -22,14 +24,55 @@ export interface SendPaymentSmsOptions {
   phone: string;
   orderNumber: string;
   amount: string | number;
+  orderId?: string;
   trackingUrl?: string;
 }
 
 export interface SendDeliverySmsOptions {
   phone: string;
   orderNumber: string;
+  orderId?: string;
   customerName?: string;
   trackingUrl?: string;
+}
+
+/**
+ * Generates an unforgeable, HMAC-SHA256 tracking token for an order.
+ * Deterministic and stateless (requires no database migrations).
+ */
+export function generateOrderTrackingToken(orderNumber: string, orderId?: string): string {
+  const secret = process.env.JWT_SECRET || "default_jwt_secret_change_me_in_prod";
+  return crypto
+    .createHmac("sha256", secret)
+    .update(`${orderNumber}:${orderId || ""}`)
+    .digest("hex")
+    .slice(0, 16);
+}
+
+/**
+ * Validates tracking token in constant-time against order number and UUID.
+ */
+export function verifyOrderTrackingToken(orderNumber: string, orderId: string, token: string): boolean {
+  if (!token || typeof token !== "string") return false;
+  const tokenClean = token.trim();
+  const expectedWithId = generateOrderTrackingToken(orderNumber, orderId);
+  const expectedWithoutId = generateOrderTrackingToken(orderNumber);
+
+  try {
+    const bufA = Buffer.from(tokenClean);
+    const bufB = Buffer.from(expectedWithId);
+    const bufC = Buffer.from(expectedWithoutId);
+
+    if (bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB)) {
+      return true;
+    }
+    if (bufA.length === bufC.length && crypto.timingSafeEqual(bufA, bufC)) {
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
 }
 
 
@@ -190,23 +233,29 @@ export class SmsService {
 
   /**
    * Send Order Received SMS (under 160 GSM-7 characters -> Rs. 5 cost)
+   * Direct tracking link contains HMAC token for immediate OTP-free access
    */
   static async sendOrderReceived(options: SendOrderSmsOptions): Promise<boolean> {
-    const { phone, orderNumber, grandTotal, trackingUrl } = options;
+    const { phone, orderNumber, grandTotal, trackingUrl, orderId } = options;
     const frontendUrl = process.env.FRONTEND_URL || "https://yathuarokiyagam.com";
-    const trackLink = trackingUrl || `${frontendUrl}/track-order`;
-    const message = `Dear Customer, order #${orderNumber} (Rs.${grandTotal}) received at Yathu Arokiyagam. We are preparing it. Track: ${trackLink}`;
+    const token = generateOrderTrackingToken(orderNumber, orderId);
+    const trackLink = trackingUrl || `${frontendUrl}/track-order?id=${orderNumber}&t=${token}`;
+    const rawMessage = `Order #${orderNumber} (Rs.${grandTotal}) received at Yathu Arokiyagam. We are preparing it. Track: ${trackLink}`;
+    const message = enforceSingleSegmentLimit(rawMessage);
     return this.dispatchQuickSms(phone, message, "Order Received SMS");
   }
 
   /**
    * Send Payment Confirmed SMS (under 160 GSM-7 characters -> Rs. 5 cost)
+   * Direct tracking link contains HMAC token for immediate OTP-free access
    */
   static async sendPaymentConfirmed(options: SendPaymentSmsOptions): Promise<boolean> {
-    const { phone, orderNumber, amount, trackingUrl } = options;
+    const { phone, orderNumber, amount, trackingUrl, orderId } = options;
     const frontendUrl = process.env.FRONTEND_URL || "https://yathuarokiyagam.com";
-    const trackLink = trackingUrl || `${frontendUrl}/track-order`;
-    const message = `Dear Customer, payment of Rs.${amount} for order #${orderNumber} is confirmed at Yathu Arokiyagam. Track: ${trackLink}`;
+    const token = generateOrderTrackingToken(orderNumber, orderId);
+    const trackLink = trackingUrl || `${frontendUrl}/track-order?id=${orderNumber}&t=${token}`;
+    const rawMessage = `Payment of Rs.${amount} for order #${orderNumber} confirmed at Yathu Arokiyagam. Track: ${trackLink}`;
+    const message = enforceSingleSegmentLimit(rawMessage);
     return this.dispatchQuickSms(phone, message, "Payment Confirmed SMS");
   }
 
@@ -214,8 +263,12 @@ export class SmsService {
    * Send Order Delivered SMS (under 160 GSM-7 characters -> Rs. 5 cost)
    */
   static async sendOrderDelivered(options: SendDeliverySmsOptions): Promise<boolean> {
-    const { phone, orderNumber } = options;
-    const message = `Dear Customer, order #${orderNumber} has been delivered. Thank you for shopping with Yathu Arokiyagam!`;
+    const { phone, orderNumber, trackingUrl, orderId } = options;
+    const frontendUrl = process.env.FRONTEND_URL || "https://yathuarokiyagam.com";
+    const token = generateOrderTrackingToken(orderNumber, orderId);
+    const trackLink = trackingUrl || `${frontendUrl}/track-order?id=${orderNumber}&t=${token}`;
+    const rawMessage = `Order #${orderNumber} has been delivered. Track: ${trackLink}. Thank you for shopping with Yathu Arokiyagam!`;
+    const message = enforceSingleSegmentLimit(rawMessage);
     return this.dispatchQuickSms(phone, message, "Order Delivered SMS");
   }
 
