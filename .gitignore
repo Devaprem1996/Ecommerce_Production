@@ -38,12 +38,16 @@ logs/
 *.sln
 *.sw?
 
-# OS files
+# OS & Office lock files
 .DS_Store
 Thumbs.db
+~$*
 .vercel
 .env*
 
+# Test results & coverage
+test-results/
+playwright-report/
+
 # Reference & design assets
-website theme reference images/
-frontend/website theme reference images/
+unused_files/design_references/theme_reference_images/

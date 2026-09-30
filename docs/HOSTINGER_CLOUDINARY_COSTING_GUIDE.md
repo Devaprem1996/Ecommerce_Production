@@ -74,7 +74,7 @@ Because the product catalog currently consists of **85 items** across 10 categor
 
 ## 5. File Location Reference
 
-The generated spreadsheet files are saved in the project root:
-- 📊 **Excel Spreadsheet**: [`Hostinger_Cloudinary_Costing_Matrix.xlsx`](file:///e:/Personal%20Projects/ecommerce-production/Hostinger_Cloudinary_Costing_Matrix.xlsx)
-- 📄 **CSV Export**: [`Hostinger_Cloudinary_Costing_Matrix.csv`](file:///e:/Personal%20Projects/ecommerce-production/Hostinger_Cloudinary_Costing_Matrix.csv)
-- 🐍 **Generator Script**: [`generate_costing_excel.py`](file:///e:/Personal%20Projects/ecommerce-production/generate_costing_excel.py)
+The generated spreadsheet files are archived in the `unused_files/` directory:
+- 📊 **Excel Spreadsheet**: [`Hostinger_Cloudinary_Costing_Matrix.xlsx`](file:///e:/Personal%20Projects/ecommerce-production/unused_files/data_and_spreadsheets/Hostinger_Cloudinary_Costing_Matrix.xlsx)
+- 📄 **CSV Export**: [`Hostinger_Cloudinary_Costing_Matrix.csv`](file:///e:/Personal%20Projects/ecommerce-production/unused_files/data_and_spreadsheets/Hostinger_Cloudinary_Costing_Matrix.csv)
+- 🐍 **Generator Script**: [`generate_costing_excel.py`](file:///e:/Personal%20Projects/ecommerce-production/unused_files/generator_scripts/generate_costing_excel.py)
