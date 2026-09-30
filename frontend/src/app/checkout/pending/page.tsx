@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
@@ -11,10 +11,16 @@ import {
   HelpCircle, 
   RefreshCw,
   Loader2,
-  Sparkles
+  AlertTriangle,
+  ArrowRight
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
+import { paymentService } from "@/services/payment.service";
+import { useCartStore } from "@/store/cartStore";
+
+const MAX_POLL_ATTEMPTS = 15;
+const POLL_INTERVAL_MS = 3000;
 
 export default function CheckoutPendingPage() {
   return (
@@ -32,47 +38,123 @@ function CheckoutPendingContent() {
   const { t } = useTranslation();
   const searchParams = useSearchParams();
   const router = useRouter();
+  const clearCart = useCartStore((s) => s.clearCart);
 
-  const orderId = searchParams?.get("orderId") || "ORD-2025-00123";
+  const orderId = searchParams?.get("orderId") || "";
   
-  const [progress, setProgress] = useState(0);
+  const [progress, setProgress] = useState(10);
   const [statusMessage, setStatusMessage] = useState("Connecting to payment gateway...");
+  const [isTimedOut, setIsTimedOut] = useState(false);
+  const [isCheckingManually, setIsCheckingManually] = useState(false);
+  
+  const pollAttemptsRef = useRef(0);
+  const isResolvedRef = useRef(false);
+
+  const checkStatus = useCallback(async (isManual = false) => {
+    if (!orderId) {
+      setStatusMessage("Missing order reference.");
+      return;
+    }
+
+    try {
+      if (isManual) {
+        setIsCheckingManually(true);
+      }
+
+      const res = await paymentService.getOrderStatus(orderId);
+
+      const isPaid =
+        res.isPaid ||
+        res.status === "PAYMENT_VERIFIED" ||
+        res.status === "CONFIRMED" ||
+        res.payments?.some((p: any) => p.status === "captured");
+
+      if (isPaid) {
+        isResolvedRef.current = true;
+        setProgress(100);
+        setStatusMessage("Payment confirmed! Preparing your receipt...");
+        clearCart();
+        toast.success("Payment verified! Redirecting to confirmation screen...");
+        const targetOrder = res.orderNumber || res.dbOrderId || orderId;
+        setTimeout(() => {
+          router.replace(`/checkout/success?orderId=${encodeURIComponent(targetOrder)}`);
+        }, 1000);
+        return;
+      }
+
+      if (res.status === "FAILED" || res.paymentStatus === "FAILED") {
+        isResolvedRef.current = true;
+        toast.error("Payment was declined or cancelled.");
+        setTimeout(() => {
+          router.replace(
+            `/checkout/failed?orderId=${encodeURIComponent(orderId)}&reason=${encodeURIComponent(
+              res.failureReason || "Payment was declined by payment gateway"
+            )}`
+          );
+        }, 800);
+        return;
+      }
+
+      if (isManual) {
+        toast.info("Payment is still awaiting confirmation from your bank.");
+      }
+    } catch (err: any) {
+      console.warn("Polling order status check error:", err);
+      if (isManual) {
+        toast.error(err.message || "Failed to query transaction status.");
+      }
+    } finally {
+      if (isManual) {
+        setIsCheckingManually(false);
+      }
+    }
+  }, [orderId, router, clearCart]);
 
   useEffect(() => {
-    // Increment progress bar to simulate checking status
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          return 100;
-        }
-        
-        // Update messages at intervals
-        if (prev === 20) setStatusMessage("Verifying bank transaction tokens...");
-        if (prev === 50) setStatusMessage("Waiting for settlement confirmation...");
-        if (prev === 80) setStatusMessage("Registering order records...");
+    if (!orderId || isResolvedRef.current) return;
 
-        return prev + 10;
-      });
-    }, 600);
+    // Run first check immediately
+    checkStatus(false);
+
+    const interval = setInterval(() => {
+      if (isResolvedRef.current) {
+        clearInterval(interval);
+        return;
+      }
+
+      pollAttemptsRef.current += 1;
+      const attempt = pollAttemptsRef.current;
+
+      const calculatedProgress = Math.min(
+        Math.round((attempt / MAX_POLL_ATTEMPTS) * 90) + 10,
+        95
+      );
+      setProgress(calculatedProgress);
+
+      if (attempt <= 4) {
+        setStatusMessage("Verifying bank transaction tokens...");
+      } else if (attempt <= 9) {
+        setStatusMessage("Waiting for settlement confirmation from your bank...");
+      } else {
+        setStatusMessage("Confirming order records with gateway...");
+      }
+
+      checkStatus(false);
+
+      if (attempt >= MAX_POLL_ATTEMPTS) {
+        clearInterval(interval);
+        if (!isResolvedRef.current) {
+          setIsTimedOut(true);
+          setStatusMessage("Bank verification is taking longer than usual.");
+        }
+      }
+    }, POLL_INTERVAL_MS);
 
     return () => clearInterval(interval);
-  }, []);
-
-  // When progress reaches 100%, redirect to success page
-  useEffect(() => {
-    if (progress === 100) {
-      toast.success("Payment verified! Redirecting to success screen...");
-      const redirectTimeout = setTimeout(() => {
-        router.replace(`/checkout/success?orderId=${orderId}`);
-      }, 800);
-      return () => clearTimeout(redirectTimeout);
-    }
-  }, [progress, orderId, router]);
+  }, [orderId, checkStatus]);
 
   const handleManualCheck = () => {
-    toast.info("Manually querying transaction status...");
-    setProgress((prev) => Math.min(prev + 15, 100));
+    checkStatus(true);
   };
 
   return (
@@ -121,11 +203,13 @@ function CheckoutPendingContent() {
               Awaiting Gateway Settlement
             </h2>
             <p className="text-xs text-neutral-500 max-w-sm mx-auto leading-relaxed">
-              We are waiting for payment verification from your bank UPI channel. This usually completes in under 2 minutes. Please do not refresh the page.
+              We are waiting for payment verification from your bank UPI channel. This usually completes in under 2 minutes. Please do not close or refresh this page.
             </p>
-            <p className="text-xs font-bold text-neutral-505 pt-2">
-              Order Reference: <span className="font-extrabold text-neutral-800 dark:text-white">{orderId}</span>
-            </p>
+            {orderId && (
+              <p className="text-xs font-bold text-neutral-505 pt-2">
+                Order Reference: <span className="font-extrabold text-neutral-800 dark:text-white">{orderId}</span>
+              </p>
+            )}
           </div>
 
           {/* Progress Tracker */}
@@ -149,23 +233,58 @@ function CheckoutPendingContent() {
             </p>
           </div>
 
+          {/* Timeout Alert if settlement is delayed */}
+          {isTimedOut && (
+            <div className="p-4 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 rounded-xl text-left flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div className="text-xs text-amber-900 dark:text-amber-200 space-y-1">
+                <p className="font-bold">Confirmation is taking longer than expected.</p>
+                <p className="text-amber-700 dark:text-amber-400">
+                  If money was debited from your account, your payment will automatically update once verified by the bank. You will receive an SMS and email receipt.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Action buttons */}
           <div className="flex flex-col gap-3 pt-4 border-t border-neutral-100 dark:border-neutral-800">
             
             <Button 
               variant="primary" 
               onClick={handleManualCheck}
+              disabled={isCheckingManually}
               className="w-full font-bold text-xs py-3"
-              leftIcon={<RefreshCw className="w-4 h-4" />}
+              leftIcon={
+                isCheckingManually ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="w-4 h-4" />
+                )
+              }
             >
-              Check Status Manually
+              {isCheckingManually ? "Checking Gateway..." : "Check Status Now"}
             </Button>
 
-            <Link href="/contact" className="w-full">
-              <Button variant="secondary" className="w-full font-bold text-xs py-3" leftIcon={<HelpCircle className="w-4 h-4" />}>
-                Contact Customer Support
-              </Button>
-            </Link>
+            {isTimedOut ? (
+              <div className="flex gap-2 w-full">
+                <Link href="/account/orders" className="flex-1">
+                  <Button variant="secondary" className="w-full font-bold text-xs py-3" rightIcon={<ArrowRight className="w-4 h-4" />}>
+                    View My Orders
+                  </Button>
+                </Link>
+                <Link href="/contact" className="flex-1">
+                  <Button variant="ghost" className="w-full font-bold text-xs py-3 border border-neutral-200 dark:border-neutral-800" leftIcon={<HelpCircle className="w-4 h-4" />}>
+                    Help & Support
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <Link href="/contact" className="w-full">
+                <Button variant="secondary" className="w-full font-bold text-xs py-3" leftIcon={<HelpCircle className="w-4 h-4" />}>
+                  Contact Customer Support
+                </Button>
+              </Link>
+            )}
 
           </div>
 

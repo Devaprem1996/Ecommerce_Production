@@ -97,6 +97,10 @@ export class PaymentController {
       return res.status(200).json({
         success: true,
         order_id: result.order_id,
+        orderNumber: result.orderNumber,
+        status: result.status,
+        paymentStatus: result.paymentStatus,
+        isPaid: result.isPaid,
         payments: result.payments,
         timestamp: new Date().toISOString(),
       });

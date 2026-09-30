@@ -317,23 +317,89 @@ export class PaymentService {
   }
 
   /**
-   * Query status fallback for a Razorpay order
+   * Query status fallback for an order or Razorpay order
    */
-  static async getOrderStatus(razorpayOrderId: string) {
-    if (!razorpayOrderId) {
-      throw ApiError.badRequest("Razorpay order ID is required.");
+  static async getOrderStatus(orderIdentifier: string) {
+    if (!orderIdentifier) {
+      throw ApiError.badRequest("Order identifier is required.");
     }
 
-    validateRazorpayConfig();
+    // Try finding associated payment or order record
+    const payment = await prisma.payment.findFirst({
+      where: {
+        OR: [
+          { providerOrderId: orderIdentifier },
+          { orderId: orderIdentifier },
+          { order: { orderNumber: orderIdentifier } },
+        ],
+      },
+      include: { order: true },
+    });
 
-    const payments = await executeWithRetry(
-      (client) => client.orders.fetchPayments(razorpayOrderId),
-      "Fetch Order Payments"
+    let order =
+      payment?.order ||
+      (await prisma.order.findFirst({
+        where: {
+          OR: [
+            { id: orderIdentifier },
+            { orderNumber: orderIdentifier },
+          ],
+        },
+      })) ||
+      undefined;
+
+    const actualRazorpayOrderId =
+      payment?.providerOrderId ||
+      (orderIdentifier.startsWith("order_") ? orderIdentifier : null);
+
+    let payments: any[] = [];
+    if (actualRazorpayOrderId) {
+      try {
+        validateRazorpayConfig();
+        const rpPayments = await executeWithRetry(
+          (client) => client.orders.fetchPayments(actualRazorpayOrderId),
+          "Fetch Order Payments"
+        );
+        payments = (rpPayments as any)?.items || rpPayments || [];
+      } catch (err) {
+        logger.warn(`Could not fetch Razorpay payments for ${actualRazorpayOrderId}:`, err);
+      }
+    }
+
+    const hasCapturedPayment = payments.some(
+      (p: any) => p.status === "captured"
     );
 
+    const isPaid =
+      payment?.status === "SUCCESSFUL" ||
+      order?.status === "PAYMENT_VERIFIED" ||
+      order?.status === "CONFIRMED" ||
+      hasCapturedPayment;
+
+    // If Razorpay captured payment but DB hasn't been updated yet (e.g. webhook pending)
+    if (hasCapturedPayment && order && order.status !== "PAYMENT_VERIFIED" && order.status !== "CONFIRMED") {
+      await prisma.$transaction(async (tx) => {
+        if (payment) {
+          await tx.payment.update({
+            where: { id: payment.id },
+            data: { status: "SUCCESSFUL", paidAt: new Date() },
+          });
+        }
+        await tx.order.update({
+          where: { id: order.id },
+          data: { status: "PAYMENT_VERIFIED", orderedAt: new Date() },
+        });
+      });
+    }
+
     return {
-      order_id: razorpayOrderId,
-      payments: (payments as any)?.items || payments || [],
+      order_id: orderIdentifier,
+      orderNumber: order?.orderNumber,
+      dbOrderId: order?.id,
+      status: isPaid ? (order?.status === "CONFIRMED" ? "CONFIRMED" : "PAYMENT_VERIFIED") : (payment?.status || order?.status || "PENDING"),
+      paymentStatus: payment?.status || (isPaid ? "SUCCESSFUL" : "PENDING"),
+      isPaid,
+      payments,
     };
   }
 

@@ -60,8 +60,15 @@ app.use(
   })
 );
 
-// Payload size limits & parsing
-app.use(express.json({ limit: "5mb" }));
+// Payload size limits & parsing (verify captures rawBody for cryptographic webhook signatures)
+app.use(
+  express.json({
+    limit: "5mb",
+    verify: (req: any, _res, buf) => {
+      req.rawBody = buf.toString("utf8");
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true, limit: "5mb" }));
 app.use(cookieParser());
 
