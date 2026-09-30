@@ -1,0 +1,1200 @@
+# E-COMMERCE APPLICATION — FULL API, ROUTE, LOGIC & ERROR-HANDLING AUDIT
+
+## ROLE
+
+Act as a **Senior Full-Stack Architect, API Integration Engineer, QA Engineer, and Debugging Specialist**.
+
+You are auditing an existing production-oriented e-commerce application.
+
+The repository contains BOTH:
+
+```text
+/frontend
+/backend
+```
+
+The application includes:
+
+* Frontend UI
+* Backend APIs
+* Database interactions
+* Authentication / authorization
+* SMS integration
+* Razorpay payment integration
+* API calls
+* Internal routes
+* Frontend navigation
+* Backend routes
+* Redirect flows
+* Webhooks/callbacks
+* Form submissions
+* Order processing
+* Payment processing
+* Error handling
+* Loading states
+* Success/failure states
+
+---
+
+# IMPORTANT RULE
+
+**DO NOT MODIFY CODE IMMEDIATELY.**
+
+First perform a complete audit and create a system map.
+
+Do not guess.
+
+Do not assume an API works because the code exists.
+
+Trace every important flow from:
+
+```text
+UI
+ ↓
+Frontend Event / Form
+ ↓
+Frontend Function
+ ↓
+API Client / Fetch / Axios
+ ↓
+Backend Route
+ ↓
+Controller
+ ↓
+Service
+ ↓
+Database / External API
+ ↓
+Backend Response
+ ↓
+Frontend Response Handler
+ ↓
+UI State Update
+ ↓
+Redirect / Navigation
+```
+
+Identify where the chain breaks, is incomplete, or behaves incorrectly.
+
+---
+
+# PHASE 1 — APPLICATION STRUCTURE DISCOVERY
+
+First inspect the complete repository.
+
+Identify:
+
+### Frontend
+
+* Framework
+* Entry points
+* Routing system
+* API service files
+* API client configuration
+* Authentication handling
+* State management
+* Form handling
+* Payment components
+* SMS-related components
+* Checkout components
+* Order components
+* User/account components
+* Admin components
+* Error/loading components
+
+### Backend
+
+* Framework
+* Entry point
+* Route files
+* Controllers
+* Services
+* Middleware
+* Authentication
+* Authorization
+* Database configuration
+* Models
+* Repositories
+* Validation
+* External integrations
+* SMS service
+* Razorpay service
+* Webhook handlers
+* Error middleware
+
+Create a folder-level architecture map.
+
+---
+
+# PHASE 2 — COMPLETE API INVENTORY
+
+Create a complete list of ALL backend API endpoints.
+
+Do not only inspect route files.
+
+Search the entire backend codebase.
+
+For every endpoint identify:
+
+| Method | Endpoint | File | Controller | Service | Auth Required | Role | Request Body | Query Params | Path Params | Response | External API | DB Operation |
+| ------ | -------- | ---- | ---------- | ------- | ------------- | ---- | ------------ | ------------ | ----------- | -------- | ------------ | ------------ |
+
+Example:
+
+```text
+POST /api/auth/login
+POST /api/auth/register
+GET /api/products
+GET /api/products/:id
+POST /api/orders
+POST /api/payment/create-order
+POST /api/payment/verify
+POST /api/payment/webhook
+POST /api/sms/send
+```
+
+Do NOT assume these are the actual endpoints.
+
+Extract the actual endpoints from the repository.
+
+---
+
+# PHASE 3 — FRONTEND API CALL INVENTORY
+
+Find EVERY place where the frontend communicates with the backend.
+
+Search for:
+
+```text
+fetch()
+axios()
+axios.get()
+axios.post()
+axios.put()
+axios.patch()
+axios.delete()
+XMLHttpRequest
+API_URL
+BASE_URL
+httpClient
+apiClient
+services/
+hooks/
+mutations
+queries
+```
+
+Create:
+
+| Frontend File | Function | HTTP Method | API Endpoint | Trigger | Request Data | Expected Response | Error Handling | Loading State | Redirect |
+| ------------- | -------- | ----------- | ------------ | ------- | ------------ | ----------------- | -------------- | ------------- | -------- |
+
+Identify:
+
+* APIs called multiple times
+* APIs called unnecessarily
+* APIs called from wrong components
+* Missing API calls
+* Incorrect HTTP methods
+* Incorrect request payloads
+* Incorrect headers
+* Missing authentication tokens
+* Wrong API base URLs
+* Hardcoded URLs
+* Duplicate API functions
+* Dead API functions
+* Unused endpoints
+
+---
+
+# PHASE 4 — FRONTEND ↔ BACKEND CONTRACT VALIDATION
+
+For EVERY API call, compare the frontend and backend.
+
+Check:
+
+```text
+Frontend HTTP method
+        ↓
+Backend HTTP method
+
+Frontend URL
+        ↓
+Backend route
+
+Frontend params
+        ↓
+Backend params
+
+Frontend request body
+        ↓
+Backend validation/schema
+
+Backend response
+        ↓
+Frontend response handling
+```
+
+Identify mismatches such as:
+
+* Wrong endpoint
+* Wrong HTTP method
+* Wrong parameter name
+* Wrong JSON field name
+* Missing required field
+* Incorrect data type
+* Incorrect response property
+* Incorrect status-code handling
+* Missing authentication header
+* Token format mismatch
+* CORS issue
+* Content-Type mismatch
+* API response structure mismatch
+
+For each mismatch explain the exact root cause.
+
+---
+
+# PHASE 5 — ROUTE & NAVIGATION AUDIT
+
+Inspect every frontend route.
+
+Create:
+
+| Frontend Route | Component | Access | Authentication | API Dependency | Expected Redirect | Actual Redirect | Problem |
+| -------------- | --------- | ------ | -------------- | -------------- | ----------------- | --------------- | ------- |
+
+Check:
+
+* Login → Dashboard
+* Register → Login
+* Product → Product Details
+* Product Details → Cart
+* Cart → Checkout
+* Checkout → Payment
+* Payment → Success
+* Payment → Failure
+* Payment → Order
+* Order → Order Details
+* Logout → Login/Home
+* Unauthorized → Login
+* Admin routes
+* Protected routes
+* 404 routes
+
+Identify:
+
+* Broken routes
+* Missing routes
+* Incorrect redirects
+* Redirect loops
+* Redirects before API completion
+* Redirects after failed API calls
+* Redirects to stale URLs
+* Browser back-button problems
+* Refresh problems
+* Direct URL access problems
+
+---
+
+# PHASE 6 — API FLOW / BUSINESS LOGIC AUDIT
+
+For each major business flow trace the complete logic.
+
+## FLOW 1 — USER REGISTRATION
+
+Trace:
+
+```text
+Registration UI
+ ↓
+Validation
+ ↓
+API call
+ ↓
+Backend route
+ ↓
+Validation
+ ↓
+Database
+ ↓
+SMS / OTP if applicable
+ ↓
+Response
+ ↓
+Frontend state
+ ↓
+Redirect
+```
+
+Check every possible failure condition.
+
+---
+
+## FLOW 2 — LOGIN
+
+Trace:
+
+```text
+Login UI
+ ↓
+Validation
+ ↓
+API
+ ↓
+Authentication
+ ↓
+Database
+ ↓
+Token/session
+ ↓
+Response
+ ↓
+Storage
+ ↓
+Application state
+ ↓
+Redirect
+```
+
+Check:
+
+* Invalid credentials
+* Missing credentials
+* Expired token
+* Invalid token
+* Missing token
+* API timeout
+* Server error
+* Redirect failure
+
+---
+
+## FLOW 3 — PRODUCT
+
+Trace:
+
+```text
+Product List
+ ↓
+API
+ ↓
+Backend
+ ↓
+Database
+ ↓
+Response
+ ↓
+State
+ ↓
+UI
+```
+
+Check:
+
+* Empty products
+* API failure
+* Loading state
+* Pagination
+* Filters
+* Search
+* Product not found
+* Invalid product ID
+
+---
+
+# PHASE 7 — CART & CHECKOUT AUDIT
+
+Trace:
+
+```text
+Product
+ ↓
+Add to Cart
+ ↓
+Cart State
+ ↓
+Cart API
+ ↓
+Backend
+ ↓
+Database
+ ↓
+Checkout
+ ↓
+Order Creation
+ ↓
+Payment
+```
+
+Check for:
+
+* Duplicate cart items
+* Incorrect quantity
+* Negative quantity
+* Stock validation
+* Price manipulation
+* Stale cart data
+* Cart synchronization issues
+* Checkout without authentication
+* Checkout with empty cart
+* Product deleted after adding to cart
+* Price changed after adding to cart
+
+---
+
+# PHASE 8 — RAZORPAY INTEGRATION AUDIT
+
+Perform a dedicated Razorpay audit.
+
+Trace the COMPLETE payment lifecycle:
+
+```text
+Checkout
+ ↓
+Create Order API
+ ↓
+Backend
+ ↓
+Razorpay Order Creation
+ ↓
+Order ID
+ ↓
+Frontend Razorpay Checkout
+ ↓
+Payment
+ ↓
+Success / Failure
+ ↓
+Payment Verification
+ ↓
+Backend Verification
+ ↓
+Order Status Update
+ ↓
+Webhook
+ ↓
+Final Payment State
+ ↓
+Frontend Redirect
+```
+
+Inspect:
+
+* Razorpay order creation
+* Razorpay key configuration
+* Environment variables
+* Order amount conversion
+* Currency
+* Razorpay order ID
+* Payment ID
+* Signature
+* Signature verification
+* Webhook
+* Webhook secret
+* Payment status
+* Order status
+* Duplicate payment handling
+* Failed payment handling
+* Cancelled payment handling
+* Network failure
+* Browser refresh during payment
+* Payment success but API failure
+* API success but redirect failure
+* Webhook arriving before frontend verification
+* Webhook arriving multiple times
+
+IMPORTANT:
+
+Determine whether payment verification is performed securely on the backend.
+
+Never trust payment-success information coming only from the frontend.
+
+---
+
+# PHASE 9 — SMS INTEGRATION AUDIT
+
+Trace:
+
+```text
+Business Event
+ ↓
+Backend
+ ↓
+SMS Service
+ ↓
+SMS Provider API
+ ↓
+Response
+ ↓
+Application
+```
+
+Identify:
+
+* SMS provider
+* API endpoint
+* Authentication
+* API key handling
+* Request payload
+* Response handling
+* Timeout
+* Retry
+* Failure handling
+* Duplicate SMS
+* OTP expiry
+* OTP validation
+* Rate limiting
+* Environment variables
+
+Check whether SMS failure incorrectly causes the main business transaction to fail.
+
+Example:
+
+```text
+Order successfully created
+        ↓
+SMS failed
+        ↓
+Does order become failed?
+```
+
+Determine whether this behavior is intentional.
+
+---
+
+# PHASE 10 — ERROR-HANDLING AUDIT
+
+Find every API call and determine whether errors are properly handled.
+
+Check for:
+
+```text
+try/catch
+.catch()
+HTTP status checks
+response.ok
+Axios errors
+timeout
+network errors
+validation errors
+authentication errors
+authorization errors
+404
+409
+422
+429
+500
+503
+```
+
+Create:
+
+| Location | API | Failure Scenario | Current Handling | Expected Handling | Severity |
+| -------- | --- | ---------------- | ---------------- | ----------------- | -------- |
+
+Look specifically for:
+
+```text
+catch(error) {
+   console.log(error)
+}
+```
+
+where no user-facing handling exists.
+
+Also identify:
+
+* Errors swallowed silently
+* Generic errors
+* Incorrect error messages
+* Backend errors not reaching frontend
+* Frontend errors not displayed
+* Errors displayed but incorrect
+* Loading spinner never stops
+* Loading spinner stops too early
+* Button remains disabled
+* Duplicate submissions
+* Failed requests causing stale UI
+
+---
+
+# PHASE 11 — HTTP STATUS CODE AUDIT
+
+Verify that backend endpoints use appropriate status codes.
+
+Examples:
+
+```text
+200 → successful request
+201 → resource created
+400 → bad request
+401 → unauthenticated
+403 → forbidden
+404 → not found
+409 → conflict
+422 → validation error
+429 → rate limited
+500 → internal server error
+502/503 → external/dependency/server failure
+```
+
+Identify incorrect status-code usage.
+
+Also verify that frontend handles those statuses correctly.
+
+---
+
+# PHASE 12 — UI / UX GLITCH AUDIT
+
+Inspect the UI around API operations.
+
+Check:
+
+### Loading
+
+* Is loading state displayed?
+* Does loading stop after success?
+* Does loading stop after failure?
+* Is double-click prevented?
+
+### Success
+
+* Is success message displayed?
+* Is data refreshed?
+* Is correct page displayed?
+* Is redirect performed?
+
+### Failure
+
+* Is error displayed?
+* Is the user told what happened?
+* Can the user retry?
+
+### Empty State
+
+Check:
+
+```text
+No products
+No orders
+No cart items
+No search results
+No notifications
+No user data
+```
+
+### Network Failure
+
+Simulate:
+
+```text
+Backend unavailable
+API timeout
+500
+404
+401
+403
+429
+Slow API
+Malformed response
+```
+
+Check UI behavior for each.
+
+---
+
+# PHASE 13 — REDIRECT LOGIC AUDIT
+
+For every API operation that should navigate somewhere, document:
+
+```text
+User Action
+ ↓
+API Request
+ ↓
+API Response
+ ↓
+Success Condition
+ ↓
+State Update
+ ↓
+Redirect
+```
+
+Find cases where:
+
+```text
+API succeeds
+BUT
+redirect does not happen
+```
+
+Also find:
+
+```text
+API fails
+BUT
+redirect still happens
+```
+
+And:
+
+```text
+API is still running
+BUT
+redirect happens early
+```
+
+Check async/await handling carefully.
+
+---
+
+# PHASE 14 — ASYNC / RACE CONDITION AUDIT
+
+Look for:
+
+* Missing `await`
+* Incorrect promise handling
+* Multiple API calls executing simultaneously
+* Race conditions
+* State updates after unmount
+* Duplicate requests
+* API calls triggered by unnecessary renders
+* `useEffect` dependency problems
+* Multiple checkout submissions
+* Multiple payment requests
+* Multiple order creation requests
+* Redirect before state update
+
+---
+
+# PHASE 15 — DATABASE / BUSINESS LOGIC AUDIT
+
+For each backend service inspect:
+
+```text
+Input
+ ↓
+Validation
+ ↓
+Business Rules
+ ↓
+Database
+ ↓
+Transaction
+ ↓
+External API
+ ↓
+Response
+```
+
+Identify:
+
+* Missing validation
+* Missing transaction handling
+* Partial updates
+* Duplicate records
+* Race conditions
+* Incorrect status transitions
+* Missing foreign-key validation
+* Null handling
+* Incorrect calculations
+* Incorrect totals
+* Incorrect tax
+* Incorrect discount
+* Incorrect shipping
+* Incorrect payment amount
+* Incorrect order status
+
+---
+
+# PHASE 16 — SECURITY AUDIT
+
+Check for:
+
+* Hardcoded API keys
+* Hardcoded Razorpay secrets
+* SMS API keys in frontend
+* Environment variables exposed to frontend
+* Sensitive data in logs
+* JWT/token storage problems
+* Missing authorization
+* IDOR
+* Unvalidated IDs
+* SQL injection
+* XSS
+* CSRF where applicable
+* Missing rate limiting
+* Weak OTP validation
+* Payment verification vulnerabilities
+* Client-side-only validation
+* Trusting frontend price/order data
+
+Do not expose or print secret values in the audit.
+
+Report only:
+
+```text
+SECRET FOUND
+File:
+Line:
+Type:
+Recommended remediation:
+```
+
+---
+
+# PHASE 17 — DEAD CODE & LOGIC GAP AUDIT
+
+Find:
+
+* Unused API endpoints
+* Unused frontend API functions
+* Unused routes
+* Duplicate routes
+* Duplicate API calls
+* Duplicate services
+* Dead components
+* Commented-out production logic
+* TODO/FIXME
+* Temporary workarounds
+* Hardcoded values
+* Magic numbers
+* Hardcoded URLs
+* Inconsistent naming
+* Inconsistent response structures
+
+---
+
+# PHASE 18 — END-TO-END TRACE MATRIX
+
+Create a master table:
+
+| Flow | Frontend | API | Backend Route | Service | DB | External API | Success | Failure | Redirect | Status |
+| ---- | -------- | --- | ------------- | ------- | -- | ------------ | ------- | ------- | -------- | ------ |
+
+Include at minimum:
+
+```text
+Registration
+Login
+Logout
+OTP
+Product List
+Product Details
+Search
+Cart Add
+Cart Update
+Cart Delete
+Checkout
+Order Creation
+Razorpay Order Creation
+Razorpay Payment
+Payment Verification
+Payment Webhook
+Order Status
+Order History
+Profile
+Address
+SMS
+Admin operations
+```
+
+Use only flows that actually exist in the repository.
+
+---
+
+# PHASE 19 — ROOT CAUSE ANALYSIS
+
+For every issue found, DO NOT simply say:
+
+```text
+API not working
+```
+
+Instead provide:
+
+### Issue
+
+Clear description.
+
+### Location
+
+```text
+File:
+Function:
+Line:
+```
+
+### Expected
+
+What should happen.
+
+### Actual
+
+What currently happens.
+
+### Root Cause
+
+The actual technical reason.
+
+### Impact
+
+What functionality is affected.
+
+### Reproduction
+
+Exact steps to reproduce.
+
+### Recommended Fix
+
+Specific technical solution.
+
+### Priority
+
+Use:
+
+```text
+P0 — Critical
+P1 — High
+P2 — Medium
+P3 — Low
+```
+
+Do NOT fix anything yet.
+
+---
+
+# PHASE 20 — ISSUE CATEGORIES
+
+Classify every issue into:
+
+```text
+API
+ROUTE
+FRONTEND
+BACKEND
+DATABASE
+PAYMENT
+SMS
+AUTHENTICATION
+AUTHORIZATION
+VALIDATION
+ERROR HANDLING
+REDIRECT
+ASYNC
+STATE MANAGEMENT
+UI/UX
+SECURITY
+PERFORMANCE
+BUSINESS LOGIC
+DATA CONSISTENCY
+CONFIGURATION
+DEAD CODE
+```
+
+---
+
+# PHASE 21 — FINAL AUDIT REPORT
+
+At the end generate the following sections:
+
+## 1. Application Architecture
+
+Show:
+
+```text
+Frontend
+   ↓
+API Layer
+   ↓
+Backend
+   ↓
+Database
+   ↓
+External Services
+```
+
+## 2. Complete Endpoint Inventory
+
+List every endpoint.
+
+## 3. Frontend API Inventory
+
+List every API call.
+
+## 4. Route Inventory
+
+List every frontend and backend route.
+
+## 5. API Contract Mismatches
+
+List every mismatch.
+
+## 6. Broken Flows
+
+List complete user flows that currently have issues.
+
+## 7. Razorpay Issues
+
+Dedicated payment findings.
+
+## 8. SMS Issues
+
+Dedicated SMS findings.
+
+## 9. Error Handling Gaps
+
+List missing/incomplete error handling.
+
+## 10. Redirect Issues
+
+List navigation/redirect problems.
+
+## 11. UI Issues
+
+List UI/UX problems related to API operations.
+
+## 12. Business Logic Gaps
+
+List logical inconsistencies.
+
+## 13. Security Issues
+
+List security concerns.
+
+## 14. Dead Code / Unused Code
+
+List unused or duplicate implementation.
+
+## 15. Root Cause Matrix
+
+Use:
+
+| ID | Category | Issue | Root Cause | File | Function | Severity | Recommended Fix |
+| -- | -------- | ----- | ---------- | ---- | -------- | -------- | --------------- |
+
+## 16. Recommended Fix Order
+
+Group issues into:
+
+```text
+PHASE 1 — Critical
+PHASE 2 — API & Backend
+PHASE 3 — Payment & SMS
+PHASE 4 — Frontend & Redirects
+PHASE 5 — UI/UX
+PHASE 6 — Security
+PHASE 7 — Cleanup
+PHASE 8 — Testing
+```
+
+---
+
+# VERY IMPORTANT — DO NOT MAKE ASSUMPTIONS
+
+If you cannot determine something from the source code, mark it:
+
+```text
+UNKNOWN — REQUIRES VERIFICATION
+```
+
+Do not invent:
+
+* API endpoints
+* database behavior
+* payment behavior
+* SMS behavior
+* authentication behavior
+* expected responses
+* business rules
+
+---
+
+# VERY IMPORTANT — DO NOT MODIFY CODE DURING AUDIT
+
+The first task is ONLY:
+
+```text
+DISCOVER
+TRACE
+COMPARE
+IDENTIFY
+DOCUMENT
+```
+
+Do not refactor.
+
+Do not rewrite.
+
+Do not automatically fix.
+
+Do not delete code.
+
+Do not change database schema.
+
+Do not change API contracts.
+
+Do not change UI.
+
+Wait until the audit report is complete.
+
+---
+
+# AFTER AUDIT
+
+Once the complete audit report is generated, ask:
+
+> "Would you like me to start fixing the issues one-by-one, beginning with the highest-impact root cause?"
+
+If the user says YES:
+
+1. Fix one logical group at a time.
+2. Show the files that will change.
+3. Explain why each change is required.
+4. Preserve existing API contracts unless a contract change is necessary.
+5. Do not introduce unnecessary libraries.
+6. Do not rewrite working functionality.
+7. After each fix, run/build/test the affected flow.
+8. Verify frontend ↔ backend compatibility.
+9. Verify success and failure paths.
+10. Verify redirect behavior.
+11. Verify loading/error states.
+12. Re-run the audit for the affected area.
+
+---
+
+# GOLDEN RULE
+
+Treat the application as a connected system, not as individual files.
+
+Always trace:
+
+```text
+USER ACTION
+    ↓
+UI
+    ↓
+FRONTEND FUNCTION
+    ↓
+API CALL
+    ↓
+BACKEND ROUTE
+    ↓
+CONTROLLER
+    ↓
+SERVICE
+    ↓
+DATABASE / EXTERNAL API
+    ↓
+RESPONSE
+    ↓
+FRONTEND STATE
+    ↓
+UI
+    ↓
+REDIRECT
+```
+
+The objective is to discover the **actual root cause**, not just patch the visible symptom.

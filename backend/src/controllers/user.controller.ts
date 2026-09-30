@@ -411,5 +411,29 @@ export class UserController {
       next(error);
     }
   }
+
+  /**
+   * POST /api/v1/user/change-password
+   */
+  static async changePassword(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required.");
+      }
+
+      const { currentPassword, newPassword } = req.body;
+      const result = await UserService.changePassword(userId, currentPassword, newPassword);
+
+      return res.status(200).json({
+        success: true,
+        message: result.message,
+        timestamp: new Date().toISOString(),
+        requestId: req.headers["x-request-id"],
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }
 

@@ -264,4 +264,53 @@ export class CmsController {
       next(error);
     }
   }
+
+  /* =========================================================================
+     PRODUCT REVIEW CONTROLLERS
+     ========================================================================= */
+
+  static async listProductReviews(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { productId } = req.params;
+      const data = await CmsService.listProductReviews(productId);
+
+      return res.status(200).json({
+        success: true,
+        message: "Product reviews retrieved successfully.",
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async createProductReview(req: Request, res: Response, next: NextFunction) {
+    try {
+      const userId = req.user?.userId;
+      if (!userId) {
+        throw ApiError.unauthorized("Authentication required to submit a review.");
+      }
+
+      const { productId } = req.params;
+      const { rating, title, comment } = req.body;
+
+      const review = await CmsService.createProductReview({
+        userId,
+        productIdOrSlug: productId,
+        rating,
+        title,
+        comment,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Thank you! Your review has been submitted successfully.",
+        data: { review },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
 }

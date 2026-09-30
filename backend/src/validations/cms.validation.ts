@@ -109,3 +109,16 @@ export const listProductsQuerySchema = z.object({
     includeInactive: z.string().optional(),
   }),
 });
+
+// Create Product Review Schema
+export const createReviewSchema = z.object({
+  params: z.object({
+    productId: z.string().min(1, "Product ID or slug is required"),
+  }),
+  body: z.object({
+    rating: z.number().int().min(1, "Rating must be at least 1").max(5, "Rating cannot exceed 5"),
+    title: z.string().trim().max(100).optional(),
+    comment: z.string().trim().min(3, "Review comment must be at least 3 characters").max(1000),
+  }),
+});
+

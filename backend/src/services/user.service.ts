@@ -51,30 +51,64 @@ export class UserService {
       throw ApiError.unauthorized("User session invalid.");
     }
 
-    const profile = await prisma.userProfile.upsert({
-      where: { userId },
-      create: {
-        userId,
-        firstName: data.firstName || "Customer",
-        lastName: data.lastName || "",
-        phone: data.phone || null,
-        dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        gender: data.gender || null,
-        avatarUrl: data.avatarUrl || null,
-      },
-      update: {
-        ...(data.firstName !== undefined && { firstName: data.firstName }),
-        ...(data.lastName !== undefined && { lastName: data.lastName }),
-        ...(data.phone !== undefined && { phone: data.phone }),
-        ...(data.dateOfBirth !== undefined && {
-          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
-        }),
-        ...(data.gender !== undefined && { gender: data.gender }),
-        ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
-      },
-    });
+    let cleanPhone: string | null | undefined = undefined;
+    if (data.phone !== undefined) {
+      if (data.phone) {
+        cleanPhone = data.phone.replace(/\D/g, "").slice(-10);
+        if (cleanPhone.length !== 10) {
+          throw ApiError.badRequest("Please provide a valid 10-digit mobile number.");
+        }
+        // Verify phone is not in use by another user
+        const conflict = await prisma.user.findFirst({
+          where: {
+            phone: cleanPhone,
+            id: { not: userId },
+            deletedAt: null,
+          },
+        });
+        if (conflict) {
+          throw ApiError.badRequest(
+            "This phone number is already registered to another account."
+          );
+        }
+      } else {
+        cleanPhone = null;
+      }
+    }
 
-    return profile;
+    return await prisma.$transaction(async (tx) => {
+      if (cleanPhone !== undefined) {
+        await tx.user.update({
+          where: { id: userId },
+          data: { phone: cleanPhone },
+        });
+      }
+
+      const profile = await tx.userProfile.upsert({
+        where: { userId },
+        create: {
+          userId,
+          firstName: data.firstName || "Customer",
+          lastName: data.lastName || "",
+          phone: cleanPhone !== undefined ? cleanPhone : null,
+          dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+          gender: data.gender || null,
+          avatarUrl: data.avatarUrl || null,
+        },
+        update: {
+          ...(data.firstName !== undefined && { firstName: data.firstName }),
+          ...(data.lastName !== undefined && { lastName: data.lastName }),
+          ...(cleanPhone !== undefined && { phone: cleanPhone }),
+          ...(data.dateOfBirth !== undefined && {
+            dateOfBirth: data.dateOfBirth ? new Date(data.dateOfBirth) : null,
+          }),
+          ...(data.gender !== undefined && { gender: data.gender }),
+          ...(data.avatarUrl !== undefined && { avatarUrl: data.avatarUrl }),
+        },
+      });
+
+      return profile;
+    });
   }
 
   /**
@@ -630,18 +664,26 @@ export class UserService {
         throw ApiError.badRequest("Unable to resolve catalog product variant.");
       }
 
-      const unitPrice = item.price !== undefined ? Number(item.price) : Number(variant.price);
+      // Strictly compute unitPrice from verified database catalog pricing (never trust client-supplied price)
+      const verifiedUnitPrice = variant.discountPrice
+        ? Number(variant.discountPrice)
+        : Number(variant.price);
+      const originalPrice = Number(variant.price);
+      const unitDiscount = variant.discountPrice
+        ? Math.max(0, originalPrice - Number(variant.discountPrice))
+        : 0;
+
       const quantity = Math.max(1, item.quantity || 1);
-      const lineSubtotal = unitPrice * quantity;
+      const lineSubtotal = verifiedUnitPrice * quantity;
       subtotalSum += lineSubtotal;
 
       resolvedItems.push({
         variantId: variant.id,
-        productName: item.productName || variant.product.nameEn || variant.nameEn,
+        productName: variant.product?.nameEn || variant.nameEn || item.productName || "Product",
         sku: variant.sku || `SKU-${variant.id.slice(0, 6).toUpperCase()}`,
         quantity,
-        unitPrice,
-        discount: 0,
+        unitPrice: verifiedUnitPrice,
+        discount: unitDiscount * quantity,
         tax: 0,
         subtotal: lineSubtotal,
       });
@@ -658,14 +700,28 @@ export class UserService {
     const createdOrder = await prisma.$transaction(
       async (tx) => {
         for (const item of resolvedItems) {
-          await tx.inventory.updateMany({
-            where: { variantId: item.variantId },
+          const invUpdate = await tx.inventory.updateMany({
+            where: {
+              variantId: item.variantId,
+              availableQuantity: { gte: item.quantity },
+            },
             data: {
               availableQuantity: {
                 decrement: item.quantity,
               },
+              lastStockUpdate: new Date(),
             },
           });
+
+          if (invUpdate.count === 0) {
+            const invRecord = await tx.inventory.findUnique({
+              where: { variantId: item.variantId },
+            });
+            const currentStock = invRecord ? invRecord.availableQuantity : 0;
+            throw ApiError.badRequest(
+              `Insufficient stock for "${item.productName}". Only ${currentStock} item(s) left in stock.`
+            );
+          }
         }
 
         const order = await tx.order.create({
@@ -1043,5 +1099,39 @@ export class UserService {
       refreshToken,
     };
   }
+
+  /**
+   * Change password for authenticated customer or admin
+   */
+  static async changePassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string
+  ) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user || !user.isActive) {
+      throw ApiError.unauthorized("User session invalid.");
+    }
+
+    if (!user.passwordHash) {
+      throw ApiError.badRequest(
+        "Account was created via social or mobile OTP login without a password. Please contact support or use OTP verification."
+      );
+    }
+
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
+    if (!isValid) {
+      throw ApiError.badRequest("Current password is incorrect.");
+    }
+
+    const newHashedPassword = await bcrypt.hash(newPassword, 12);
+    await prisma.user.update({
+      where: { id: userId },
+      data: { passwordHash: newHashedPassword },
+    });
+
+    return { success: true, message: "Password updated successfully." };
+  }
 }
+
 

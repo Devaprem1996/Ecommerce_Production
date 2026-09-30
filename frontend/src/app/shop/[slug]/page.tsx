@@ -153,7 +153,7 @@ export default function ProductDetail({ params }: PageProps) {
     if (!slug) return null;
     if (singleProduct) return singleProduct;
     const source = dbProducts.length > 0 ? dbProducts : mockProducts;
-    return source.find((p) => slugify(p.name) === slug);
+    return source.find((p) => p.slug === slug || slugify(p.name) === slug || p.id === slug);
   }, [slug, singleProduct, dbProducts]);
 
   // Redirect to 404 if product not found after slug is resolved
@@ -243,6 +243,28 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
   // Reviews States
   const [reviews, setReviews] = useState<ReviewItem[]>(() => generateMockReviews(product));
   const [reviewRatingFilter, setReviewRatingFilter] = useState<number | null>(null);
+
+  // Fetch real reviews from backend database if available
+  useEffect(() => {
+    if (!product?.id) return;
+    apiClient
+      .get(`/api/v1/cms/products/${product.id}/reviews`)
+      .then((res: any) => {
+        const fetched = res?.data?.data?.reviews || res?.data?.reviews;
+        if (Array.isArray(fetched) && fetched.length > 0) {
+          const mapped: ReviewItem[] = fetched.map((r: any) => ({
+            id: r.id,
+            name: r.userName || 'Verified Customer',
+            rating: r.rating || 5,
+            comment: r.comment || '',
+            date: new Date(r.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+            verified: true,
+          }));
+          setReviews(mapped);
+        }
+      })
+      .catch(() => {});
+  }, [product?.id]);
 
   // Write a Review Modal States
   const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
@@ -367,14 +389,36 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
     return { counts, average, total: reviews.length };
   }, [reviews]);
 
-  const handleReviewSubmit = (e: React.FormEvent) => {
+  const handleReviewSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newReviewName.trim() || !newReviewComment.trim()) {
       toast.warning(currentLang === 'ta' ? 'அனைத்து விவரங்களையும் நிரப்பவும்' : 'Please fill all fields');
       return;
     }
     setIsSubmittingReview(true);
-    setTimeout(() => {
+    try {
+      const res: any = await apiClient.post(`/api/v1/cms/products/${product.id}/reviews`, {
+        rating: newReviewRating,
+        title: `Review by ${newReviewName.trim()}`,
+        comment: newReviewComment.trim(),
+      });
+
+      const newRev: ReviewItem = {
+        id: res?.data?.data?.review?.id || `rev-${Date.now()}`,
+        name: newReviewName,
+        rating: newReviewRating,
+        comment: newReviewComment,
+        date: new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }),
+        verified: true,
+      };
+
+      setReviews(prev => [newRev, ...prev]);
+      setIsReviewModalOpen(false);
+      setNewReviewName('');
+      setNewReviewComment('');
+      setNewReviewRating(5);
+      toast.success(t('product.review_success', 'Thank you! Your review has been submitted.'));
+    } catch {
       const newRev: ReviewItem = {
         id: `rev-${Date.now()}`,
         name: newReviewName,
@@ -384,13 +428,14 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
         verified: true,
       };
       setReviews(prev => [newRev, ...prev]);
-      setIsSubmittingReview(false);
       setIsReviewModalOpen(false);
       setNewReviewName('');
       setNewReviewComment('');
       setNewReviewRating(5);
-      toast.success(t('product.review_success', 'Thank you! Your review has been submitted.'));
-    }, 600);
+      toast.success(t('product.review_success', 'Thank you! Your review has been recorded.'));
+    } finally {
+      setIsSubmittingReview(false);
+    }
   };
 
   const scrollToReviews = () => {

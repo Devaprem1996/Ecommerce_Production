@@ -3,6 +3,7 @@ import { UserController } from "../controllers/user.controller.js";
 import { requireAuth, validateRequest } from "../middleware/auth.middleware.js";
 import {
   updateProfileSchema,
+  changePasswordSchema,
   createAddressSchema,
   updateAddressSchema,
   createOrderSchema,
@@ -23,12 +24,17 @@ router.post(
 // All subsequent user routes require customer or admin authentication
 router.use(requireAuth);
 
-// Profile
+// Profile & Password
 router.get("/profile", UserController.getProfile);
 router.put(
   "/profile",
   validateRequest(updateProfileSchema),
   UserController.updateProfile
+);
+router.post(
+  "/change-password",
+  validateRequest(changePasswordSchema),
+  UserController.changePassword
 );
 
 // Wishlist

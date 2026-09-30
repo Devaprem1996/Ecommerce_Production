@@ -233,10 +233,14 @@ export default function CheckoutPage() {
     setPincodeLoading(true);
     setPincodeError(null);
     try {
-      const res = await fetch(`/api/pincode/${code}`);
+      let res = await fetch(`/api/v1/shipping/pincode/${code}`);
+      if (!res.ok) {
+        res = await fetch(`/api/pincode/${code}`);
+      }
       if (res.ok) {
-        const data = await res.json();
-        if (data.available) {
+        const json = await res.json();
+        const data = json.data || json;
+        if (data.available || data.serviceable) {
           setAddressForm(prev => ({
             ...prev,
             city: data.city,
@@ -244,7 +248,7 @@ export default function CheckoutPage() {
           }));
           toast.success(`Serviceable: ${data.city}`);
         } else {
-          setPincodeError('Pincode is not serviceable by our delivery partners.');
+          setPincodeError(data.message || 'Pincode is not serviceable by our delivery partners.');
         }
       } else {
         setPincodeError('Invalid Pincode. Please check and try again.');

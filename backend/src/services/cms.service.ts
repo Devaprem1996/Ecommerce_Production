@@ -328,6 +328,23 @@ export class CmsService {
             inventory: true,
           },
         },
+        reviews: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                profile: {
+                  select: {
+                    firstName: true,
+                    lastName: true,
+                    avatarUrl: true,
+                  },
+                },
+              },
+            },
+          },
+          orderBy: { createdAt: "desc" },
+        },
       },
     });
 
@@ -844,5 +861,109 @@ export class CmsService {
 
     logger.info(`Product variant soft deleted: SKU ${variant.sku} (ID: ${variant.id})`);
     return true;
+  }
+
+  /* =========================================================================
+     PRODUCT REVIEW SERVICES
+     ========================================================================= */
+
+  /**
+   * List reviews for a product
+   */
+  static async listProductReviews(productIdOrSlug: string) {
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id: productIdOrSlug }, { slug: productIdOrSlug }],
+        deletedAt: null,
+      },
+      select: { id: true, nameEn: true },
+    });
+
+    if (!product) {
+      throw ApiError.notFound("Product not found.");
+    }
+
+    const reviews = await prisma.review.findMany({
+      where: { productId: product.id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            profile: {
+              select: {
+                firstName: true,
+                lastName: true,
+                avatarUrl: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const averageRating =
+      reviews.length > 0
+        ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
+        : 5;
+
+    return {
+      productId: product.id,
+      productName: product.nameEn,
+      reviews: reviews.map((r) => ({
+        id: r.id,
+        rating: r.rating,
+        title: r.title,
+        comment: r.comment,
+        createdAt: r.createdAt,
+        userName:
+          `${r.user.profile?.firstName || ""} ${r.user.profile?.lastName || ""}`.trim() ||
+          "Verified Customer",
+        avatarUrl: r.user.profile?.avatarUrl || null,
+      })),
+      total: reviews.length,
+      averageRating: Number(averageRating.toFixed(1)),
+    };
+  }
+
+  /**
+   * Add a review for a product by authenticated user
+   */
+  static async createProductReview(params: {
+    userId: string;
+    productIdOrSlug: string;
+    rating: number;
+    title?: string;
+    comment: string;
+  }) {
+    const product = await prisma.product.findFirst({
+      where: {
+        OR: [{ id: params.productIdOrSlug }, { slug: params.productIdOrSlug }],
+        deletedAt: null,
+      },
+      select: { id: true, nameEn: true },
+    });
+
+    if (!product) {
+      throw ApiError.notFound("Product not found.");
+    }
+
+    const review = await prisma.review.create({
+      data: {
+        userId: params.userId,
+        productId: product.id,
+        rating: params.rating,
+        title: params.title || null,
+        comment: params.comment,
+      },
+      include: {
+        user: {
+          include: { profile: true },
+        },
+      },
+    });
+
+    return review;
   }
 }

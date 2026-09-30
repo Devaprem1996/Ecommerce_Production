@@ -234,8 +234,12 @@ export function mapProductToFrontend(backendProduct: any): ProductType {
     images: [image],
     category: backendProduct.category?.nameEn || 'General',
     stock: stock,
-    rating: backendProduct.rating ? Number(backendProduct.rating) : 4.5,
-    reviewsCount: backendProduct.reviewsCount ?? 0,
+    rating: Array.isArray(backendProduct.reviews) && backendProduct.reviews.length > 0
+      ? Number((backendProduct.reviews.reduce((acc: number, r: any) => acc + (r.rating || 5), 0) / backendProduct.reviews.length).toFixed(1))
+      : (backendProduct.rating ? Number(backendProduct.rating) : 4.8),
+    reviewsCount: Array.isArray(backendProduct.reviews)
+      ? backendProduct.reviews.length
+      : (backendProduct.reviewsCount ?? 0),
     isOrganic: backendProduct.isOrganic ?? true,
     isLabTested: backendProduct.isLabTested ?? false,
     unit: unit,

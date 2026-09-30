@@ -2,6 +2,7 @@ import prisma from "../config/db.js";
 import { OrderStatus, DiscountType } from "@prisma/client";
 import { SmsService } from "./sms.service.js";
 import { UserService } from "./user.service.js";
+import { ApiError } from "../exceptions/api-error.js";
 import logger from "../logger/index.js";
 
 export interface DashboardKpiItem {
@@ -398,7 +399,16 @@ export class AdminService {
    * Update status of an existing order
    */
   static async updateOrderStatus(id: string, status: string) {
+    if (!status) {
+      throw ApiError.badRequest("Order status is required.");
+    }
+
     const upperStatus = status.toUpperCase() as OrderStatus;
+    if (!Object.values(OrderStatus).includes(upperStatus)) {
+      throw ApiError.badRequest(
+        `Invalid order status '${status}'. Allowed statuses: ${Object.values(OrderStatus).join(", ")}`
+      );
+    }
 
     if (upperStatus === OrderStatus.CANCELLED || upperStatus === OrderStatus.REFUNDED) {
       return UserService.cancelOrder(null, id, "Admin Cancellation");

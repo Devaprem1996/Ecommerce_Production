@@ -10,6 +10,7 @@ import {
   createProductVariantSchema,
   updateProductVariantSchema,
   listProductsQuerySchema,
+  createReviewSchema,
 } from "../validations/cms.validation.js";
 
 const router = Router();
@@ -34,6 +35,15 @@ router.get(
 
 // Product Details by Slug
 router.get("/products/:slug", CmsController.getProduct);
+
+// Product Reviews (Public list, Authenticated creation)
+router.get("/products/:productId/reviews", CmsController.listProductReviews);
+router.post(
+  "/products/:productId/reviews",
+  requireAuth,
+  validateRequest(createReviewSchema),
+  CmsController.createProductReview
+);
 
 /* =========================================================================
    ADMIN DASHBOARD ROUTE DEFINITIONS (PROTECTED)
