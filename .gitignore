@@ -44,6 +44,7 @@ Thumbs.db
 ~$*
 .vercel
 .env*
+!.env.example
 
 # Test results & coverage
 test-results/

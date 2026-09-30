@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Production build outputs
+dist/
+
+# Environment files
+.env
+.env.local
+*.env
+
+# Runtime logs
+logs/
+*.log
+
+# Coverage & test
+coverage/
