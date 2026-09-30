@@ -484,6 +484,85 @@ function ProductDetailContent({ product, currentLang, t, router }: ContentProps)
 
   return (
     <div className="min-h-screen bg-[#FDFBF7] dark:bg-[#0A0D0E] font-sans pb-24 transition-colors duration-300">
+      {/* Schema.org Structured Data for SEO / Rich Snippets */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify([
+            {
+              "@context": "https://schema.org",
+              "@type": "Product",
+              name: product.name,
+              alternateName: product.nameTamil || undefined,
+              description: product.description,
+              image: Array.isArray(product.images) && product.images.length > 0
+                ? product.images.map((img: any) => typeof img === 'string' ? img : img.url || img.imageUrl)
+                : ['/images/hero-traditional.jpg'],
+              sku: activeSku,
+              brand: {
+                "@type": "Brand",
+                name: "Yathu Arokiyagam",
+              },
+              offers: {
+                "@type": "Offer",
+                url: `https://yathuarokiyagam.com/shop/${product.slug || slugify(product.name)}`,
+                priceCurrency: "INR",
+                price: activePrice,
+                priceValidUntil: "2026-12-31",
+                itemCondition: "https://schema.org/NewCondition",
+                availability: activeStock > 0
+                  ? "https://schema.org/InStock"
+                  : "https://schema.org/OutOfStock",
+                seller: {
+                  "@type": "Organization",
+                  name: "Yathu Arokiyagam",
+                },
+              },
+              ...(product.rating && product.rating > 0
+                ? {
+                    aggregateRating: {
+                      "@type": "AggregateRating",
+                      ratingValue: Number(product.rating).toFixed(1),
+                      reviewCount: Math.max(1, reviews.length || product.reviewsCount || 1),
+                      bestRating: "5",
+                      worstRating: "1",
+                    },
+                  }
+                : {}),
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              itemListElement: [
+                {
+                  "@type": "ListItem",
+                  position: 1,
+                  name: "Home",
+                  item: "https://yathuarokiyagam.com",
+                },
+                {
+                  "@type": "ListItem",
+                  position: 2,
+                  name: "Shop",
+                  item: "https://yathuarokiyagam.com/shop",
+                },
+                {
+                  "@type": "ListItem",
+                  position: 3,
+                  name: product.category,
+                  item: `https://yathuarokiyagam.com/shop?category=${slugify(product.category)}`,
+                },
+                {
+                  "@type": "ListItem",
+                  position: 4,
+                  name: product.name,
+                  item: `https://yathuarokiyagam.com/shop/${product.slug || slugify(product.name)}`,
+                },
+              ],
+            },
+          ]),
+        }}
+      />
       
       {/* 1. Sleek Breadcrumb Navigation */}
       <div className="w-full bg-white dark:bg-[#0E1214] border-b border-neutral-200/70 dark:border-neutral-800/80 py-3.5 sm:py-4">
