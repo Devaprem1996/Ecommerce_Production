@@ -12,6 +12,7 @@ import { BackToTop } from "@/components/layout/BackToTop";
 import { I18nProvider } from "@/components/layout/I18nProvider";
 import { MiniCart } from "@/components/layout/MiniCart";
 import { SmoothScrollProvider } from "@/providers/SmoothScrollProvider";
+import { AuthSessionSync } from "@/components/auth/AuthSessionSync";
 
 
 const inter = Inter({
@@ -157,6 +158,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col bg-neutral-50 dark:bg-neutral-905">
         <SmoothScrollProvider>
           <I18nProvider>
+            <AuthSessionSync />
             <AnnouncementBar />
             <Navbar />
             <main className="flex-1">{children}</main>

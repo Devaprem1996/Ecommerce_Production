@@ -162,7 +162,8 @@ export default function CheckoutPage() {
 
   // Load saved addresses from database for authenticated customer
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user?.id) {
+      setIsLoadingAddresses(true);
       accountService
         .getAddresses()
         .then((addrs) => {
@@ -172,6 +173,7 @@ export default function CheckoutPage() {
             setSelectedAddressId(defaultAddr.id);
             setUseNewAddress(false);
           } else {
+            setSelectedAddressId('');
             setUseNewAddress(true);
           }
         })
@@ -181,8 +183,14 @@ export default function CheckoutPage() {
         .finally(() => {
           setIsLoadingAddresses(false);
         });
+    } else {
+      setSavedAddresses([]);
+      setSelectedAddressId('');
+      setUseNewAddress(true);
+      setIsLoadingAddresses(false);
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, user?.id]);
+
   const [addressForm, setAddressForm] = useState<AddressData>({
     name: '',
     mobile: '',
@@ -192,6 +200,27 @@ export default function CheckoutPage() {
     city: '',
     state: ''
   });
+
+  // Keep checkout contact details aligned with active user
+  useEffect(() => {
+    if (user?.id) {
+      setAddressForm((prev) => ({
+        ...prev,
+        name: user.name || (user as any).firstName || prev.name,
+        mobile: user.mobile || prev.mobile,
+      }));
+    } else {
+      setAddressForm({
+        name: '',
+        mobile: '',
+        addressLine1: '',
+        addressLine2: '',
+        pincode: '',
+        city: '',
+        state: '',
+      });
+    }
+  }, [user?.id]);
   const [pincodeLoading, setPincodeLoading] = useState(false);
   const [pincodeError, setPincodeError] = useState<string | null>(null);
 

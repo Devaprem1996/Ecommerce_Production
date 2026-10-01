@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
+import { useAuthStore } from '@/store/auth-store';
 
 const TABS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
@@ -32,6 +33,7 @@ const CANCELLATION_REASONS = [
 ];
 
 export default function OrdersListPage() {
+  const { user } = useAuthStore();
   const [orders, setOrders] = useState<CustomerOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('all');
@@ -57,8 +59,13 @@ export default function OrdersListPage() {
   };
 
   useEffect(() => {
-    loadOrders();
-  }, []);
+    if (user?.id) {
+      loadOrders();
+    } else {
+      setOrders([]);
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   // Filter orders by active tab
   const filteredOrders = orders.filter((order) => {

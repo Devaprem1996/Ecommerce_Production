@@ -81,7 +81,7 @@ export default function AccountDashboard() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user?.id]);
 
   // Helper to format status badge
   const getStatusBadge = (status: string) => {

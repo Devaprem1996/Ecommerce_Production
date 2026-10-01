@@ -12,8 +12,10 @@ import {
 import { toast } from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { accountService, UserAddress } from '@/services/account.service';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function AddressesPage() {
+  const { user } = useAuthStore();
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,8 +45,13 @@ export default function AddressesPage() {
   };
 
   useEffect(() => {
-    loadAddresses();
-  }, []);
+    if (user?.id) {
+      loadAddresses();
+    } else {
+      setAddresses([]);
+      setLoading(false);
+    }
+  }, [user?.id]);
 
   // Open Drawer for Add Address
   const handleAddClick = () => {

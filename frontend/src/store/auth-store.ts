@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import { useCartStore } from "@/store/cartStore";
 
 export interface User {
   id: string;
@@ -32,7 +33,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       user: null,
       isLoggedIn: false,
       isAuthenticated: false,
@@ -49,23 +50,29 @@ export const useAuthStore = create<AuthState>()(
             console.error("Failed to persist token to storage:", e);
           }
         }
+
+        // If logging into a different account than previously cached user, clear cart, wishlist, orders, and recent items
+        const currentUser = get().user;
+        if (currentUser && currentUser.id && user?.id && currentUser.id !== user.id) {
+          try {
+            useCartStore.getState().clearCart();
+            if (typeof window !== "undefined") {
+              localStorage.removeItem("yathu-cart-storage");
+              localStorage.removeItem("yathu-wishlist-storage");
+              localStorage.removeItem("user_orders");
+              localStorage.removeItem("yathu_recently_viewed_ids");
+            }
+          } catch (e) {
+            console.error("Failed to clear previous user cart and data:", e);
+          }
+        }
+
         const roleStr = user?.role || "customer";
         const normalizedRole = (roleStr.toLowerCase() === "admin" ? "admin" : "customer") as "customer" | "admin";
         set({ user, isLoggedIn: true, isAuthenticated: true, role: normalizedRole, token, isLoading: false });
       },
       setAuth: (user, token) => {
-        if (typeof window !== "undefined") {
-          (window as any).__accessToken = token;
-          try {
-            localStorage.setItem("access_token", token);
-            document.cookie = `access_token=${token}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
-          } catch (e) {
-            console.error("Failed to persist token to storage:", e);
-          }
-        }
-        const roleStr = user?.role || "customer";
-        const normalizedRole = (roleStr.toLowerCase() === "admin" ? "admin" : "customer") as "customer" | "admin";
-        set({ user, isLoggedIn: true, isAuthenticated: true, role: normalizedRole, token, isLoading: false });
+        get().login(user, token);
       },
       logout: () => {
         if (typeof window !== "undefined") {
@@ -73,25 +80,42 @@ export const useAuthStore = create<AuthState>()(
           try {
             localStorage.removeItem("access_token");
             localStorage.removeItem("admin_access_token");
+            localStorage.removeItem("admin_logged_in");
+            localStorage.removeItem("yathu-cart-storage");
+            localStorage.removeItem("yathu-wishlist-storage");
+            localStorage.removeItem("user_orders");
+            localStorage.removeItem("yathu_recently_viewed_ids");
             document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "admin_access_token=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "pending_otp_mobile=; path=/; max-age=0; SameSite=Lax";
+            document.cookie = "refresh_token=; path=/api/auth/refresh; max-age=0; SameSite=Strict";
+            document.cookie = "refreshToken=; path=/api/v1/auth/refresh; max-age=0; SameSite=Strict";
+            document.cookie = "refreshToken=; path=/; max-age=0; SameSite=Strict";
           } catch (e) {
             console.error("Failed to clear storage:", e);
           }
         }
+
+        // Always clean up cart on logout so the next user or guest does not see previous account's items
+        try {
+          useCartStore.getState().clearCart();
+        } catch (e) {
+          console.error("Failed to clear cart store:", e);
+        }
+
+        // Clean up wishlist on logout
+        if (typeof window !== "undefined") {
+          import("@/hooks/useWishlist")
+            .then(({ useWishlist }) => {
+              useWishlist.getState().setItems([]);
+            })
+            .catch(() => {});
+        }
+
         set({ user: null, isLoggedIn: false, isAuthenticated: false, role: "guest", token: null, isLoading: false });
       },
       clearAuth: () => {
-        if (typeof window !== "undefined") {
-          delete (window as any).__accessToken;
-          try {
-            localStorage.removeItem("access_token");
-            localStorage.removeItem("admin_access_token");
-            document.cookie = "access_token=; path=/; max-age=0; SameSite=Lax";
-          } catch (e) {
-            console.error("Failed to clear storage:", e);
-          }
-        }
-        set({ user: null, isLoggedIn: false, isAuthenticated: false, role: "guest", token: null, isLoading: false });
+        get().logout();
       },
       updateProfile: (updates) => {
         set((state) => ({
