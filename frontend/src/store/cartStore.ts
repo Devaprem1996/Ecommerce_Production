@@ -24,7 +24,7 @@ interface CartState {
   clearCart: () => void;
   getTotal: () => number;
   getItemCount: () => number;
-  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
+  applyCoupon: (code: string, phone?: string) => Promise<{ success: boolean; message: string }>;
   removeCoupon: () => void;
 }
 
@@ -147,7 +147,7 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
       },
 
-      applyCoupon: async (code: string) => {
+      applyCoupon: async (code: string, phone?: string) => {
         const cleanedCode = code.toUpperCase().trim();
         if (!cleanedCode) {
           return { success: false, message: 'Please enter a coupon code.' };
@@ -171,6 +171,7 @@ export const useCartStore = create<CartState>()(
           }>('/coupons/validate', {
             code: cleanedCode,
             subtotal,
+            phone,
           });
 
           if (res.success && res.data?.valid) {
@@ -182,6 +183,7 @@ export const useCartStore = create<CartState>()(
               minOrderValue: Number(coupon.minOrderValue),
               maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
             };
+            // Strictly enforce single coupon at a time by replacing any prior coupon
             set({
               appliedCoupon: couponData,
               discountAmount,
@@ -197,28 +199,9 @@ export const useCartStore = create<CartState>()(
             message: res.message || 'Invalid coupon code.',
           };
         } catch (err: any) {
-          // Local fallback for offline/seed preview if network error occurs
-          if (cleanedCode === 'WELCOME10') {
-            if (subtotal < 299) {
-              return { success: false, message: 'Minimum order ₹299 required for WELCOME10.' };
-            }
-            const disc = Math.min(Math.round(subtotal * 0.1), 100);
-            const c: CartCoupon = { code: 'WELCOME10', discountType: 'PERCENTAGE', discountValue: 10, minOrderValue: 299, maxDiscount: 100 };
-            set({ appliedCoupon: c, discountAmount: disc });
-            return { success: true, message: `Coupon "WELCOME10" applied! You save ₹${disc}.` };
-          } else if (cleanedCode === 'YATHU100') {
-            if (subtotal < 799) {
-              return { success: false, message: 'Minimum order ₹799 required for YATHU100.' };
-            }
-            const disc = Math.min(100, subtotal);
-            const c: CartCoupon = { code: 'YATHU100', discountType: 'FIXED_AMOUNT', discountValue: 100, minOrderValue: 799, maxDiscount: null };
-            set({ appliedCoupon: c, discountAmount: disc });
-            return { success: true, message: `Coupon "YATHU100" applied! You save ₹${disc}.` };
-          }
-
           const errorMsg =
-            err?.response?.data?.message ||
             err?.message ||
+            err?.response?.data?.message ||
             'Unable to validate coupon code. Please try again.';
           return { success: false, message: errorMsg };
         }

@@ -8,10 +8,17 @@ export class CouponController {
    */
   static async validateCoupon(req: Request, res: Response, next: NextFunction) {
     try {
-      const { code, subtotal } = req.body;
+      const { code, subtotal, phone } = req.body;
       const numSubtotal = Number(subtotal || 0);
+      const userId = req.user?.userId || req.body.userId;
+      const userPhone = phone || (req.user as any)?.phone;
 
-      const result = await CouponService.validateCoupon(code, numSubtotal);
+      const result = await CouponService.validateCoupon(
+        code,
+        numSubtotal,
+        userId,
+        userPhone
+      );
 
       return res.status(200).json({
         success: true,

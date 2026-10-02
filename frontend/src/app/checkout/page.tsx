@@ -282,7 +282,8 @@ export default function CheckoutPage() {
   const handleApplyCoupon = async () => {
     if (!couponInput.trim()) return;
     setIsApplyingCoupon(true);
-    const result = await applyCoupon(couponInput.trim());
+    const cleanPhone = (addressForm.mobile || user?.mobile || (user as any)?.phone || '').replace(/\D/g, '').slice(-10);
+    const result = await applyCoupon(couponInput.trim(), cleanPhone || undefined);
     setIsApplyingCoupon(false);
     if (result.success) {
       toast.success(result.message);

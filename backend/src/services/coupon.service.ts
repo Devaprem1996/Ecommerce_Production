@@ -1,6 +1,6 @@
 import prisma from "../config/db.js";
 import { ApiError } from "../exceptions/api-error.js";
-import { DiscountType } from "@prisma/client";
+import { DiscountType, OrderStatus } from "@prisma/client";
 
 export interface CouponValidationResult {
   valid: boolean;
@@ -20,10 +20,13 @@ export interface CouponValidationResult {
 export class CouponService {
   /**
    * Validate coupon code against database and calculate verified discount
+   * Enforces 1-time usage per customer across active orders
    */
   static async validateCoupon(
     rawCode: string,
-    subtotal: number
+    subtotal: number,
+    userId?: string,
+    userPhone?: string
   ): Promise<CouponValidationResult> {
     if (!rawCode || typeof rawCode !== "string") {
       throw ApiError.badRequest("Coupon code is required.");
@@ -66,6 +69,49 @@ export class CouponService {
       throw ApiError.badRequest(
         `Coupon "${code}" has reached its maximum usage limit.`
       );
+    }
+
+    // Enforce 1-Time Usage Per Customer: check by authenticated User ID
+    if (userId) {
+      const priorOrder = await prisma.order.findFirst({
+        where: {
+          userId,
+          couponId: coupon.id,
+          status: {
+            notIn: [OrderStatus.CANCELLED, OrderStatus.DRAFT],
+          },
+        },
+      });
+
+      if (priorOrder) {
+        throw ApiError.badRequest(
+          `You have already used coupon "${coupon.code}". Each coupon can only be used once per customer.`
+        );
+      }
+    }
+
+    // Enforce 1-Time Usage Per Customer: check by customer mobile number
+    if (userPhone) {
+      const cleanPhone = userPhone.replace(/\D/g, "").slice(-10);
+      if (cleanPhone.length === 10) {
+        const priorOrderByPhone = await prisma.order.findFirst({
+          where: {
+            couponId: coupon.id,
+            status: {
+              notIn: [OrderStatus.CANCELLED, OrderStatus.DRAFT],
+            },
+            address: {
+              phone: { endsWith: cleanPhone },
+            },
+          },
+        });
+
+        if (priorOrderByPhone) {
+          throw ApiError.badRequest(
+            `Coupon "${coupon.code}" has already been used for this mobile number (+91 ${cleanPhone}). Each coupon can only be used once per customer.`
+          );
+        }
+      }
     }
 
     // Calculate verified discount

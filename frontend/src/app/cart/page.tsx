@@ -34,11 +34,13 @@ import { toast } from '@/components/ui/Toast';
 import { slugify } from '@/utils/slugify';
 import { ProductType } from '@/types';
 import { apiClient } from '@/services/api-client';
+import { useAuthStore } from '@/store/auth-store';
 
 export default function CartPage() {
   const { t, i18n } = useTranslation();
   const currentLang = i18n.language;
   const router = useRouter();
+  const { user } = useAuthStore();
 
   // Cart Store
   const { 
@@ -141,7 +143,8 @@ export default function CartPage() {
     const code = couponCode.trim();
     if (!code) return;
     setIsApplyingCoupon(true);
-    const result = await applyCoupon(code);
+    const cleanPhone = (user?.mobile || (user as any)?.phone || '').replace(/\D/g, '').slice(-10);
+    const result = await applyCoupon(code, cleanPhone || undefined);
     setIsApplyingCoupon(false);
     if (result.success) {
       toast.success(result.message);

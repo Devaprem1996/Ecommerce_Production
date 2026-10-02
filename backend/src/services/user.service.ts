@@ -326,6 +326,16 @@ export class UserService {
         });
       }
 
+      // 2b. Restore coupon used count if order had a coupon
+      if (order.couponId) {
+        await tx.coupon.update({
+          where: { id: order.couponId },
+          data: {
+            usedCount: { decrement: 1 },
+          },
+        });
+      }
+
       // 3. Update order status
       return await tx.order.update({
         where: { id: orderId },
@@ -725,6 +735,51 @@ export class UserService {
         throw ApiError.badRequest(
           `Coupon "${cleanCoupon}" has reached its maximum usage limit.`
         );
+      }
+
+      // Enforce 1-Time Usage Per Customer: check by authenticated User ID
+      const priorOrderWithCoupon = await prisma.order.findFirst({
+        where: {
+          userId,
+          couponId: foundCoupon.id,
+          status: {
+            notIn: [OrderStatus.CANCELLED, OrderStatus.DRAFT],
+          },
+        },
+      });
+
+      if (priorOrderWithCoupon) {
+        throw ApiError.badRequest(
+          `You have already used coupon "${cleanCoupon}". Each coupon can only be used once per customer.`
+        );
+      }
+
+      // Check customer phone number as secondary identity to prevent duplicate accounts
+      const customer = await prisma.user.findUnique({
+        where: { id: userId },
+        select: { phone: true },
+      });
+      const customerPhone = customer?.phone || data.shippingAddress?.mobile;
+      if (customerPhone) {
+        const cleanPhone = customerPhone.replace(/\D/g, "").slice(-10);
+        if (cleanPhone.length === 10) {
+          const priorOrderByPhone = await prisma.order.findFirst({
+            where: {
+              couponId: foundCoupon.id,
+              status: {
+                notIn: [OrderStatus.CANCELLED, OrderStatus.DRAFT],
+              },
+              address: {
+                phone: { endsWith: cleanPhone },
+              },
+            },
+          });
+          if (priorOrderByPhone) {
+            throw ApiError.badRequest(
+              `Coupon "${cleanCoupon}" has already been used for this mobile number (+91 ${cleanPhone}). Each coupon can only be used once per customer.`
+            );
+          }
+        }
       }
 
       // Compute server-side verified discount
