@@ -8,7 +8,7 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Install build dependencies required for bcrypt and native compilation
-RUN apk add --no-cache python3 make g++ libc6-compat
+RUN apk add --no-cache python3 make g++ libc6-compat openssl
 
 # Copy package files
 COPY package*.json ./
@@ -33,7 +33,7 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat openssl
 
 # Create non-root system user for security
 RUN addgroup --system --gid 1001 nodejs && \
