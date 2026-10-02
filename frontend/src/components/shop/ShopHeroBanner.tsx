@@ -103,7 +103,7 @@ export const ShopHeroBanner: React.FC<ShopHeroBannerProps> = ({ onCtaClick }) =>
             <div className="absolute bottom-3 left-3 bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md px-3 py-1.5 rounded-xl border border-white/50 shadow-md flex items-center gap-2">
               <Tag className="w-3.5 h-3.5 text-amber-600" />
               <span className="text-[11px] font-extrabold text-neutral-900 dark:text-white">
-                USE CODE: <span className="text-emerald-700 dark:text-emerald-400">ORGANIC10</span>
+                USE CODE: <span className="text-emerald-700 dark:text-emerald-400">WELCOME10</span>
               </span>
             </div>
           </div>

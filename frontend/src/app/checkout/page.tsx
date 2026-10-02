@@ -20,7 +20,8 @@ import {
   Info,
   ExternalLink,
   MessageSquare,
-  Loader2
+  Loader2,
+  Tag
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useAuthStore } from '@/store/auth-store';
@@ -46,7 +47,16 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   // Stores
-  const { items, getTotal, clearCart, getItemCount, appliedCoupon, discountAmount } = useCartStore();
+  const {
+    items,
+    getTotal,
+    clearCart,
+    getItemCount,
+    appliedCoupon,
+    discountAmount,
+    applyCoupon,
+    removeCoupon,
+  } = useCartStore();
   const { user, isAuthenticated, login } = useAuthStore();
 
   const [hasMounted, setHasMounted] = useState(false);
@@ -248,10 +258,14 @@ export default function CheckoutPage() {
     return items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
   }, [items]);
 
+  const activeCouponCode = useMemo(() => {
+    if (!appliedCoupon) return null;
+    return typeof appliedCoupon === 'string' ? appliedCoupon : appliedCoupon.code;
+  }, [appliedCoupon]);
+
   const deliveryFee = useMemo(() => {
-    if (appliedCoupon === 'YATHUFREE') return 0;
     return subtotal >= 499 ? 0 : 50;
-  }, [subtotal, appliedCoupon]);
+  }, [subtotal]);
 
   const codFee = useMemo(() => {
     return paymentMethod === 'cod' ? 30 : 0;
@@ -260,6 +274,23 @@ export default function CheckoutPage() {
   const totalAmount = useMemo(() => {
     return Math.max(0, subtotal - discountAmount) + deliveryFee + codFee;
   }, [subtotal, discountAmount, deliveryFee, codFee]);
+
+  // Dynamic Coupon States
+  const [couponInput, setCouponInput] = useState('');
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+
+  const handleApplyCoupon = async () => {
+    if (!couponInput.trim()) return;
+    setIsApplyingCoupon(true);
+    const result = await applyCoupon(couponInput.trim());
+    setIsApplyingCoupon(false);
+    if (result.success) {
+      toast.success(result.message);
+      setCouponInput('');
+    } else {
+      toast.error(result.message);
+    }
+  };
 
   // Sync Pincode to auto-fill city/state
   useEffect(() => {
@@ -389,6 +420,7 @@ export default function CheckoutPage() {
         : undefined,
       items: orderItems,
       paymentMethod,
+      couponCode: activeCouponCode || undefined,
     };
 
     try {
@@ -899,11 +931,72 @@ export default function CheckoutPage() {
                     ))}
                   </div>
 
+                  {/* Coupon / Promo Code Input Section */}
+                  <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3">
+                    {activeCouponCode ? (
+                      <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-card">
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 tracking-wider">
+                                {activeCouponCode}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.2 bg-emerald-600 text-white rounded font-bold">
+                                SAVED ₹{discountAmount}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Coupon applied</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeCoupon}
+                          className="text-[11px] font-bold text-red-500 hover:text-red-700 underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleApplyCoupon();
+                            }
+                          }}
+                          placeholder="PROMO CODE"
+                          className="w-full text-xs font-bold uppercase tracking-wider px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={handleApplyCoupon}
+                          disabled={isApplyingCoupon || !couponInput.trim()}
+                          className="text-xs font-bold px-3 shrink-0"
+                        >
+                          {isApplyingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="border-t border-neutral-100 dark:border-neutral-800 pt-3 space-y-2 text-xs font-semibold text-neutral-600 dark:text-neutral-400">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span suppressHydrationWarning>₹{subtotal}</span>
                     </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-success font-bold">
+                        <span>Coupon Discount ({activeCouponCode})</span>
+                        <span suppressHydrationWarning>-₹{discountAmount}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Delivery</span>
                       {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span suppressHydrationWarning>₹{deliveryFee}</span>}
@@ -1164,11 +1257,72 @@ export default function CheckoutPage() {
                     Order Summary
                   </h3>
 
+                  {/* Coupon / Promo Code Input Section */}
+                  <div className="border-b border-neutral-100 dark:border-neutral-800 pb-3">
+                    {activeCouponCode ? (
+                      <div className="flex items-center justify-between p-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-card">
+                        <div className="flex items-center gap-2">
+                          <Tag className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                          <div>
+                            <div className="flex items-center gap-1.5">
+                              <span className="text-xs font-black text-emerald-800 dark:text-emerald-300 tracking-wider">
+                                {activeCouponCode}
+                              </span>
+                              <span className="text-[10px] px-1.5 py-0.2 bg-emerald-600 text-white rounded font-bold">
+                                SAVED ₹{discountAmount}
+                              </span>
+                            </div>
+                            <p className="text-[10px] text-emerald-600 dark:text-emerald-400">Coupon applied</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={removeCoupon}
+                          className="text-[11px] font-bold text-red-500 hover:text-red-700 underline cursor-pointer"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponInput}
+                          onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              handleApplyCoupon();
+                            }
+                          }}
+                          placeholder="PROMO CODE"
+                          className="w-full text-xs font-bold uppercase tracking-wider px-3 py-2 border border-neutral-200 dark:border-neutral-700 rounded-card bg-transparent text-neutral-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-primary-500"
+                        />
+                        <Button
+                          type="button"
+                          variant="primary"
+                          size="sm"
+                          onClick={handleApplyCoupon}
+                          disabled={isApplyingCoupon || !couponInput.trim()}
+                          className="text-xs font-bold px-3 shrink-0"
+                        >
+                          {isApplyingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+
                   <div className="space-y-2.5 text-xs font-semibold text-neutral-650 dark:text-neutral-400">
                     <div className="flex justify-between">
                       <span>Subtotal</span>
                       <span className="text-neutral-900 dark:text-white" suppressHydrationWarning>₹{subtotal}</span>
                     </div>
+                    {discountAmount > 0 && (
+                      <div className="flex justify-between text-success font-bold">
+                        <span>Coupon Discount ({activeCouponCode})</span>
+                        <span suppressHydrationWarning>-₹{discountAmount}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between">
                       <span>Delivery</span>
                       {deliveryFee === 0 ? <span className="text-success font-bold">Free</span> : <span className="text-neutral-900 dark:text-white" suppressHydrationWarning>₹{deliveryFee}</span>}

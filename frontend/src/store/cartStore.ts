@@ -1,11 +1,20 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { CartItemType, ProductType } from '@/types';
+import { apiClient } from '@/services/api-client';
+
+export interface CartCoupon {
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  minOrderValue: number;
+  maxDiscount?: number | null;
+}
 
 interface CartState {
   items: CartItemType[];
   isMiniCartOpen: boolean;
-  appliedCoupon: string | null;
+  appliedCoupon: CartCoupon | string | null;
   discountAmount: number;
   openMiniCart: () => void;
   closeMiniCart: () => void;
@@ -15,21 +24,38 @@ interface CartState {
   clearCart: () => void;
   getTotal: () => number;
   getItemCount: () => number;
-  applyCoupon: (code: string) => { success: boolean; message: string };
+  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
   removeCoupon: () => void;
 }
 
-const calculateDiscount = (items: CartItemType[], coupon: string | null): number => {
+const calculateDiscount = (items: CartItemType[], coupon: CartCoupon | string | null): number => {
   if (!coupon) return 0;
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
-  if (coupon === 'ORGANIC10') {
-    return Math.round(subtotal * 0.1);
+
+  if (typeof coupon === 'object') {
+    if (subtotal < (coupon.minOrderValue || 0)) return 0;
+
+    if (coupon.discountType === 'PERCENTAGE') {
+      const rawDiscount = Math.round((subtotal * coupon.discountValue) / 100);
+      if (coupon.maxDiscount && coupon.maxDiscount > 0) {
+        return Math.min(rawDiscount, coupon.maxDiscount);
+      }
+      return rawDiscount;
+    }
+    // FIXED_AMOUNT
+    return Math.min(coupon.discountValue, subtotal);
   }
-  if (coupon === 'FRESH20') {
-    if (subtotal < 499) return 0;
-    return Math.min(Math.round(subtotal * 0.2), 150);
+
+  // Fallbacks for seed coupons
+  if (coupon === 'WELCOME10') {
+    if (subtotal < 299) return 0;
+    return Math.min(Math.round(subtotal * 0.1), 100);
   }
-  return 0; // YATHUFREE is handled in delivery calculations
+  if (coupon === 'YATHU100') {
+    if (subtotal < 799) return 0;
+    return Math.min(100, subtotal);
+  }
+  return 0;
 };
 
 export const useCartStore = create<CartState>()(
@@ -121,27 +147,81 @@ export const useCartStore = create<CartState>()(
         return get().items.reduce((sum, item) => sum + item.quantity, 0);
       },
 
-      applyCoupon: (code) => {
+      applyCoupon: async (code: string) => {
         const cleanedCode = code.toUpperCase().trim();
+        if (!cleanedCode) {
+          return { success: false, message: 'Please enter a coupon code.' };
+        }
         const subtotal = get().getTotal();
 
-        if (cleanedCode === 'ORGANIC10') {
-          const discount = Math.round(subtotal * 0.1);
-          set({ appliedCoupon: 'ORGANIC10', discountAmount: discount });
-          return { success: true, message: 'Coupon "ORGANIC10" applied! 10% Discount saved.' };
-        } else if (cleanedCode === 'FRESH20') {
-          if (subtotal < 499) {
-            return { success: false, message: 'Minimum order ₹499 required for this code.' };
-          }
-          const discount = Math.min(Math.round(subtotal * 0.2), 150);
-          set({ appliedCoupon: 'FRESH20', discountAmount: discount });
-          return { success: true, message: `Coupon "FRESH20" applied! You save ₹${discount}.` };
-        } else if (cleanedCode === 'YATHUFREE') {
-          set({ appliedCoupon: 'YATHUFREE', discountAmount: 0 });
-          return { success: true, message: 'Coupon "YATHUFREE" applied! Free Delivery enabled.' };
-        }
+        try {
+          const res = await apiClient.post<{
+            valid: boolean;
+            coupon: {
+              id: string;
+              code: string;
+              discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+              discountValue: number;
+              minOrderValue: number;
+              maxDiscount: number | null;
+            };
+            discountAmount: number;
+            newTotal: number;
+            message: string;
+          }>('/coupons/validate', {
+            code: cleanedCode,
+            subtotal,
+          });
 
-        return { success: false, message: 'Invalid coupon code. Try ORGANIC10, FRESH20 or YATHUFREE' };
+          if (res.success && res.data?.valid) {
+            const { coupon, discountAmount, message } = res.data;
+            const couponData: CartCoupon = {
+              code: coupon.code,
+              discountType: coupon.discountType,
+              discountValue: Number(coupon.discountValue),
+              minOrderValue: Number(coupon.minOrderValue),
+              maxDiscount: coupon.maxDiscount ? Number(coupon.maxDiscount) : null,
+            };
+            set({
+              appliedCoupon: couponData,
+              discountAmount,
+            });
+            return {
+              success: true,
+              message: message || `Coupon "${coupon.code}" applied! You save ₹${discountAmount}.`,
+            };
+          }
+
+          return {
+            success: false,
+            message: res.message || 'Invalid coupon code.',
+          };
+        } catch (err: any) {
+          // Local fallback for offline/seed preview if network error occurs
+          if (cleanedCode === 'WELCOME10') {
+            if (subtotal < 299) {
+              return { success: false, message: 'Minimum order ₹299 required for WELCOME10.' };
+            }
+            const disc = Math.min(Math.round(subtotal * 0.1), 100);
+            const c: CartCoupon = { code: 'WELCOME10', discountType: 'PERCENTAGE', discountValue: 10, minOrderValue: 299, maxDiscount: 100 };
+            set({ appliedCoupon: c, discountAmount: disc });
+            return { success: true, message: `Coupon "WELCOME10" applied! You save ₹${disc}.` };
+          } else if (cleanedCode === 'YATHU100') {
+            if (subtotal < 799) {
+              return { success: false, message: 'Minimum order ₹799 required for YATHU100.' };
+            }
+            const disc = Math.min(100, subtotal);
+            const c: CartCoupon = { code: 'YATHU100', discountType: 'FIXED_AMOUNT', discountValue: 100, minOrderValue: 799, maxDiscount: null };
+            set({ appliedCoupon: c, discountAmount: disc });
+            return { success: true, message: `Coupon "YATHU100" applied! You save ₹${disc}.` };
+          }
+
+          const errorMsg =
+            err?.response?.data?.message ||
+            err?.message ||
+            'Unable to validate coupon code. Please try again.';
+          return { success: false, message: errorMsg };
+        }
       },
 
       removeCoupon: () => {

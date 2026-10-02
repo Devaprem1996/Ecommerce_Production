@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import prisma from "../config/db.js";
 import { ApiError } from "../exceptions/api-error.js";
-import { OrderStatus, PaymentStatus } from "@prisma/client";
+import { OrderStatus, PaymentStatus, DiscountType } from "@prisma/client";
 import { SmsService, verifyOrderTrackingToken } from "./sms.service.js";
 import { EmailService } from "./email.service.js";
 import { PaymentService } from "./payment.service.js";
@@ -689,14 +689,67 @@ export class UserService {
       });
     }
 
+    // 2b. Database-Verified Coupon Application
+    let appliedCouponRecord: any = null;
+    let couponDiscount = 0;
+
+    if (data.couponCode && typeof data.couponCode === "string" && data.couponCode.trim()) {
+      const cleanCoupon = data.couponCode.toUpperCase().trim();
+      const foundCoupon = await prisma.coupon.findUnique({
+        where: { code: cleanCoupon },
+      });
+
+      if (!foundCoupon) {
+        throw ApiError.badRequest(`Coupon "${cleanCoupon}" does not exist.`);
+      }
+      if (!foundCoupon.isActive) {
+        throw ApiError.badRequest(`Coupon "${cleanCoupon}" is currently inactive.`);
+      }
+
+      const now = new Date();
+      if (now < foundCoupon.startDate) {
+        throw ApiError.badRequest(`Coupon "${cleanCoupon}" is not yet active.`);
+      }
+      if (now > foundCoupon.endDate) {
+        throw ApiError.badRequest(`Coupon "${cleanCoupon}" has expired.`);
+      }
+
+      const minOrder = Number(foundCoupon.minOrderValue || 0);
+      if (subtotalSum < minOrder) {
+        throw ApiError.badRequest(
+          `Minimum order value of ₹${minOrder} is required to apply "${cleanCoupon}". Current subtotal is ₹${subtotalSum}.`
+        );
+      }
+
+      if (foundCoupon.usageLimit !== null && foundCoupon.usedCount >= foundCoupon.usageLimit) {
+        throw ApiError.badRequest(
+          `Coupon "${cleanCoupon}" has reached its maximum usage limit.`
+        );
+      }
+
+      // Compute server-side verified discount
+      const discountVal = Number(foundCoupon.discountValue);
+      if (foundCoupon.discountType === DiscountType.PERCENTAGE) {
+        couponDiscount = Math.round((subtotalSum * discountVal) / 100);
+        if (foundCoupon.maxDiscount !== null && Number(foundCoupon.maxDiscount) > 0) {
+          couponDiscount = Math.min(couponDiscount, Number(foundCoupon.maxDiscount));
+        }
+      } else {
+        // FIXED_AMOUNT
+        couponDiscount = Math.min(discountVal, subtotalSum);
+      }
+
+      appliedCouponRecord = foundCoupon;
+    }
+
     const shippingCharge = subtotalSum >= 499 ? 0 : 50;
-    const grandTotal = subtotalSum + shippingCharge;
+    const grandTotal = Math.max(0, subtotalSum - couponDiscount) + shippingCharge;
     const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
 
     const isCod = data.paymentMethod === "cod";
     const orderStatus = isCod ? OrderStatus.CONFIRMED : OrderStatus.PENDING_PAYMENT;
 
-    // 3. Execute atomic transaction (inventory decrement + order record creation)
+    // 3. Execute atomic transaction (inventory decrement + coupon usedCount + order record creation)
     const createdOrder = await prisma.$transaction(
       async (tx) => {
         for (const item of resolvedItems) {
@@ -724,18 +777,29 @@ export class UserService {
           }
         }
 
+        // If coupon applied, increment usedCount atomically
+        if (appliedCouponRecord) {
+          await tx.coupon.update({
+            where: { id: appliedCouponRecord.id },
+            data: {
+              usedCount: { increment: 1 },
+            },
+          });
+        }
+
         const order = await tx.order.create({
           data: {
             userId,
             addressId,
             orderNumber,
             subtotal: subtotalSum,
-            discount: 0,
+            discount: couponDiscount,
             tax: 0,
             shippingCharge,
             grandTotal,
             status: orderStatus,
             orderedAt: new Date(),
+            couponId: appliedCouponRecord?.id || null,
             orderItems: {
               create: resolvedItems,
             },

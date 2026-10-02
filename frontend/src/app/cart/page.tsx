@@ -24,7 +24,8 @@ import {
   ShieldCheck,
   Star,
   Sparkles,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react';
 import { useCartStore } from '@/store/cartStore';
 import { useWishlist } from '@/hooks/useWishlist';
@@ -32,6 +33,7 @@ import { mockProducts } from '@/constants/mockData';
 import { toast } from '@/components/ui/Toast';
 import { slugify } from '@/utils/slugify';
 import { ProductType } from '@/types';
+import { apiClient } from '@/services/api-client';
 
 export default function CartPage() {
   const { t, i18n } = useTranslation();
@@ -46,7 +48,11 @@ export default function CartPage() {
     clearCart,
     addItem,
     getTotal, 
-    getItemCount 
+    getItemCount,
+    appliedCoupon,
+    discountAmount,
+    applyCoupon,
+    removeCoupon,
   } = useCartStore();
 
   // Wishlist Store
@@ -54,8 +60,29 @@ export default function CartPage() {
 
   // Coupon States
   const [couponCode, setCouponCode] = useState('');
-  const [activeCoupon, setActiveCoupon] = useState<string | null>(null);
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [activePromos, setActivePromos] = useState<Array<{ code: string; discountValue: number; discountType: string }>>([]);
+
+  const activeCoupon = useMemo(() => {
+    if (!appliedCoupon) return null;
+    return typeof appliedCoupon === 'string' ? appliedCoupon : appliedCoupon.code;
+  }, [appliedCoupon]);
+
+  // Fetch real active coupons created by admin from database
+  useEffect(() => {
+    apiClient
+      .get<{ coupons: Array<{ code: string; discountValue: number; discountType: string }> }>('/coupons/active')
+      .then((res) => {
+        if (res.data?.coupons && res.data.coupons.length > 0) {
+          setActivePromos(res.data.coupons);
+        } else {
+          setActivePromos([{ code: 'WELCOME10', discountValue: 10, discountType: 'PERCENTAGE' }]);
+        }
+      })
+      .catch(() => {
+        setActivePromos([{ code: 'WELCOME10', discountValue: 10, discountType: 'PERCENTAGE' }]);
+      });
+  }, []);
 
   // GSAP Button Ref
   const checkoutBtnRef = useRef<HTMLButtonElement>(null);
@@ -66,7 +93,7 @@ export default function CartPage() {
   // Delivery Calculations
   const freeShippingThreshold = 499;
   const standardShippingCost = 50;
-  const isFreeDelivery = subtotal >= freeShippingThreshold || activeCoupon === 'YATHUFREE';
+  const isFreeDelivery = subtotal >= freeShippingThreshold;
   const deliveryFee = itemCount > 0 && !isFreeDelivery ? standardShippingCost : 0;
   const remainingForFreeShipping = Math.max(0, freeShippingThreshold - subtotal);
   const orderTotal = Math.max(0, subtotal - discountAmount + deliveryFee);
@@ -108,39 +135,24 @@ export default function CartPage() {
     };
   }, []);
 
-  // Apply Coupon Logic
-  const handleApplyCoupon = (e: React.FormEvent) => {
+  // Apply Coupon Logic using CartStore and dynamic server-side validation
+  const handleApplyCoupon = async (e: React.FormEvent) => {
     e.preventDefault();
-    const code = couponCode.toUpperCase().trim();
-    if (code === 'ORGANIC10') {
-      setActiveCoupon(code);
-      setDiscountAmount(Math.round(subtotal * 0.1));
-      toast.success(
-        currentLang === 'ta'
-          ? '"ORGANIC10" கூப்பன் பயன்படுத்தப்பட்டது! 10% தள்ளுபடி.'
-          : 'Coupon "ORGANIC10" applied! 10% discount saved.'
-      );
-    } else if (code === 'YATHUFREE') {
-      setActiveCoupon(code);
-      setDiscountAmount(0);
-      toast.success(
-        currentLang === 'ta'
-          ? '"YATHUFREE" கூப்பன் பயன்படுத்தப்பட்டது! இலவச டெலிவரி.'
-          : 'Coupon "YATHUFREE" applied! Free Delivery unlocked.'
-      );
+    const code = couponCode.trim();
+    if (!code) return;
+    setIsApplyingCoupon(true);
+    const result = await applyCoupon(code);
+    setIsApplyingCoupon(false);
+    if (result.success) {
+      toast.success(result.message);
+      setCouponCode('');
     } else {
-      toast.error(
-        currentLang === 'ta'
-          ? 'தவறான கூப்பன் குறியீடு. ORGANIC10 அல்லது YATHUFREE முயற்சிக்கவும்'
-          : 'Invalid coupon code. Try ORGANIC10 or YATHUFREE'
-      );
+      toast.error(result.message);
     }
   };
 
   const handleRemoveCoupon = () => {
-    setActiveCoupon(null);
-    setDiscountAmount(0);
-    setCouponCode('');
+    removeCoupon();
     toast.info(currentLang === 'ta' ? 'கூப்பன் நீக்கப்பட்டது' : 'Coupon code removed.');
   };
 
@@ -420,16 +432,16 @@ export default function CartPage() {
                     <input
                       type="text"
                       value={couponCode}
-                      onChange={(e) => setCouponCode(e.target.value)}
+                      onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
                       placeholder="Promocode"
                       className="w-full px-3.5 py-2.5 text-xs font-semibold uppercase bg-transparent text-neutral-900 dark:text-white placeholder-neutral-400 focus:outline-none"
                     />
                     <button
                       type="submit"
-                      disabled={!couponCode.trim()}
-                      className="px-4 py-2.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 disabled:opacity-40 transition-colors cursor-pointer shrink-0"
+                      disabled={!couponCode.trim() || isApplyingCoupon}
+                      className="px-4 py-2.5 text-xs font-bold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 disabled:opacity-40 transition-colors cursor-pointer shrink-0 flex items-center gap-1"
                     >
-                      Apply
+                      {isApplyingCoupon ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Apply'}
                     </button>
                   </form>
 
@@ -438,7 +450,7 @@ export default function CartPage() {
                     <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-between text-xs">
                       <span className="font-bold text-emerald-700 dark:text-emerald-300 flex items-center gap-1.5">
                         <Check className="w-3.5 h-3.5" />
-                        {activeCoupon} Applied!
+                        {activeCoupon} Applied! (Saved ₹{discountAmount})
                       </span>
                       <button
                         type="button"
@@ -450,24 +462,20 @@ export default function CartPage() {
                     </div>
                   )}
 
-                  {/* Quick Coupon Suggestions */}
-                  {!activeCoupon && (
+                  {/* Quick Coupon Suggestions from Database */}
+                  {!activeCoupon && activePromos.length > 0 && (
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap text-[10px]">
                       <span className="text-neutral-400 font-semibold uppercase">Try:</span>
-                      <button
-                        type="button"
-                        onClick={() => { setCouponCode('ORGANIC10'); }}
-                        className="font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer"
-                      >
-                        ORGANIC10 (10% OFF)
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setCouponCode('YATHUFREE'); }}
-                        className="font-bold px-2 py-0.5 rounded-md bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 cursor-pointer"
-                      >
-                        YATHUFREE (Free Delivery)
-                      </button>
+                      {activePromos.map((promo) => (
+                        <button
+                          key={promo.code}
+                          type="button"
+                          onClick={() => { setCouponCode(promo.code); }}
+                          className="font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer"
+                        >
+                          {promo.code} ({promo.discountType === 'PERCENTAGE' ? `${promo.discountValue}% OFF` : `₹${promo.discountValue} OFF`})
+                        </button>
+                      ))}
                     </div>
                   )}
                 </div>
