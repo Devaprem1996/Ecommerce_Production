@@ -138,3 +138,13 @@ export const useCartStore = create<CartState>()(
     }
   )
 );
+
+// Cross-tab synchronization: keep cart synchronized in real-time across multiple open tabs
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'yathu-cart-storage') {
+      useCartStore.persist.rehydrate();
+    }
+  });
+}
+

@@ -347,6 +347,8 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
+    // Prevent double-click concurrency race condition
+    if (isProcessingPayment) return;
     setIsProcessingPayment(true);
 
     const orderItems = items.map((item) => ({

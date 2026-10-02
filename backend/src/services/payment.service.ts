@@ -230,8 +230,26 @@ export class PaymentService {
       };
     }
 
-    // Update DB records transactionally
+    let isFirstVerification = false;
+
+    // Update DB records transactionally with double-check inside transaction to prevent concurrent race condition
     await prisma.$transaction(async (tx) => {
+      const currentPayment = await tx.payment.findFirst({
+        where: { providerOrderId: razorpay_order_id },
+        include: { order: true },
+      });
+
+      if (
+        currentPayment &&
+        (currentPayment.status === "SUCCESSFUL" ||
+          currentPayment.order?.status === "PAYMENT_VERIFIED")
+      ) {
+        // Concurrently processed by webhook/browser
+        return;
+      }
+
+      isFirstVerification = true;
+
       await tx.payment.updateMany({
         where: { providerOrderId: razorpay_order_id },
         data: {
@@ -243,17 +261,10 @@ export class PaymentService {
       });
 
       // Target order by orderId or via the payment relation
-      if (orderId) {
+      const targetId = orderId || existingPayment?.orderId || currentPayment?.orderId;
+      if (targetId) {
         await tx.order.update({
-          where: { id: orderId },
-          data: {
-            status: "PAYMENT_VERIFIED",
-            orderedAt: new Date(),
-          },
-        });
-      } else if (existingPayment?.orderId) {
-        await tx.order.update({
-          where: { id: existingPayment.orderId },
+          where: { id: targetId },
           data: {
             status: "PAYMENT_VERIFIED",
             orderedAt: new Date(),
@@ -262,28 +273,41 @@ export class PaymentService {
       }
     });
 
+    if (!isFirstVerification) {
+      logger.info(
+        `[Razorpay Idempotency] Order ${razorpay_order_id} was verified concurrently. Skipping duplicate notifications.`
+      );
+      return {
+        verified: true,
+        order_id: razorpay_order_id,
+        payment_id: razorpay_payment_id,
+        alreadyProcessed: true,
+      };
+    }
+
     logger.info(
       `Payment successfully verified and order marked PAID for Razorpay Order ${razorpay_order_id}`
     );
 
-    // Dispatch order confirmation SMS and Email now that payment is verified
+    // Decoupled background dispatch of order confirmation SMS and Email
+    // Using setImmediate prevents external gateway latency from blocking the HTTP verification response
     const targetOrderId = orderId || existingPayment?.orderId;
     if (targetOrderId) {
-      prisma.order
-        .findUnique({
-          where: { id: targetOrderId },
-          include: { address: true, user: true },
-        })
-        .then((orderRecord) => {
+      setImmediate(async () => {
+        try {
+          const orderRecord = await prisma.order.findUnique({
+            where: { id: targetOrderId },
+            include: { address: true, user: true },
+          });
           if (!orderRecord) return;
 
           const phoneToNotify =
             orderRecord.address?.phone || orderRecord.user?.phone;
           if (phoneToNotify) {
-            SmsService.sendOrderConfirmation({
+            SmsService.sendPaymentConfirmed({
               phone: phoneToNotify,
               orderNumber: orderRecord.orderNumber,
-              grandTotal: Number(orderRecord.grandTotal),
+              amount: Number(orderRecord.grandTotal),
               orderId: orderRecord.id,
             }).catch((err) =>
               logger.error("Failed to send payment verified SMS:", err)
@@ -303,10 +327,10 @@ export class PaymentService {
               logger.error("Failed to send payment verified Email:", err)
             );
           }
-        })
-        .catch((err) =>
-          logger.error("Failed to load order for notification dispatch:", err)
-        );
+        } catch (err) {
+          logger.error("Failed to dispatch decoupled post-payment notifications:", err);
+        }
+      });
     }
 
     return {

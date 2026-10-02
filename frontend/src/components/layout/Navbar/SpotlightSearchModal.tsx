@@ -81,8 +81,9 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Live search debounced
+  // Live search debounced with concurrency guard
   useEffect(() => {
+    let isCurrent = true;
     const trimmed = query.trim();
     if (!trimmed) {
       setResults([]);
@@ -96,6 +97,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
         const res = await apiClient.get('/api/v1/cms/products', {
           params: { search: trimmed, limit: '8' }
         });
+        if (!isCurrent) return;
         if (res?.data?.products && Array.isArray(res.data.products)) {
           setResults(res.data.products.map(mapProductToFrontend));
         } else {
@@ -108,6 +110,7 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
           setResults(filtered);
         }
       } catch (err) {
+        if (!isCurrent) return;
         // Fallback filter
         const filtered = mockProducts.filter(p => 
           p.name.toLowerCase().includes(trimmed.toLowerCase()) ||
@@ -115,11 +118,16 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
         );
         setResults(filtered);
       } finally {
-        setIsLoading(false);
+        if (isCurrent) {
+          setIsLoading(false);
+        }
       }
     }, 200);
 
-    return () => clearTimeout(timer);
+    return () => {
+      isCurrent = false;
+      clearTimeout(timer);
+    };
   }, [query]);
 
   const handleSelectTerm = (term: string) => {

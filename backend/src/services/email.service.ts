@@ -26,6 +26,9 @@ export class EmailService {
           user: process.env.GMAIL_USER,
           pass: process.env.GMAIL_APP_PASSWORD.replace(/\s+/g, ""),
         },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
       logger.info("[EmailService] Initialized Gmail SMTP transport");
       return this.transporter;
@@ -41,6 +44,9 @@ export class EmailService {
           user: process.env.SMTP_USER,
           pass: process.env.SMTP_PASS,
         },
+        connectionTimeout: 5000,
+        greetingTimeout: 5000,
+        socketTimeout: 5000,
       });
       logger.info(`[EmailService] Initialized SMTP transport for ${process.env.SMTP_HOST}`);
       return this.transporter;
@@ -69,13 +75,19 @@ export class EmailService {
         process.env.SMTP_USER ||
         "no-reply@yathuarokiyagam.com";
 
-      await transporter.sendMail({
+      const sendPromise = transporter.sendMail({
         from: `"Yathu Arokiyagam" <${fromAddress}>`,
         to: options.to,
         subject: options.subject,
         html: options.html,
         text: options.text,
       });
+
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("SMTP sendMail timed out after 6000ms")), 6000)
+      );
+
+      await Promise.race([sendPromise, timeoutPromise]);
 
       logger.info(`[EmailService] Successfully sent email to ${options.to}: "${options.subject}"`);
       return true;

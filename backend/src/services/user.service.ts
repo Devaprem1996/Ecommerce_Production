@@ -770,27 +770,33 @@ export class UserService {
       { maxWait: 15000, timeout: 20000 }
     );
 
-    // Asynchronously dispatch notifications (SMS and Email)
+    // Decoupled background dispatch of notifications (SMS and Email)
     // Only dispatch immediately for Cash on Delivery. Online orders dispatch upon payment verification.
     if (data.paymentMethod === "cod") {
-      const phoneToNotify = (createdOrder as any).address?.phone || user?.phone;
-      if (phoneToNotify) {
-        SmsService.sendOrderConfirmation({
-          phone: phoneToNotify,
-          orderNumber: createdOrder.orderNumber,
-          grandTotal: Number(createdOrder.grandTotal),
-          orderId: createdOrder.id,
-        }).catch((err) => logger.error("Failed to send order SMS:", err));
-      }
+      setImmediate(async () => {
+        try {
+          const phoneToNotify = (createdOrder as any).address?.phone || user?.phone;
+          if (phoneToNotify) {
+            SmsService.sendOrderConfirmation({
+              phone: phoneToNotify,
+              orderNumber: createdOrder.orderNumber,
+              grandTotal: Number(createdOrder.grandTotal),
+              orderId: createdOrder.id,
+            }).catch((err) => logger.error("Failed to send order SMS:", err));
+          }
 
-      if (user?.email && !user.email.endsWith(".local")) {
-        EmailService.sendOrderConfirmation(
-          user.email,
-          createdOrder.orderNumber,
-          Number(createdOrder.grandTotal),
-          (createdOrder as any).address?.fullName || "Customer"
-        ).catch((err) => logger.error("Failed to send order email:", err));
-      }
+          if (user?.email && !user.email.endsWith(".local")) {
+            EmailService.sendOrderConfirmation(
+              user.email,
+              createdOrder.orderNumber,
+              Number(createdOrder.grandTotal),
+              (createdOrder as any).address?.fullName || "Customer"
+            ).catch((err) => logger.error("Failed to send order email:", err));
+          }
+        } catch (err) {
+          logger.error("Decoupled COD notification dispatch error:", err);
+        }
+      });
     }
 
     return createdOrder;

@@ -127,6 +127,7 @@ export class SmsService {
           flash: 0,
           numbers: cleanPhone,
         }),
+        signal: AbortSignal.timeout(5000),
       });
 
       const result: any = await response.json();
@@ -150,6 +151,7 @@ export class SmsService {
             variables_values: otp,
             numbers: cleanPhone,
           }),
+          signal: AbortSignal.timeout(5000),
         });
 
         const fallbackResult: any = await fallbackRes.json();
@@ -215,6 +217,7 @@ export class SmsService {
           flash: 0,
           numbers: cleanPhone,
         }),
+        signal: AbortSignal.timeout(5000),
       });
 
       const result: any = await response.json();

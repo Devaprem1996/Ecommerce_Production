@@ -21,6 +21,11 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - app_network
 
@@ -41,8 +46,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 8080
-      DATABASE_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable
-      DIRECT_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable
+      DATABASE_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable&connection_limit=20&pool_timeout=10
+      DIRECT_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable&connection_limit=20&pool_timeout=10
       JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-jwt-signing-tokens-123456}
       REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-dev-secret-key-for-refresh-tokens-signing-987654}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
@@ -57,6 +62,11 @@ services:
       CLOUDINARY_URL: ${CLOUDINARY_URL}
     volumes:
       - media_uploads:/var/www/uploads
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - app_network
 
@@ -77,6 +87,11 @@ services:
       NODE_ENV: production
       PORT: 3000
       INTERNAL_API_URL: http://backend:8080/api/v1
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - app_network
 
@@ -99,6 +114,11 @@ services:
     depends_on:
       - frontend
       - backend
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - app_network
 
@@ -113,6 +133,11 @@ services:
       - "${UPTIME_KUMA_PORT:-3001}:3001"
     volumes:
       - uptime_kuma_data:/app/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "20m"
+        max-file: "3"
     networks:
       - app_network
 
