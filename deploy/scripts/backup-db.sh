@@ -30,11 +30,23 @@ docker exec -t "${CONTAINER_NAME}" pg_dump -U "${DB_USER}" -d "${DB_NAME}" --cle
 
 # Check backup file size
 FILE_SIZE=$(du -h "${BACKUP_FILE}" | cut -f1)
-echo "[SUCCESS] Backup successfully saved to: ${BACKUP_FILE} (Size: ${FILE_SIZE})"
+echo "[SUCCESS] Database backup saved to: ${BACKUP_FILE} (Size: ${FILE_SIZE})"
+
+# Also back up uploaded product images if Docker volume exists
+MEDIA_BACKUP_FILE="${BACKUP_DIR}/media_uploads_${TIMESTAMP}.tar.gz"
+if docker volume inspect yathu_media_uploads >/dev/null 2>&1; then
+    MEDIA_DIR=$(docker volume inspect yathu_media_uploads --format '{{.Mountpoint}}')
+    if [ -d "${MEDIA_DIR}" ]; then
+        tar -czf "${MEDIA_BACKUP_FILE}" -C "${MEDIA_DIR}" . 2>/dev/null || true
+        MEDIA_SIZE=$(du -h "${MEDIA_BACKUP_FILE}" | cut -f1)
+        echo "[SUCCESS] Product media uploads saved to: ${MEDIA_BACKUP_FILE} (Size: ${MEDIA_SIZE})"
+    fi
+fi
 
 # Remove backups older than retention window (14 days)
-echo "Purging backups older than ${RETENTION_DAYS} days..."
+echo "Purging archives older than ${RETENTION_DAYS} days..."
 find "${BACKUP_DIR}" -name "db_backup_${DB_NAME}_*.sql.gz" -mtime +${RETENTION_DAYS} -exec rm -f {} \;
+find "${BACKUP_DIR}" -name "media_uploads_*.tar.gz" -mtime +${RETENTION_DAYS} -exec rm -f {} \;
 
-echo "[COMPLETED] Database backup finished cleanly at $(date)"
+echo "[COMPLETED] Database and media backup finished cleanly at $(date)"
 echo "=================================================="
