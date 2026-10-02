@@ -38,8 +38,14 @@ const explicitWhitelist = [
   process.env.FRONTEND_URL,
   "https://yathuiyarkaiyagam.vercel.app",
   "https://yathuarokiyagam.vercel.app",
+  "https://yathuarokiyagam.com",
+  "https://www.yathuarokiyagam.com",
+  "http://localhost",
+  "http://localhost:80",
   "http://localhost:3000",
   "http://localhost:3001",
+  "http://127.0.0.1",
+  "http://127.0.0.1:3000",
 ].filter(Boolean) as string[];
 
 app.use(

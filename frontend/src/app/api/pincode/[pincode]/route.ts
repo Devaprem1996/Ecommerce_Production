@@ -15,6 +15,7 @@ export async function GET(
     }
 
     const backendUrl =
+      process.env.INTERNAL_API_URL?.replace(/\/api\/v1\/?$/, "") ||
       process.env.BACKEND_URL ||
       process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
       "http://localhost:8080";

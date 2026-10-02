@@ -14,7 +14,10 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase().trim();
-    const backendApiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api/v1';
+    const backendApiUrl =
+      process.env.INTERNAL_API_URL ||
+      process.env.NEXT_PUBLIC_API_URL ||
+      'http://localhost:8080/api/v1';
 
     // Authenticate exclusively against live Express backend database
     try {

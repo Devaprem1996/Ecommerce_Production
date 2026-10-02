@@ -18,12 +18,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 3. Query Express backend (supports Fly.io in prod and localhost:8080 in local dev)
+    // 3. Query Express backend (supports INTERNAL_API_URL in Docker/VPS, NEXT_PUBLIC_API_URL, or localhost)
     const backendApiUrl =
+      process.env.INTERNAL_API_URL ||
       process.env.NEXT_PUBLIC_API_URL ||
-      (process.env.NODE_ENV === "production"
-        ? "https://yathuiyarkaiyagam-backend-prod.fly.dev/api/v1"
-        : "http://localhost:8080/api/v1");
+      "http://localhost:8080/api/v1";
 
     const backendRes = await fetch(`${backendApiUrl}/admin/dashboard`, {
       headers: {

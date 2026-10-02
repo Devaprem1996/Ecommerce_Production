@@ -1,8 +1,8 @@
 const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_URL ||
-  (typeof window !== "undefined" && window.location.hostname.includes("vercel.app")
-    ? "https://yathu-backend-prod.fly.dev/api/v1"
-    : "http://localhost:8080/api/v1");
+  (typeof window !== "undefined"
+    ? `${window.location.origin}/api/v1`
+    : process.env.INTERNAL_API_URL || "http://localhost:8080/api/v1");
 
 export interface ApiResponse<T = any> {
   success: boolean;

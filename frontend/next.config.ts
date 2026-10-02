@@ -28,6 +28,7 @@ const nextConfig: NextConfig = {
   },
   async rewrites() {
     const backendBase = (
+      process.env.INTERNAL_API_URL?.replace(/\/api\/v1\/?$/, "") ||
       process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/v1\/?$/, "") ||
       "http://localhost:8080"
     ).replace(/\/$/, "");
@@ -35,7 +36,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/v1/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || `${backendBase}/api/v1`}/:path*`,
+        destination: `${process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || `${backendBase}/api/v1`}/:path*`,
       },
       {
         source: "/api/create-order",
@@ -62,7 +63,7 @@ const nextConfig: NextConfig = {
               "default-src 'self'",
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
               "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
-              "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com http://localhost:* ws://localhost:* https://*.vercel.app https://*.fly.dev",
+              "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.yathuarokiyagam.com https://yathuarokiyagam.com https://*.vercel.app https://*.fly.dev",
               "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.wikimedia.org",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
