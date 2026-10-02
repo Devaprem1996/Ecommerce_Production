@@ -6,6 +6,14 @@ const nextConfig: NextConfig = {
     remotePatterns: [
       {
         protocol: "https",
+        hostname: "**",
+      },
+      {
+        protocol: "http",
+        hostname: "**",
+      },
+      {
+        protocol: "https",
         hostname: "res.cloudinary.com",
         pathname: "/**",
       },
@@ -64,7 +72,7 @@ const nextConfig: NextConfig = {
               "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://checkout.razorpay.com",
               "frame-src 'self' https://api.razorpay.com https://checkout.razorpay.com",
               "connect-src 'self' https://api.razorpay.com https://lumberjack.razorpay.com http://localhost:* ws://localhost:* http://127.0.0.1:* ws://127.0.0.1:* https://*.yathuarokiyagam.com https://yathuarokiyagam.com https://*.vercel.app https://*.fly.dev",
-              "img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.wikimedia.org",
+              "img-src 'self' data: blob: https: http:",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' data: https://fonts.gstatic.com",
             ].join("; "),

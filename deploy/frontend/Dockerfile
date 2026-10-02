@@ -40,6 +40,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy built application assets
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/next.config.* ./
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 
