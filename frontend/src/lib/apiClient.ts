@@ -49,7 +49,10 @@ class ApiClient {
       urlString = url.toString();
     } else {
       // Server-side execution
-      const host = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+      const host =
+        process.env.INTERNAL_API_URL?.replace(/\/api\/v1\/?$/, "") ||
+        process.env.NEXT_PUBLIC_API_URL ||
+        'http://localhost:3000';
       const url = new URL(path, host);
       if (options.params) {
         Object.keys(options.params).forEach((key) =>

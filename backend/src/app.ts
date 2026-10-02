@@ -56,6 +56,7 @@ app.use(
       }
       if (
         explicitWhitelist.includes(origin) ||
+        /^https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin) ||
         /^https:\/\/[a-zA-Z0-9-]+\.vercel\.app$/.test(origin)
       ) {
         return callback(null, true);
