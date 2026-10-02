@@ -32,13 +32,15 @@ const prisma = basePrisma.$extends({
             error?.message?.includes("connection closed") ||
             error?.message?.includes("Connection terminated") ||
             error?.message?.includes("Connection timed out") ||
+            error?.message?.includes("Timed out fetching a new connection from the connection pool") ||
+            error?.message?.includes("connection pool") ||
             error?.name === "PrismaClientInitializationError";
 
           if (isConnectionError) {
             logger.warn(
-              `[Neon DB Auto-Wakeup] Waking up serverless compute for ${model}.${operation}, retrying query in 1.5s...`
+              `[DB Connection / Pool Auto-Retry] Retrying ${model}.${operation} in 600ms due to transient connection/pool pressure: ${error?.message?.slice(0, 100)}`
             );
-            await new Promise((resolve) => setTimeout(resolve, 1500));
+            await new Promise((resolve) => setTimeout(resolve, 600));
             return await query(args);
           }
           throw error;

@@ -1,4 +1,5 @@
 import { Request, Response, NextFunction } from "express";
+import crypto from "node:crypto";
 import bcrypt from "bcryptjs";
 import prisma from "../config/db.js";
 import { SmsService } from "../services/sms.service.js";
@@ -8,6 +9,27 @@ import logger from "../logger/index.js";
 
 const isProduction = process.env.NODE_ENV === "production";
 const COOKIE_NAME = "refreshToken";
+
+// Lightweight, constant-time HMAC-SHA256 OTP hashing (avoids blocking event loop)
+function hashOtp(otp: string): string {
+  const secret = process.env.JWT_SECRET || "yathu_secure_otp_salt_key_2026";
+  return crypto.createHmac("sha256", secret).update(otp).digest("hex");
+}
+
+function verifyOtpHash(enteredOtp: string, storedHash: string): boolean {
+  // Backward compatibility with any legacy bcrypt hashes in database
+  if (storedHash.startsWith("$2")) {
+    return bcrypt.compareSync(enteredOtp, storedHash);
+  }
+  const expected = hashOtp(enteredOtp);
+  try {
+    const bufA = Buffer.from(expected);
+    const bufB = Buffer.from(storedHash);
+    return bufA.length === bufB.length && crypto.timingSafeEqual(bufA, bufB);
+  } catch {
+    return false;
+  }
+}
 
 const getCookieOptions = () => ({
   httpOnly: true,
@@ -44,7 +66,7 @@ export class OtpController {
 
       // Generate secure 6-digit OTP
       const otp = Math.floor(100000 + Math.random() * 900000).toString();
-      const otpHash = await bcrypt.hash(otp, 10);
+      const otpHash = hashOtp(otp);
 
       // Invalidate existing unused OTPs for this phone & purpose
       await prisma.otpVerification.deleteMany({
@@ -123,8 +145,8 @@ export class OtpController {
         throw ApiError.badRequest("Maximum verification attempts exceeded. Please request a new OTP.");
       }
 
-      // Verify OTP hash
-      const isValid = await bcrypt.compare(otp, otpRecord.otpHash);
+      // Verify OTP hash (constant time, zero event loop CPU starvation)
+      const isValid = verifyOtpHash(otp, otpRecord.otpHash);
       if (!isValid) {
         await prisma.otpVerification.update({
           where: { id: otpRecord.id },

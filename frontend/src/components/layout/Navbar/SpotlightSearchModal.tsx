@@ -99,7 +99,9 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
         });
         if (!isCurrent) return;
         if (res?.data?.products && Array.isArray(res.data.products)) {
-          setResults(res.data.products.map(mapProductToFrontend));
+          React.startTransition(() => {
+            setResults(res.data.products.map(mapProductToFrontend));
+          });
         } else {
           // Fallback to local filter
           const filtered = mockProducts.filter(p => 
@@ -107,7 +109,9 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
             (p.nameTamil && p.nameTamil.includes(trimmed)) ||
             p.category.toLowerCase().includes(trimmed.toLowerCase())
           );
-          setResults(filtered);
+          React.startTransition(() => {
+            setResults(filtered);
+          });
         }
       } catch (err) {
         if (!isCurrent) return;
@@ -116,7 +120,9 @@ export const SpotlightSearchModal: React.FC<SpotlightSearchModalProps> = ({ isOp
           p.name.toLowerCase().includes(trimmed.toLowerCase()) ||
           (p.nameTamil && p.nameTamil.includes(trimmed))
         );
-        setResults(filtered);
+        React.startTransition(() => {
+          setResults(filtered);
+        });
       } finally {
         if (isCurrent) {
           setIsLoading(false);

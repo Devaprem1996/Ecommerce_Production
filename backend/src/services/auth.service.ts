@@ -29,7 +29,7 @@ export class AuthService {
       throw ApiError.conflict("User with this email already exists.");
     }
 
-    const hashedPassword = await bcrypt.hash(data.passwordHash, 12);
+    const hashedPassword = await bcrypt.hash(data.passwordHash, 10);
 
     // Create user and profile in a transaction
     const newUser = await prisma.$transaction(async (tx) => {

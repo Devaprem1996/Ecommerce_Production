@@ -1131,7 +1131,7 @@ export class UserService {
       throw ApiError.badRequest("Current password is incorrect.");
     }
 
-    const newHashedPassword = await bcrypt.hash(newPassword, 12);
+    const newHashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: userId },
       data: { passwordHash: newHashedPassword },

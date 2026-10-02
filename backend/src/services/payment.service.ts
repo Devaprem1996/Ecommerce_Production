@@ -217,6 +217,7 @@ export class PaymentService {
     if (
       existingPayment &&
       (existingPayment.status === "SUCCESSFUL" ||
+        existingPayment.status === "CAPTURED" ||
         existingPayment.order?.status === "PAYMENT_VERIFIED")
     ) {
       logger.info(
@@ -242,6 +243,7 @@ export class PaymentService {
       if (
         currentPayment &&
         (currentPayment.status === "SUCCESSFUL" ||
+          currentPayment.status === "CAPTURED" ||
           currentPayment.order?.status === "PAYMENT_VERIFIED")
       ) {
         // Concurrently processed by webhook/browser
@@ -519,30 +521,147 @@ export class PaymentService {
       const providerPaymentId = paymentEntity?.id;
 
       if (providerOrderId) {
-        await prisma.payment.updateMany({
+        const paymentRecord = await prisma.payment.findFirst({
           where: { providerOrderId },
-          data: {
-            status: "CAPTURED",
-            providerPaymentId,
-            paidAt: new Date(),
-          },
+          include: { order: true },
         });
-        logger.info(`Webhook: Payment captured for Razorpay Order ${providerOrderId}`);
+
+        if (paymentRecord) {
+          const wasAlreadyVerified =
+            paymentRecord.status === "SUCCESSFUL" ||
+            paymentRecord.status === "CAPTURED" ||
+            paymentRecord.order?.status === "PAYMENT_VERIFIED";
+
+          if (wasAlreadyVerified) {
+            logger.info(
+              `[Webhook Idempotency] Payment ${providerOrderId} was already verified by browser. Skipping duplicate actions.`
+            );
+          } else {
+            // Webhook arrived before browser redirect, or user closed the browser tab
+            await prisma.$transaction(async (tx) => {
+              await tx.payment.updateMany({
+                where: { providerOrderId },
+                data: {
+                  status: "SUCCESSFUL",
+                  providerPaymentId,
+                  paidAt: new Date(),
+                },
+              });
+
+              if (paymentRecord.orderId) {
+                await tx.order.update({
+                  where: { id: paymentRecord.orderId },
+                  data: {
+                    status: "PAYMENT_VERIFIED",
+                    orderedAt: new Date(),
+                  },
+                });
+              }
+            });
+
+            logger.info(
+              `[Webhook] Successfully marked order PAID via Webhook for Razorpay Order ${providerOrderId}`
+            );
+
+            // Dispatch decoupled SMS/Email confirmation because browser did not process it
+            if (paymentRecord.orderId) {
+              setImmediate(async () => {
+                try {
+                  const orderRecord = await prisma.order.findUnique({
+                    where: { id: paymentRecord.orderId! },
+                    include: { address: true, user: true },
+                  });
+                  if (!orderRecord) return;
+
+                  const phoneToNotify =
+                    orderRecord.address?.phone || orderRecord.user?.phone;
+                  if (phoneToNotify) {
+                    SmsService.sendPaymentConfirmed({
+                      phone: phoneToNotify,
+                      orderNumber: orderRecord.orderNumber,
+                      amount: Number(orderRecord.grandTotal),
+                      orderId: orderRecord.id,
+                    }).catch((err) =>
+                      logger.error("Failed to send webhook payment SMS:", err)
+                    );
+                  }
+
+                  if (
+                    orderRecord.user?.email &&
+                    !orderRecord.user.email.endsWith(".local")
+                  ) {
+                    EmailService.sendOrderConfirmation(
+                      orderRecord.user.email,
+                      orderRecord.orderNumber,
+                      Number(orderRecord.grandTotal),
+                      orderRecord.address?.fullName || "Customer"
+                    ).catch((err) =>
+                      logger.error("Failed to send webhook payment Email:", err)
+                    );
+                  }
+                } catch (err) {
+                  logger.error("Decoupled webhook notification error:", err);
+                }
+              });
+            }
+          }
+        }
       }
     } else if (event === "payment.failed") {
       const paymentEntity = payload.payload?.payment?.entity;
       const providerOrderId = paymentEntity?.order_id;
+      const providerPaymentId = paymentEntity?.id;
 
       if (providerOrderId) {
-        await prisma.payment.updateMany({
+        const paymentRecord = await prisma.payment.findFirst({
           where: { providerOrderId },
-          data: {
-            status: "FAILED",
-            failureReason:
-              paymentEntity?.error_description || "Payment failed at gateway.",
+          include: {
+            order: {
+              include: { orderItems: true },
+            },
           },
         });
-        logger.warn(`Webhook: Payment failed for Razorpay Order ${providerOrderId}`);
+
+        if (paymentRecord) {
+          await prisma.$transaction(async (tx) => {
+            await tx.payment.updateMany({
+              where: { providerOrderId },
+              data: {
+                status: "FAILED",
+                providerPaymentId,
+                failureReason:
+                  paymentEntity?.error_description || "Payment failed at gateway.",
+              },
+            });
+
+            // If order was in PENDING_PAYMENT, mark CANCELLED and restore reserved inventory!
+            if (
+              paymentRecord.order &&
+              paymentRecord.order.status === "PENDING_PAYMENT"
+            ) {
+              await tx.order.update({
+                where: { id: paymentRecord.order.id },
+                data: { status: "CANCELLED" },
+              });
+
+              for (const item of paymentRecord.order.orderItems) {
+                if (item.variantId) {
+                  await tx.inventory.updateMany({
+                    where: { variantId: item.variantId },
+                    data: {
+                      availableQuantity: { increment: item.quantity },
+                      lastStockUpdate: new Date(),
+                    },
+                  });
+                }
+              }
+              logger.info(
+                `[Inventory Rollback] Restored inventory for failed order ${paymentRecord.order.orderNumber}`
+              );
+            }
+          });
+          logger.warn(`Webhook: Payment failed for Razorpay Order ${providerOrderId}`);
+        }
       }
     } else if (event === "refund.processed") {
       const refundEntity = payload.payload?.refund?.entity;

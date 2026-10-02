@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
@@ -46,7 +46,7 @@ export default function CheckoutPage() {
   const router = useRouter();
 
   // Stores
-  const { items, getTotal, clearCart, getItemCount } = useCartStore();
+  const { items, getTotal, clearCart, getItemCount, appliedCoupon, discountAmount } = useCartStore();
   const { user, isAuthenticated, login } = useAuthStore();
 
   const [hasMounted, setHasMounted] = useState(false);
@@ -244,10 +244,22 @@ export default function CheckoutPage() {
   const [estimatedDays, setEstimatedDays] = useState(3);
   const [confirmedTotal, setConfirmedTotal] = useState(0);
 
-  const subtotal = getTotal();
-  const deliveryFee = subtotal >= 499 ? 0 : 50;
-  const codFee = paymentMethod === 'cod' ? 30 : 0;
-  const totalAmount = subtotal + deliveryFee + codFee;
+  const subtotal = useMemo(() => {
+    return items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  }, [items]);
+
+  const deliveryFee = useMemo(() => {
+    if (appliedCoupon === 'YATHUFREE') return 0;
+    return subtotal >= 499 ? 0 : 50;
+  }, [subtotal, appliedCoupon]);
+
+  const codFee = useMemo(() => {
+    return paymentMethod === 'cod' ? 30 : 0;
+  }, [paymentMethod]);
+
+  const totalAmount = useMemo(() => {
+    return Math.max(0, subtotal - discountAmount) + deliveryFee + codFee;
+  }, [subtotal, discountAmount, deliveryFee, codFee]);
 
   // Sync Pincode to auto-fill city/state
   useEffect(() => {
@@ -460,7 +472,15 @@ export default function CheckoutPage() {
     } catch (err: any) {
       setIsProcessingPayment(false);
       console.error('Failed to process payment/order:', err);
-      toast.error(err?.message || 'Failed to initiate payment. Please try again.');
+      const rawMsg =
+        err?.response?.data?.message ||
+        err?.message ||
+        'Failed to initiate payment. Please try again.';
+      if (rawMsg.toLowerCase().includes('insufficient stock') || rawMsg.toLowerCase().includes('stock')) {
+        toast.error(`Inventory Alert: ${rawMsg}`);
+      } else {
+        toast.error(rawMsg);
+      }
     }
   };
 

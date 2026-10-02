@@ -45,6 +45,12 @@ export const useCartStore = create<CartState>()(
 
       addItem: (product, quantity = 1) =>
         set((state) => {
+          const maxStock = typeof product.stock === 'number' && product.stock >= 0 ? product.stock : 999;
+          if (maxStock <= 0) {
+            // Cannot add out-of-stock item
+            return state;
+          }
+
           const existingItemIndex = state.items.findIndex(
             (item) => item.product.id === product.id && item.product.unit === product.unit
           );
@@ -52,12 +58,15 @@ export const useCartStore = create<CartState>()(
           let newItems = [...state.items];
 
           if (existingItemIndex > -1) {
+            const currentQty = newItems[existingItemIndex].quantity;
+            const updatedQty = Math.min(currentQty + quantity, maxStock);
             newItems[existingItemIndex] = {
               ...newItems[existingItemIndex],
-              quantity: newItems[existingItemIndex].quantity + quantity,
+              quantity: updatedQty,
             };
           } else {
-            newItems.push({ product, quantity });
+            const initialQty = Math.min(Math.max(1, quantity), maxStock);
+            newItems.push({ product, quantity: initialQty });
           }
 
           const discount = calculateDiscount(newItems, state.appliedCoupon);
@@ -81,9 +90,20 @@ export const useCartStore = create<CartState>()(
 
       updateQuantity: (productId, quantity) =>
         set((state) => {
-          const newItems = state.items.map((item) =>
-            item.product.id === productId ? { ...item, quantity } : item
-          );
+          if (quantity <= 0) {
+            const newItems = state.items.filter((item) => item.product.id !== productId);
+            const discount = calculateDiscount(newItems, state.appliedCoupon);
+            return {
+              items: newItems,
+              discountAmount: discount,
+            };
+          }
+
+          const newItems = state.items.map((item) => {
+            if (item.product.id !== productId) return item;
+            const maxStock = typeof item.product.stock === 'number' && item.product.stock >= 0 ? item.product.stock : 999;
+            return { ...item, quantity: Math.min(quantity, maxStock) };
+          });
           const discount = calculateDiscount(newItems, state.appliedCoupon);
           return {
             items: newItems,

@@ -39,9 +39,7 @@ export class StorageService {
     const basePath = process.env.LOCAL_UPLOAD_PATH || "/var/www/uploads";
     const targetDir = path.join(basePath, folder);
 
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
+    await fs.promises.mkdir(targetDir, { recursive: true });
 
     const ext = path.extname(originalName).toLowerCase() || ".webp";
     const baseRaw = path.basename(originalName, ext).replace(/[^a-zA-Z0-9_-]/g, "").toLowerCase();
@@ -49,8 +47,8 @@ export class StorageService {
     const uniqueFileName = `${cleanBase}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}${ext}`;
     const fullPath = path.join(targetDir, uniqueFileName);
 
-    fs.writeFileSync(fullPath, fileBuffer);
-    logger.info(`Saved image to local VPS disk: ${fullPath}`);
+    await fs.promises.writeFile(fullPath, fileBuffer);
+    logger.info(`Saved image asynchronously to local VPS disk: ${fullPath}`);
 
     // Return URL path routed by Nginx
     return `/uploads/${folder}/${uniqueFileName}`;
