@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { CmsService } from "../services/cms.service.js";
-import { uploadToCloudinary } from "../config/cloudinary.js";
+import { StorageService } from "../services/storage.service.js";
 import { ApiError } from "../exceptions/api-error.js";
 
 export class CmsController {
@@ -252,11 +252,15 @@ export class CmsController {
       // Determine folder based on request body or default to "products"
       const folder = (req.body.folder as string) || "products";
 
-      const imageUrl = await uploadToCloudinary(req.file.buffer, folder);
+      const imageUrl = await StorageService.uploadImage(
+        req.file.buffer,
+        req.file.originalname,
+        folder
+      );
 
       return res.status(200).json({
         success: true,
-        message: "Image uploaded successfully to Cloudinary.",
+        message: "Image uploaded successfully.",
         data: { url: imageUrl },
         timestamp: new Date().toISOString(),
       });

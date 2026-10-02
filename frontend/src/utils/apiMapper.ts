@@ -206,14 +206,28 @@ export function mapProductToFrontend(backendProduct: any): ProductType {
 
   const firstVariant = mappedVariants[0];
   const rawImage = backendProduct.thumbnailUrl || backendProduct.variants?.[0]?.images?.[0] || '';
-  // Authentic Cloudinary URLs (from cloud chv6xh1d or user's account) or external CDN URLs are preserved
+  
+  // 1. Admin uploaded image (/uploads/ or Cloudinary) always takes absolute precedence
+  const isAdminUpload = Boolean(
+    rawImage && (rawImage.startsWith('/uploads/') || rawImage.includes('res.cloudinary.com'))
+  );
+
+  // 2. Check if product has a dedicated handcrafted local asset in /images/
+  const curatedAsset = PRODUCT_IMAGE_MAP[backendProduct.slug];
+  const hasLocalCuratedAsset = Boolean(curatedAsset && curatedAsset.startsWith('/images/'));
+
+  // 3. Fallback check for dead or dummy placeholder URLs
   const isPlaceholderUrl =
     !rawImage ||
     rawImage.includes('yathu-iyarkaiyagam') ||
     rawImage.includes('placeholder.svg') ||
     rawImage.includes('via.placeholder.com');
 
-  const image = isPlaceholderUrl
+  const image = isAdminUpload
+    ? rawImage
+    : hasLocalCuratedAsset
+    ? curatedAsset
+    : isPlaceholderUrl
     ? resolveProductImage(backendProduct.slug, backendProduct.category?.slug)
     : rawImage;
 
