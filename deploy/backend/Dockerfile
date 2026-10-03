@@ -39,19 +39,19 @@ RUN apk add --no-cache libc6-compat openssl
 RUN addgroup --system --gid 1001 nodejs && \
     adduser --system --uid 1001 expressjs
 
-# Copy runtime assets and dependencies from builder
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
+# Prepare writable directories
+RUN mkdir -p /var/www/uploads /app/logs && \
+    chown -R expressjs:nodejs /var/www/uploads /app/logs
 
-# Create directory for local file uploads and logs
-RUN mkdir -p /var/www/uploads logs && \
-    chown -R expressjs:nodejs /app /var/www/uploads
+# Copy runtime assets and dependencies directly with proper ownership
+COPY --chown=expressjs:nodejs --from=builder /app/package*.json ./
+COPY --chown=expressjs:nodejs --from=builder /app/node_modules ./node_modules
+COPY --chown=expressjs:nodejs --from=builder /app/dist ./dist
+COPY --chown=expressjs:nodejs --from=builder /app/prisma ./prisma
 
 USER expressjs
 
 EXPOSE 8080
 
-# Run database migrations and launch production server
+# Launch production server
 CMD ["node", "dist/server.js"]
