@@ -50,12 +50,14 @@ export async function POST(request: NextRequest) {
       accessToken
     });
 
-    const isProduction = process.env.NODE_ENV === 'production';
+    const isHttps =
+      request.nextUrl.protocol === 'https:' ||
+      request.headers.get('x-forwarded-proto') === 'https';
 
     // Write access token cookie for middleware/SSR page access
     response.cookies.set('access_token', accessToken, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isHttps,
       sameSite: 'lax',
       path: '/',
       maxAge: 15 * 60 // 15 minutes
@@ -64,7 +66,7 @@ export async function POST(request: NextRequest) {
     // Write refresh token cookie restricted to the refresh path for maximum security
     response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
-      secure: isProduction,
+      secure: isHttps,
       sameSite: 'strict',
       path: '/api/auth/refresh',
       maxAge: 7 * 24 * 60 * 60 // 7 days

@@ -59,11 +59,12 @@ export function useAdminPayments(params: { search?: string; status?: string; pro
   });
 }
 
-export function useAdminPendingActions() {
+export function useAdminPendingActions(options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ["admin", "pending-actions"],
     queryFn: () => adminService.getPendingActions(),
     staleTime: 15000,
     refetchInterval: 30000, // poll operational alerts every 30s
+    enabled: options?.enabled ?? true,
   });
 }

@@ -77,13 +77,18 @@ function AdminLoginForm() {
     return () => clearInterval(interval);
   }, []);
 
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const { register, handleSubmit, setValue, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       email: '',
       password: '',
     }
   });
+
+  const fillDemoAdmin = () => {
+    setValue('email', 'admin@yathu.com');
+    setValue('password', 'admin123');
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     if (isLocked) {
@@ -121,6 +126,7 @@ function AdminLoginForm() {
           localStorage.setItem('admin_access_token', resData.accessToken);
           localStorage.setItem('access_token', resData.accessToken);
           document.cookie = `access_token=${resData.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
+          document.cookie = `admin_access_token=${resData.accessToken}; path=/; max-age=${7 * 24 * 60 * 60}; SameSite=Lax`;
         }
         
         // Log in to Zustand store
@@ -213,7 +219,7 @@ function AdminLoginForm() {
                   disabled={loading}
                   {...register('email')}
                   className="w-full text-xs font-semibold pl-10 pr-4 py-3 border border-neutral-800 rounded-card bg-neutral-950 text-white focus:outline-none focus:ring-1 focus:ring-primary-500 focus:border-primary-500 disabled:opacity-50"
-                  placeholder="admin@yathuarokiyagam.com"
+                  placeholder="admin@yathu.com"
                   autoComplete="email"
                 />
               </div>
@@ -286,6 +292,17 @@ function AdminLoginForm() {
             >
               {loading ? 'Securing Connection...' : 'Login to Dashboard →'}
             </Button>
+
+            {/* Quick Demo Fill Helper */}
+            <div className="pt-1 text-center">
+              <button
+                type="button"
+                onClick={fillDemoAdmin}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[11px] font-semibold text-primary-400 bg-primary-500/10 hover:bg-primary-500/20 border border-primary-500/20 rounded-md transition-colors cursor-pointer"
+              >
+                <span>🔑 Autofill Admin Credentials (admin@yathu.com)</span>
+              </button>
+            </div>
 
             {/* Forgot Password Link */}
             <div className="text-center pt-2 select-none">

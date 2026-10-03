@@ -45,16 +45,18 @@ function AdminLayoutContent({ children }: AdminLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Real-time Pending Operational Actions
-  const [showNotifications, setShowNotifications] = useState(false);
-  const { data: pendingData } = useAdminPendingActions();
-  const pendingNotifications = pendingData?.notifications || [];
-  const unreadCount = pendingData?.totalUnread || 0;
-
   const isGuestPath =
     pathname === '/admin/login' ||
     pathname === '/admin/forgot-password' ||
     pathname === '/admin/reset-password';
+
+  // Real-time Pending Operational Actions
+  const [showNotifications, setShowNotifications] = useState(false);
+  const { data: pendingData } = useAdminPendingActions({
+    enabled: !isGuestPath && !checkingAuth,
+  });
+  const pendingNotifications = pendingData?.notifications || [];
+  const unreadCount = pendingData?.totalUnread || 0;
 
   // Auth Guard
   useEffect(() => {

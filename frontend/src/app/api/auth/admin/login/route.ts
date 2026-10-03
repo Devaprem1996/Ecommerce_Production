@@ -70,7 +70,9 @@ export async function POST(request: NextRequest) {
         createdAt: backendUser.createdAt,
       };
 
-      const isProduction = process.env.NODE_ENV === 'production';
+      const isHttps =
+        request.nextUrl.protocol === 'https:' ||
+        request.headers.get('x-forwarded-proto') === 'https';
       const response = NextResponse.json({
         success: true,
         message: 'Admin logged in successfully.',
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
 
       response.cookies.set('access_token', token, {
         httpOnly: true,
-        secure: isProduction,
+        secure: isHttps,
         sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 60 * 60,
@@ -88,7 +90,7 @@ export async function POST(request: NextRequest) {
 
       response.cookies.set('admin_access_token', token, {
         httpOnly: false,
-        secure: isProduction,
+        secure: isHttps,
         sameSite: 'lax',
         path: '/',
         maxAge: 7 * 24 * 60 * 60,
