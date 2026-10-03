@@ -254,7 +254,7 @@ import axios from "axios";
 async function simulateTraffic() {
   const variantId = "some-variant-uuid";
   const requests = Array.from({ length: 50 }).map(() =>
-    axios.post("http://localhost:5000/api/v1/checkout/confirm", {
+    axios.post("http://localhost:8080/api/v1/checkout/confirm", {
       variantId,
       quantity: 1,
     }).catch(err => err.response)
@@ -270,6 +270,6 @@ async function simulateTraffic() {
 
 ### B. Tunneling Sandbox Webhooks locally
 1. Install ngrok: `npm install -g ngrok`
-2. Start server locally on port 5000: `npm run dev`
-3. Run tunnel: `ngrok http 5000`
+2. Start server locally on port 8080: `npm run dev`
+3. Run tunnel: `ngrok http 8080`
 4. Set webhook endpoint inside payment gateway settings page to: `https://<subdomain>.ngrok-free.app/api/v1/payments/webhook`

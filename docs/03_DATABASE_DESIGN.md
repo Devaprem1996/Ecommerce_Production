@@ -867,7 +867,29 @@ Multi-Vendor Marketplace
 
 ---
 
-# 10. Database Rules
+# 10. Hot Query Composite Indexing Strategy
+
+To guarantee < 5ms response times on the single Hostinger VPS without table scans under concurrent traffic:
+
+| Model / Table | Composite Index | Hot Query Covered |
+| :--- | :--- | :--- |
+| **User (`users`)** | `@@index([role, isActive])` | Admin active staff / customer filtering |
+| **User (`users`)** | `@@index([createdAt])` | Admin customer signup analytics & recency |
+| **Product (`products`)** | `@@index([categoryId, isActive])` | Storefront category catalog browsing |
+| **Product (`products`)** | `@@index([brand, isActive])` | Brand filter queries |
+| **Product (`products`)** | `@@index([isActive, createdAt])` | New arrivals & homepage featured products |
+| **ProductVariant (`product_variants`)** | `@@index([productId, isActive])` | Active product variant resolution |
+| **Order (`orders`)** | `@@index([userId, status])` | Customer order history filtering |
+| **Order (`orders`)** | `@@index([userId, createdAt])` | Customer recent orders timeline |
+| **Order (`orders`)** | `@@index([status, createdAt])` | Admin pending fulfillment dashboard |
+| **OrderItem (`order_items`)** | `@@index([orderId, variantId])` | Order details resolution & cart checkout |
+| **Payment (`payments`)** | `@@index([providerOrderId])` | Razorpay webhook signature verification |
+| **Payment (`payments`)** | `@@index([orderId, status])` | Order payment state lookup |
+| **Payment (`payments`)** | `@@index([status, createdAt])` | Accounting & reconciliation reports |
+
+---
+
+# 11. Database Rules
 
 Rule 1
 
@@ -891,7 +913,7 @@ Historical records must never change.
 
 ---
 
-# 11. Definition of Done
+# 12. Definition of Done
 
 Database design is complete only when:
 
@@ -911,4 +933,4 @@ Database design is complete only when:
 
 ✓ Future scalability considered
 
-Status: Approved for Backend Development
+Status: Approved for Production VPS Deployment

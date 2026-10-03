@@ -2,86 +2,119 @@
 
 # Production Deployment Architecture
 
-Version: 1.0
-
-Status: Approved
+Version: 2.0 (Hostinger KVM VPS + Docker Compose)  
+Status: Approved  
 
 ---
 
 ## 1. Platform Topology
 
-The application uses a serverless and containerized deployment infrastructure to ensure automatic scaling, easy monitoring, and cost efficiency.
+The application uses an isolated, self-hosted Docker Compose architecture hosted on a single **Hostinger KVM 2 VPS (2 vCPU, 8 GB RAM, 100 GB NVMe Storage, Ubuntu 24.04 LTS)**.
 
 ```
-       [ Client Browser ]
-         │          │
- (HTTPS) │          │ (HTTPS)
-         ▼          ▼
-   [ Vercel ]   [ Railway ]
-   (Next.js)   (Express Server)
-                    │
-                    │ (TCP/SSL)
-                    ▼
-          [ Neon PostgreSQL ]
+                            Internet / Shopper Browser
+                                       │
+                                       ▼ (Port 80 / 443 HTTPS)
+                        ┌──────────────────────────────┐
+                        │   Hostinger KVM 2 VPS        │
+                        │   NGINX Reverse Proxy        │
+                        └──────────────┬───────────────┘
+                                       │
+             ┌─────────────────────────┼─────────────────────────┐
+             │ /                       │ /api/                   │ /uploads/
+             ▼                         ▼                         ▼
+    ┌──────────────────┐     ┌──────────────────┐     ┌──────────────────┐
+    │ Next.js Frontend │     │ Express Backend  │     │ Direct NVMe Disk │
+    │ Container :3000  │     │ Container :8080  │     │ Static Media     │
+    └──────────────────┘     └─────────┬────────┘     └──────────────────┘
+                                       │ Internal Network
+                                       ▼
+                             ┌──────────────────┐
+                             │  PostgreSQL 16   │
+                             │ Container :5432  │
+                             └──────────────────┘
+
+* Sidecar Container: Uptime Kuma (:3001) - 24/7 internal & external ping monitor
+* Background Scripts: monitor-resources.sh & backup-db.sh with Telegram notifications
 ```
 
-### A. Frontend: Vercel
-* Hosts the client Next.js application.
-* Standard CDN caching, edge routing, and asset optimization.
-* Continuous Integration: Auto-builds and deploys from the GitHub repository `main` branch.
+### A. Reverse Proxy: NGINX (Alpine Container)
+* Handles TLS/SSL termination with Let's Encrypt certificates.
+* Directly serves uploaded product photos from `/var/www/uploads/` with 30-day immutable caching (bypassing Node.js runtime).
+* Proxies dynamic `/api/` REST requests to Express (`:8080`) with `X-Forwarded-For` and `X-Real-IP`.
+* Proxies frontend HTML/SSR requests to Next.js (`:3000`).
+* Routes `/healthz` and `/ready` probes directly to the backend.
 
-### B. Backend: Railway
-* Hosts the containerized Express Node.js application.
-* Configured using a dynamic health-check route `/api/v1/health` to confirm server readiness before routing traffic.
-* Automatically redeploys on new changes merged into the GitHub repository `main` branch.
+### B. Frontend: Next.js (Node.js 20 Alpine)
+* Multi-stage production container with standalone output.
+* Internal API communication routes through Docker network `http://backend:8080/api/v1`.
+* Strict memory limit: 2048 MB, reservation: 512 MB, CPU: 0.8 vCPU.
 
-### C. Database: Neon PostgreSQL
-* A serverless, autoscaling PostgreSQL provider.
-* Automatically scales computing resources up/down according to traffic volume.
+### C. Backend: Express.js + Prisma ORM (Node.js 20 Alpine)
+* Sentry Node SDK (`instrument.ts`) preloaded for performance tracing and crash interception.
+* Graceful shutdown: drains open HTTP sockets, flushes Sentry events, and calls `prisma.$disconnect()`.
+* Strict memory limit: 1536 MB, reservation: 256 MB, CPU: 1.0 vCPU.
+
+### D. Database: PostgreSQL 16 (Alpine Container)
+* Persistent data stored in isolated Docker named volume `yathu_postgres_data`.
+* Runs directly on NVMe SSD (<5ms query response, zero cold starts).
+* Strict memory limit: 2048 MB, reservation: 512 MB, CPU: 1.0 vCPU.
 
 ---
 
-## 2. Environment Variables Configuration
+## 2. Production Environment Variables Configuration
 
-The following variables must be configured on their respective platforms.
+Configured in `/root/ecommerce-production/deploy/.env`:
 
-### A. Backend Variables (Railway)
-| Variable Name | Description | Example |
+| Variable Name | Description | Example / Recommendation |
 |---|---|---|
-| `PORT` | Local network binding port | `8080` |
-| `NODE_ENV` | Application runtime environment | `production` |
-| `DATABASE_URL` | Transaction pooled database connection | `postgresql://user:pass@neon-pool/...` |
-| `DIRECT_URL` | Direct connection (required for Prisma migrations) | `postgresql://user:pass@neon-direct/...` |
-| `JWT_SECRET` | Secret key used to sign Access Tokens | `[High Entropy Random String]` |
-| `REFRESH_TOKEN_SECRET` | Secret key used to sign Refresh Tokens | `[High Entropy Random String]` |
-| `FRONTEND_URL` | Restricts CORS to the frontend domain | `https://my-ecommerce-store.vercel.app` |
-| `GOOGLE_CLIENT_ID` | Google Console OAuth Client ID | `oauth-client-id-xyz.apps.googleusercontent.com` |
-| `GOOGLE_CLIENT_SECRET` | Google Console OAuth Secret key | `oauth-secret-key-abc` |
-| `RAZORPAY_KEY_ID` | Razorpay account key ID | `rzp_live_key_xyz` |
-| `RAZORPAY_KEY_SECRET` | Razorpay account key secret | `razorpay_secret_abc` |
-| `RAZORPAY_WEBHOOK_SECRET`| Razorpay custom webhook security token | `webhook_secret_123` |
-| `CLOUDINARY_URL` | Cloudinary credentials connection string | `cloudinary://key:secret@cloud_name` |
-
-### B. Frontend Variables (Vercel)
-| Variable Name | Description | Example |
-|---|---|---|
-| `NEXT_PUBLIC_API_URL` | API base path URL for HTTP/fetch services | `https://my-api-server.railway.app/api/v1` |
-| `NEXT_PUBLIC_GOOGLE_CLIENT_ID`| Google OAuth identifier | `oauth-client-id-xyz.apps.googleusercontent.com` |
+| `PORT` | Backend network listening port | `8080` |
+| `NODE_ENV` | Application environment | `production` |
+| `DATABASE_URL` | PostgreSQL connection string | `postgresql://user:pass@postgres:5432/yathu_ecommerce?sslmode=disable&connection_limit=20&pool_timeout=10` |
+| `DIRECT_URL` | Direct connection for migrations | `postgresql://user:pass@postgres:5432/yathu_ecommerce?sslmode=disable&connection_limit=20&pool_timeout=10` |
+| `JWT_SECRET` | Secret key used to sign Access Tokens | `[64-character high entropy hex string]` |
+| `REFRESH_TOKEN_SECRET` | Secret key used to sign Refresh Tokens | `[64-character high entropy hex string]` |
+| `FRONTEND_URL` | Restricts CORS to the production domain | `https://yathuarokiyagam.com` |
+| `RAZORPAY_KEY_ID` | Razorpay Live API key ID | `rzp_live_...` |
+| `RAZORPAY_KEY_SECRET` | Razorpay Live API secret | `[Secret Key]` |
+| `RAZORPAY_WEBHOOK_SECRET`| Cryptographic webhook signature verification | `[Webhook Secret]` |
+| `FAST2SMS_API_KEY` | Fast2SMS production API key | `[SMS API Key]` |
+| `GMAIL_USER` / `GMAIL_APP_PASSWORD` | Transactional email sender | `email@domain.com` / App Password |
+| `SENTRY_DSN` | Centralized crash and error reporting | `https://key@o0.ingest.sentry.io/0000000` |
+| `SENTRY_ENVIRONMENT` | Sentry release tag | `production` |
+| `TELEGRAM_BOT_TOKEN` | Bot token for instant mobile alerts | `1234567890:ABCdefGHI...` |
+| `TELEGRAM_CHAT_ID` | Personal chat ID for mobile push | `123456789` |
 
 ---
 
-## 3. Build & Deployment Lifecycle
+## 3. Observability & Health Probes
 
-### A. Database Migrations Orchestration
-To prevent schema discrepancies between code and the database during deployments:
-1. Enforce database migrations *prior* to starting the runtime application.
-2. In Railway, specify the start command as:
-   ```bash
-   npx prisma migrate deploy && node dist/server.js
-   ```
-* **Rule**: Never run `npx prisma db push` in production. Always utilize migration tracking files (`prisma migrate deploy`) to maintain version consistency.
+The backend exposes two dedicated low-overhead probes:
 
-### B. Health Verification
-* The Express server must expose a public `/api/v1/health` endpoint.
-* The route must execute a fast `SELECT 1` query via Prisma to confirm database connectivity.
-* Railway uses this route for continuous health monitoring. If the route returns a status code other than `200 OK`, Railway rolls back the deployment automatically to prevent downtime.
+1. **Liveness Probe (`GET /healthz`):**
+   * Confirms Node.js event loop is alive without querying the database.
+   * Zero database overhead (< 1ms). Used by container liveness monitors.
+
+2. **Readiness Probe (`GET /ready`):**
+   * Executes a fast `SELECT 1` query to test database connectivity and connection pool responsiveness.
+   * Threshold: Latency must be `< 3000ms`.
+   * Returns `HTTP 200` when ready, or `HTTP 503` if shutting down or database is unreachable.
+
+---
+
+## 4. Zero-Downtime Deployment Lifecycle
+
+Deployments are automated through [.github/workflows/deploy.yml](file:///e:/ecommerce-production-VPS/.github/workflows/deploy.yml) on push to the **`VPS-SETUP`** (or `vps`) branch:
+
+1. **Remote Build & Push (GitHub Actions):**
+   * GitHub Actions compiles and pushes Backend and Frontend container images to **GitHub Container Registry (GHCR)**.
+   * No compilation happens on the VPS, preventing CPU and RAM spikes.
+
+2. **Rolling Update via SSH:**
+   * VPS pulls prebuilt images from GHCR: `docker compose -f docker-compose.prod.yml pull`.
+   * Applies schema migrations in a temporary container: `npx prisma migrate deploy`.
+   * Hot-swaps the backend container: `docker compose up -d --no-deps backend`.
+   * Polls `/ready` until it returns `HTTP 200`.
+   * Hot-swaps the frontend container: `docker compose up -d --no-deps frontend`.
+   * Reloads Nginx reverse proxy: `docker exec yathu_nginx nginx -s reload`.
+   * Prunes dangling images: `docker image prune -f`.

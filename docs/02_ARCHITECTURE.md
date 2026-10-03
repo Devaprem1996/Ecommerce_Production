@@ -188,21 +188,33 @@ GitHub
 
 Deployment
 
-Frontend
+Platform
 
-Vercel
+Hostinger KVM 2 VPS (Ubuntu 24.04 LTS, 2 vCPU, 8 GB RAM, 100 GB NVMe)
 
-Backend
+Web Server / Reverse Proxy
 
-Railway
+Nginx (Alpine) with Let's Encrypt SSL
+
+Frontend Runtime
+
+Next.js (Node.js 20 Alpine in Docker)
+
+Backend Runtime
+
+Express.js + TypeScript (Node.js 20 Alpine in Docker)
 
 Database
 
-Neon PostgreSQL
+PostgreSQL 16 (NVMe Docker Named Volume)
 
-Future Migration
+Observability & Alerting
 
-AWS
+Sentry (Node SDK) + Telegram Bot Webhook + Uptime Kuma
+
+Continuous Deployment
+
+GitHub Actions (GHCR Remote Builds + Zero-Downtime Rolling Update)
 
 ---
 

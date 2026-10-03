@@ -53,10 +53,12 @@ We utilize a double-token (Access + Refresh Token) system to balance session per
   ```
 
 ### C. Rate Limiting
-* Protect servers from Denial of Service (DoS) and brute force:
-  * **Global APIs**: Max 100 requests per 15 minutes per IP.
-  * **Auth/Login APIs** (`/api/v1/auth/*`): Max 5 attempts per 15 minutes per IP.
-  * **Checkout/Payment APIs** (`/api/v1/checkout/*`, `/api/v1/payments/*`): Max 10 requests per 15 minutes per IP.
+* Protect servers from Denial of Service (DoS), brute force, and financial gateway abuse:
+  * **Global Public APIs** (`/api/*`): 300 requests per 15 minutes per IP (allows normal catalog browsing without throttling shoppers).
+  * **Authentication APIs** (`/api/v1/auth/*`): 30 attempts per 15 minutes per IP (`authRateLimiter`).
+  * **SMS OTP Dispatch & Verification** (`/api/v1/auth/otp/*`): 10 requests per 15 minutes per IP (`otpRateLimiter`) to prevent SMS credit burn.
+  * **Checkout & Order Creation** (`POST /api/v1/user/orders`): 20 requests per 10 minutes per IP (`checkoutRateLimiter`) to prevent cart hoarding attacks.
+  * **Payment Operations** (`/api/create-order`, `/api/verify-payment`): 30 requests per 10 minutes per IP (`paymentRateLimiter`).
 
 ---
 

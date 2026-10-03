@@ -97,7 +97,7 @@ This document is the master operational manual and technical deployment guide fo
 
 5. **Configuring Environment Variables (`/var/www/yathu/backend/.env`)**:
    ```env
-   PORT=5000
+   PORT=8080
    NODE_ENV=production
    DATABASE_URL="postgresql://yathu_admin:ProductionPass2026!@localhost:5432/yathu_ecommerce_db?schema=public"
    JWT_SECRET="super_secret_jwt_key_yathu_2026"
@@ -183,7 +183,7 @@ To protect against data corruption or hardware issues:
        }
 
        location /api {
-           proxy_pass http://localhost:5000;
+           proxy_pass http://localhost:8080;
            proxy_http_version 1.1;
            proxy_set_header Host $host;
            proxy_set_header X-Real-IP $remote_addr;
