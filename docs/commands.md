@@ -8,27 +8,29 @@ This document provides quick reference commands for running Docker, managing the
 
 ### A. Run Prisma DB Push (Update Database Schema)
 
+Whenever you add or update models, fields (such as courier tracking fields), or indexes in `backend/prisma/schema.prisma`:
+
 #### Option 1: Directly Inside the Running Docker Backend Container (Recommended)
-This runs Prisma directly in the Docker network without needing Node.js or PostgreSQL drivers installed on your host machine:
+This command executes directly inside the Docker bridge network without needing Node.js or PostgreSQL drivers installed on your host machine:
 
 ```bash
-# 1. Push schema.prisma changes to PostgreSQL
+# 1. Push schema.prisma changes to PostgreSQL inside Docker
 docker exec -it yathu_backend npx prisma db push
 
-# 2. Regenerate Prisma Client inside the container
+# 2. Regenerate the Prisma Client inside the container
 docker exec -it yathu_backend npx prisma generate
 
-# 3. (Optional) Re-seed initial products, categories & admin user
+# 3. (Optional) Re-seed catalog / admin credentials if starting fresh
 docker exec -it yathu_backend npx ts-node prisma/seed.ts
 ```
 
 #### Option 2: From Host Machine (Local Terminal / PowerShell)
-If you are developing locally on your host machine with `DATABASE_URL` pointing to `localhost:5432`:
+If you have dependencies installed locally and your `backend/.env` has `DATABASE_URL` pointing to `localhost:5432`:
 
 ```bash
 cd backend
 
-# 1. Push schema directly to Docker PostgreSQL
+# 1. Push schema directly to the Docker PostgreSQL container
 npx prisma db push
 
 # 2. Regenerate Prisma Client locally
@@ -42,14 +44,19 @@ npx prisma studio
 
 ### B. Prisma Production Migrations & Status Checks
 
+When deploying schema updates on your Hostinger VPS:
+
 ```bash
-# Check if database schema is up-to-date with migrations
+# 1. Check if database schema is up-to-date with migrations
 docker exec -it yathu_backend npx prisma migrate status
 
-# Apply pending migrations safely on production VPS
+# 2. Apply pending migrations safely on VPS
 docker exec -it yathu_backend npx prisma migrate deploy
 
-# Create a new migration file after modifying schema.prisma
+# 3. Or push schema directly
+docker exec -it yathu_backend npx prisma db push
+
+# 4. Create a new migration file after modifying schema.prisma (during local development)
 cd backend
 npx prisma migrate dev --name describe_your_change
 ```
@@ -74,6 +81,11 @@ FROM orders ORDER BY \"createdAt\" DESC LIMIT 5;
 # 4. View all registered users and roles
 docker exec -i yathu_postgres psql -U yathu_admin -d yathu_ecommerce -c "
 SELECT id, email, role, \"createdAt\" FROM users;
+"
+
+# 5. Check active database connection pool count
+docker exec -i yathu_postgres psql -U yathu_admin -d yathu_ecommerce -c "
+SELECT count(*) FROM pg_stat_activity;
 "
 ```
 
@@ -103,7 +115,7 @@ docker compose ps
 # 2. View real-time CPU and RAM utilization for all containers
 docker stats
 
-# 3. Snapshot resource usage without streaming
+# 3. Snapshot resource usage without streaming (ideal for scripts)
 docker stats --no-stream --format "table {{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}\t{{.MemPerc}}"
 
 # 4. Test backend readiness probe (checks PostgreSQL latency & memory)
@@ -118,16 +130,16 @@ curl -i http://localhost:8088/healthz
 ### C. Real-Time Logging & Debugging
 
 ```bash
-# 1. Tail live backend logs (last 50 lines)
+# 1. Follow live backend API logs
 docker logs -f --tail 50 yathu_backend
 
-# 2. Tail live frontend Next.js logs
+# 2. Follow live frontend Next.js logs
 docker logs -f --tail 50 yathu_frontend
 
-# 3. Tail Nginx access and error logs
+# 3. Follow live Nginx access and error logs
 docker logs -f --tail 50 yathu_nginx
 
-# 4. View logs from the last 15 minutes
+# 4. View logs generated within the last 15 minutes
 docker logs --since 15m yathu_backend
 
 # 5. Search for errors in container logs
@@ -190,7 +202,7 @@ docker exec -it yathu_nginx sh
 
 ---
 
-## 4. Local Simulation URLs
+## 4. Local Simulation URLs & Credentials
 
 - **Storefront Home:** [http://localhost:8088](http://localhost:8088)
 - **Admin Dashboard:** [http://localhost:8088/admin](http://localhost:8088/admin)
