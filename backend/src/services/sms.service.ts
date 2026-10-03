@@ -263,6 +263,28 @@ export class SmsService {
   }
 
   /**
+   * Send Order Shipped SMS with real courier name and tracking/AWB number
+   */
+  static async sendOrderShipped(options: {
+    phone: string;
+    orderNumber: string;
+    courierPartner?: string | null;
+    trackingNumber?: string | null;
+    trackingUrl?: string | null;
+    orderId?: string;
+  }): Promise<boolean> {
+    const { phone, orderNumber, courierPartner, trackingNumber, trackingUrl, orderId } = options;
+    const frontendUrl = process.env.FRONTEND_URL || "https://yathuarokiyagam.com";
+    const token = generateOrderTrackingToken(orderNumber, orderId);
+    const trackLink = trackingUrl || `${frontendUrl}/track-order?id=${orderNumber}&t=${token}`;
+    const courierText = courierPartner ? ` via ${courierPartner}` : "";
+    const awbText = trackingNumber ? ` AWB: ${trackingNumber}.` : "";
+    const rawMessage = `Order #${orderNumber} shipped${courierText}.${awbText} Track: ${trackLink}`;
+    const message = enforceSingleSegmentLimit(rawMessage);
+    return this.dispatchQuickSms(phone, message, "Order Shipped SMS");
+  }
+
+  /**
    * Send Order Delivered SMS (under 160 GSM-7 characters -> Rs. 5 cost)
    */
   static async sendOrderDelivered(options: SendDeliverySmsOptions): Promise<boolean> {

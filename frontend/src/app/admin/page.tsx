@@ -15,7 +15,11 @@ import {
   RefreshCw,
   AlertCircle,
   Clock,
-  Radio
+  Radio,
+  Truck,
+  AlertTriangle,
+  CreditCard,
+  CheckCircle2
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -28,9 +32,11 @@ import {
 } from 'recharts';
 import { Button } from '@/components/ui/Button';
 import { useAdminDashboard } from '@/hooks/useAdminDashboard';
+import { useAdminPendingActions } from '@/hooks/useAdmin';
 
 export default function AdminDashboardOverview() {
   const { data, isLoading, isError, error, refetch, isFetching } = useAdminDashboard();
+  const { data: pendingData, refetch: refetchPending } = useAdminPendingActions();
   const [lastUpdated, setLastUpdated] = useState<string>('');
 
   useEffect(() => {
@@ -39,6 +45,7 @@ export default function AdminDashboardOverview() {
 
   const handleManualRefresh = () => {
     refetch();
+    refetchPending();
   };
 
   // 1. Loading Skeleton View
@@ -229,6 +236,81 @@ export default function AdminDashboardOverview() {
           );
         })}
       </div>
+
+      {/* Daily Operations Pending Checklist Widget */}
+      {pendingData && (
+        <div className="bg-gradient-to-br from-neutral-900 via-neutral-900 to-neutral-950 text-white rounded-feature p-5 shadow-lg border border-neutral-800 space-y-4">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 border-b border-neutral-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping" />
+              <h2 className="text-sm font-black uppercase tracking-wider text-neutral-100">
+                Daily Operations Pending Checklist
+              </h2>
+            </div>
+            <span className="text-[11px] text-neutral-400 font-semibold">
+              Prioritized operational actions for store managers
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <Link 
+              href="/admin/orders?status=confirmed"
+              className="p-3.5 rounded-card bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex flex-col justify-between group cursor-pointer"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">To Pack</span>
+                <Package className="w-4 h-4 text-blue-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-blue-400">{pendingData.checklist.ordersToPack}</span>
+                <p className="text-[10px] text-neutral-400 font-medium">Orders need packing</p>
+              </div>
+            </Link>
+
+            <Link 
+              href="/admin/orders?status=packed"
+              className="p-3.5 rounded-card bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex flex-col justify-between group cursor-pointer"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">To Dispatch</span>
+                <Truck className="w-4 h-4 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-indigo-400">{pendingData.checklist.ordersToShip}</span>
+                <p className="text-[10px] text-neutral-400 font-medium">Awaiting courier AWB</p>
+              </div>
+            </Link>
+
+            <Link 
+              href="/admin/products"
+              className="p-3.5 rounded-card bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex flex-col justify-between group cursor-pointer"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Low Stock</span>
+                <AlertTriangle className="w-4 h-4 text-amber-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-amber-400">{pendingData.checklist.lowStockCount}</span>
+                <p className="text-[10px] text-neutral-400 font-medium">Items &le; 5 units left</p>
+              </div>
+            </Link>
+
+            <Link 
+              href="/admin/payments?status=FAILED"
+              className="p-3.5 rounded-card bg-white/5 hover:bg-white/10 border border-white/10 transition-colors flex flex-col justify-between group cursor-pointer"
+            >
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Failed Checks</span>
+                <CreditCard className="w-4 h-4 text-red-400 group-hover:translate-x-0.5 transition-transform" />
+              </div>
+              <div className="mt-2">
+                <span className="text-2xl font-black text-red-400">{pendingData.checklist.recentFailedPaymentsCount}</span>
+                <p className="text-[10px] text-neutral-400 font-medium">Failed in last 48h</p>
+              </div>
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* Analytics Chart Block */}
       <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 sm:p-6 shadow-sm space-y-4">

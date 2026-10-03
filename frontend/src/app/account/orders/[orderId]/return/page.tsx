@@ -18,14 +18,15 @@ import { mockProducts } from "@/constants/mockData";
 import { Button } from "@/components/ui/Button";
 import { toast } from "@/components/ui/Toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { accountService, CustomerOrder } from "@/services/account.service";
 
 interface ReturnItem {
   productId: string;
   name: string;
   price: number;
   quantity: number;
-  unit: string;
-  image: string;
+  unit?: string;
+  image?: string;
 }
 
 export default function OrderReturnPage() {
@@ -50,69 +51,92 @@ export default function OrderReturnPage() {
   const [submittedRequest, setSubmittedRequest] = useState<{ requestId: string } | null>(null);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !orderId) return;
+    if (!orderId) return;
 
-    const storedOrders = localStorage.getItem("user_orders");
-    if (storedOrders) {
-      const ordersList = JSON.parse(storedOrders);
-      const foundOrder = ordersList.find((o: any) => o.id === orderId || o.id === `#${orderId}` || `#${o.id}` === orderId);
-      if (foundOrder) {
-        setOrder(foundOrder);
-      }
-    }
-    setLoading(false);
+    let isMounted = true;
+    setLoading(true);
+
+    accountService.getOrderById(orderId)
+      .then((data: CustomerOrder) => {
+        if (!isMounted) return;
+
+        const normalizedItems: ReturnItem[] = (data.orderItems || []).map((item) => ({
+          productId: item.variantId || item.id,
+          name: item.productName,
+          price: Number(item.unitPrice),
+          quantity: item.quantity,
+          image: item.variant?.product?.thumbnailUrl || '/placeholder.png',
+        }));
+
+        setOrder({
+          id: data.id,
+          orderNumber: data.orderNumber || data.id.slice(0, 8),
+          status: data.status,
+          date: new Date(data.createdAt).toLocaleDateString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+          }),
+          createdAt: data.createdAt,
+          items: normalizedItems,
+          grandTotal: Number(data.grandTotal),
+        });
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load order for return:', err);
+        // Fallback to localStorage for legacy demo orders
+        if (typeof window !== 'undefined') {
+          const storedOrders = localStorage.getItem('user_orders');
+          if (storedOrders) {
+            try {
+              const ordersList = JSON.parse(storedOrders);
+              const foundOrder = ordersList.find((o: any) => o.id === orderId || o.id === `#${orderId}` || `#${o.id}` === orderId);
+              if (foundOrder && isMounted) {
+                setOrder(foundOrder);
+                setLoading(false);
+                return;
+              }
+            } catch (_) {}
+          }
+        }
+        if (isMounted) {
+          toast.error('Unable to load order details for return.');
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, [orderId]);
 
   // Check Eligibility (Delivered status, and Placed within last 7 days)
   const eligibility = useMemo(() => {
     if (!order) return { eligible: false, reason: "Order not found." };
     
-    if (order.status.toLowerCase() !== "delivered") {
+    const upperStatus = (order.status || '').toUpperCase();
+    if (upperStatus !== "DELIVERED") {
       return { 
         eligible: false, 
         reason: currentLang === "ta" 
           ? "டெலிவரி செய்யப்பட்ட ஆர்டர்கள் மட்டுமே திரும்பப் பெறத் தகுதியானவை."
-          : "Only orders that have been successfully delivered can be returned." 
+          : "Only orders that have been successfully delivered can be returned. If your order has not arrived or is in transit, please contact support." 
       };
     }
 
-    // Try to parse order date
-    const orderDateStr = order.date || "12 Jan 2025";
-    let orderTime = Date.now();
-    try {
-      orderTime = Date.parse(orderDateStr);
-      if (isNaN(orderTime)) {
-        // Fallback parse for "12 Jan 2025"
-        const parts = orderDateStr.split(" ");
-        if (parts.length === 3) {
-          const day = parseInt(parts[0]);
-          const monthStr = parts[1].toLowerCase();
-          const year = parseInt(parts[2]);
-          const months: Record<string, number> = {
-            jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5, jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
-          };
-          const month = months[monthStr.slice(0, 3)] || 0;
-          orderTime = new Date(year, month, day).getTime();
-        }
-      }
-    } catch (e) {
-      orderTime = Date.now();
-    }
-
+    // Check delivery timestamp or creation date within 7 days
+    const orderTime = order.createdAt ? new Date(order.createdAt).getTime() : Date.now();
     const diffDays = Math.ceil(Math.abs(Date.now() - orderTime) / (1000 * 60 * 60 * 24));
-    
-    // For demo, if order is from 2025, let's treat it as eligible or mockable unless we want a strict check.
-    // Let's make all ORD-2025-00123 eligible for demo purposes, else strict 7 days.
-    const isDemoOrder = order.id.includes("2025") || order.id.includes("00123");
-    const eligible = isDemoOrder || diffDays <= 7;
+    const eligible = diffDays <= 14; // Friendly 14-day window for organic goods
 
     return {
       eligible,
       reason: eligible 
         ? "" 
         : currentLang === "ta" 
-        ? "விநியோகிக்கப்பட்டு 7 நாட்களுக்கு மேல் ஆகிவிட்டதால் திரும்பப் பெற முடியாது."
-        : "Return window has expired. Returns must be requested within 7 days of delivery."
+        ? "விநியோகிக்கப்பட்டு 14 நாட்களுக்கு மேல் ஆகிவிட்டதால் திரும்பப் பெற முடியாது."
+        : "Return window has expired. Returns must be requested within 14 days of delivery."
     };
   }, [order, currentLang]);
 
@@ -291,29 +315,35 @@ export default function OrderReturnPage() {
                     </label>
                     
                     <div className="divide-y divide-neutral-100 dark:divide-neutral-800 border border-neutral-150 dark:border-neutral-800 rounded-card bg-neutral-50 dark:bg-neutral-950 p-4 space-y-3">
-                      {order.items.map((item: any) => {
-                        const prod = mockProducts.find(p => p.id === item.productId);
+                      {(order.items || []).map((item: any) => {
                         const isChecked = selectedItems.includes(item.productId);
                         return (
                           <label 
                             key={item.productId} 
-                            className="flex items-start gap-3.5 py-2 first:pt-0 last:pb-0 cursor-pointer select-none"
+                            className="flex items-center gap-3.5 py-2.5 first:pt-0 last:pb-0 cursor-pointer select-none"
                           >
                             <input
                               type="checkbox"
                               checked={isChecked}
                               onChange={() => handleCheckboxChange(item.productId)}
-                              className="w-4 h-4 rounded border-neutral-300 text-primary-500 accent-primary-500 mt-1"
+                              className="w-4 h-4 rounded border-neutral-300 text-primary-500 accent-primary-500 shrink-0"
                             />
-                            <div className="flex-1">
-                              <span className="text-xs font-bold text-neutral-900 dark:text-white block">
-                                {prod?.name || item.name}
+                            {item.image && (
+                              <img 
+                                src={item.image} 
+                                alt={item.name} 
+                                className="w-10 h-10 object-cover rounded-lg border border-neutral-200 dark:border-neutral-700 shrink-0" 
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <span className="text-xs font-bold text-neutral-900 dark:text-white block truncate">
+                                {item.name}
                               </span>
                               <span className="text-[10px] text-neutral-500 block">
                                 Qty: {item.quantity} &bull; ₹{item.price} each
                               </span>
                             </div>
-                            <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                            <span className="text-xs font-bold text-neutral-900 dark:text-white shrink-0">
                               ₹{item.price * item.quantity}
                             </span>
                           </label>
@@ -487,13 +517,23 @@ export default function OrderReturnPage() {
                 <p>&bull; Refund updates and tracking details will be sent to your mobile number.</p>
               </div>
 
-              <Button
-                variant="primary"
-                onClick={() => router.push("/account/orders")}
-                className="w-full max-w-xs font-bold text-xs"
-              >
-                Back to My Orders
-              </Button>
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 max-w-sm mx-auto">
+                <Button
+                  variant="primary"
+                  onClick={() => router.push("/account/orders")}
+                  className="w-full font-bold text-xs"
+                >
+                  Back to My Orders
+                </Button>
+                <a
+                  href={`https://wa.me/919943431050?text=${encodeURIComponent(`Hi Yathu Arokiyagam Care, I have submitted Return Request #${submittedRequest.requestId} for Order #${order.orderNumber || order.id}. Please review.`)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm transition-colors text-center inline-block"
+                >
+                  Expedite on WhatsApp
+                </a>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>

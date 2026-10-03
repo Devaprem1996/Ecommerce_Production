@@ -9,16 +9,21 @@ import { mockProducts } from "@/constants/mockData";
 import { formatPrice } from "@/utils/formatPrice";
 import { toast } from "@/components/ui/Toast";
 
+import { accountService, CustomerOrder } from "@/services/account.service";
+
 interface InvoiceItem {
   productId: string;
   name: string;
   price: number;
   quantity: number;
   unit: string;
+  sku?: string;
+  subtotal: number;
 }
 
 interface InvoiceData {
   id: string;
+  orderNumber: string;
   invoiceNo: string;
   date: string;
   customerName: string;
@@ -26,6 +31,9 @@ interface InvoiceData {
   mobile: string;
   paymentMethod: string;
   paymentStatus: string;
+  paymentId?: string | null;
+  courierPartner?: string | null;
+  trackingNumber?: string | null;
   items: InvoiceItem[];
   subtotal: number;
   discount: number;
@@ -45,89 +53,125 @@ export default function OrderInvoicePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (typeof window === "undefined" || !orderId) return;
+    if (!orderId) return;
 
-    // Try to load order from localStorage
-    const storedOrders = localStorage.getItem("user_orders");
-    let foundInvoice: InvoiceData | null = null;
+    let isMounted = true;
+    setLoading(true);
 
-    if (storedOrders) {
-      const ordersList = JSON.parse(storedOrders);
-      const order = ordersList.find((o: any) => o.id === orderId || o.id === `#${orderId}` || `#${o.id}` === orderId);
-      
-      if (order) {
-        // Calculate subtotal, tax, discount
-        const calculatedItems = order.items.map((item: any) => {
-          const prod = mockProducts.find(p => p.id === item.productId);
+    accountService.getOrderById(orderId)
+      .then((order: CustomerOrder) => {
+        if (!isMounted) return;
+
+        const payment = order.payments?.[0];
+        const isOnline = payment?.provider === 'razorpay' || payment?.provider === 'online';
+        const isPaid = payment?.status?.toUpperCase() === 'SUCCESSFUL' || payment?.status?.toUpperCase() === 'CAPTURED';
+        const isRefunded = order.status.toUpperCase() === 'REFUNDED' || payment?.status?.toUpperCase() === 'REFUNDED';
+
+        const paymentMethod = isRefunded
+          ? 'Refunded to Source (Razorpay)'
+          : isOnline
+          ? `Online Payment (Razorpay)`
+          : 'Cash on Delivery (COD)';
+
+        const paymentStatus = isRefunded ? 'REFUNDED' : isPaid ? 'PAID' : 'PENDING';
+
+        const calculatedItems: InvoiceItem[] = (order.orderItems || []).map((item) => {
           return {
-            productId: item.productId,
-            name: prod?.name || item.name || "Organic Product",
-            price: item.price,
+            productId: item.variantId || item.id,
+            name: item.productName || 'Organic Product',
+            price: Number(item.unitPrice),
             quantity: item.quantity,
-            unit: prod?.unit || "1kg"
+            unit: 'Pack',
+            sku: item.sku,
+            subtotal: Number(item.subtotal),
           };
         });
 
-        const subtotal = calculatedItems.reduce((acc: number, item: any) => acc + item.price * item.quantity, 0);
-        // Tax is roughly 5% GST included or extra
-        const tax = Math.round(subtotal * 0.05);
-        const discount = order.discountAmount || 0;
-        const deliveryFee = subtotal > 500 ? 0 : 40;
-        const total = order.total;
+        const invoiceDate = new Date(order.createdAt).toLocaleDateString('en-US', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric',
+        });
 
-        foundInvoice = {
+        const addressText = order.address
+          ? `${order.address.addressLine1}${order.address.addressLine2 ? `, ${order.address.addressLine2}` : ''}, ${order.address.city}, ${order.address.state} - ${order.address.postalCode}`
+          : 'Customer Address';
+
+        const invoicePayload: InvoiceData = {
           id: order.id,
-          invoiceNo: `INV-${order.id.slice(-6).toUpperCase()}`,
-          date: order.date || "12 Jan 2025",
-          customerName: order.shippingAddress?.name || "Customer Name",
-          address: order.shippingAddress 
-            ? `${order.shippingAddress.street || ""}, ${order.shippingAddress.city || ""}, ${order.shippingAddress.state || ""} - ${order.shippingAddress.pincode || ""}`
-            : "123 Anna Nagar, Chennai - 600040",
-          mobile: order.shippingAddress?.mobile || order.mobile || "9876543210",
-          paymentMethod: order.paymentMethod === "cod" ? "Cash on Delivery" : "Online Payment (UPI/Card)",
-          paymentStatus: order.paymentStatus === "paid" ? "PAID" : "PENDING",
+          orderNumber: order.orderNumber || order.id.slice(0, 8),
+          invoiceNo: `INV-${order.orderNumber || order.id.slice(-6).toUpperCase()}`,
+          date: invoiceDate,
+          customerName: order.address?.fullName || 'Valued Customer',
+          address: addressText,
+          mobile: order.address?.phone || '',
+          paymentMethod,
+          paymentStatus,
+          paymentId: payment?.providerPaymentId || null,
+          courierPartner: order.courierPartner || null,
+          trackingNumber: order.trackingNumber || null,
           items: calculatedItems,
-          subtotal,
-          discount,
-          deliveryFee,
-          tax,
-          total
+          subtotal: Number(order.subtotal),
+          discount: Number(order.discount),
+          deliveryFee: Number(order.shippingCharge),
+          tax: Number(order.tax || 0),
+          total: Number(order.grandTotal),
         };
-      }
-    }
 
-    // Fallback Mock Order if not found in user_orders
-    if (!foundInvoice) {
-      const items = [
-        { productId: "p1", name: "Organic Red Rice", price: 299, quantity: 2, unit: "1kg" },
-        { productId: "p2", name: "Cold Pressed Coconut Oil", price: 399, quantity: 1, unit: "500ml" }
-      ];
-      const subtotal = 997;
-      const discount = 100;
-      const deliveryFee = 0; // FREE
-      const tax = 44; // 5% GST
-      const total = 941;
+        setInvoice(invoicePayload);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Failed to load invoice from API:', err);
+        // Fallback: check localStorage for legacy demo orders if any
+        if (typeof window !== 'undefined') {
+          const storedOrders = localStorage.getItem('user_orders');
+          if (storedOrders) {
+            try {
+              const ordersList = JSON.parse(storedOrders);
+              const fallbackOrder = ordersList.find((o: any) => o.id === orderId || o.id === `#${orderId}` || `#${o.id}` === orderId);
+              if (fallbackOrder && isMounted) {
+                setInvoice({
+                  id: fallbackOrder.id,
+                  orderNumber: fallbackOrder.id,
+                  invoiceNo: `INV-${fallbackOrder.id.slice(-6).toUpperCase()}`,
+                  date: fallbackOrder.date || '12 Jan 2025',
+                  customerName: fallbackOrder.shippingAddress?.name || 'Customer Name',
+                  address: fallbackOrder.shippingAddress
+                    ? `${fallbackOrder.shippingAddress.street || ''}, ${fallbackOrder.shippingAddress.city || ''}, ${fallbackOrder.shippingAddress.state || ''} - ${fallbackOrder.shippingAddress.pincode || ''}`
+                    : 'Customer Address',
+                  mobile: fallbackOrder.shippingAddress?.mobile || fallbackOrder.mobile || '',
+                  paymentMethod: fallbackOrder.paymentMethod === 'cod' ? 'Cash on Delivery' : 'Online Payment (UPI/Card)',
+                  paymentStatus: fallbackOrder.paymentStatus === 'paid' ? 'PAID' : 'PENDING',
+                  items: (fallbackOrder.items || []).map((it: any) => ({
+                    productId: it.productId,
+                    name: it.name || 'Organic Product',
+                    price: it.price,
+                    quantity: it.quantity,
+                    unit: '1kg',
+                    subtotal: it.price * it.quantity,
+                  })),
+                  subtotal: fallbackOrder.total,
+                  discount: fallbackOrder.discountAmount || 0,
+                  deliveryFee: 0,
+                  tax: 0,
+                  total: fallbackOrder.total,
+                });
+                setLoading(false);
+                return;
+              }
+            } catch (_) {}
+          }
+        }
+        if (isMounted) {
+          toast.error('Unable to fetch order invoice from server.');
+          setLoading(false);
+        }
+      });
 
-      foundInvoice = {
-        id: orderId || "ORD-2025-00123",
-        invoiceNo: `INV-${(orderId || "00123").replace("#", "").slice(-5).toUpperCase()}`,
-        date: "12 Jan 2025",
-        customerName: "John Doe",
-        address: "123 Anna Nagar, Chennai, Tamil Nadu - 600040",
-        mobile: "9876543210",
-        paymentMethod: "Online UPI Payment",
-        paymentStatus: "PAID",
-        items,
-        subtotal,
-        discount,
-        deliveryFee,
-        tax,
-        total
-      };
-    }
-
-    setInvoice(foundInvoice);
-    setLoading(false);
+    return () => {
+      isMounted = false;
+    };
   }, [orderId]);
 
   const handlePrint = () => {

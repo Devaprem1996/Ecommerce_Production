@@ -48,8 +48,12 @@ export class AdminController {
   static async updateOrderStatus(req: Request, res: Response, next: NextFunction) {
     try {
       const { id } = req.params;
-      const { status } = req.body;
-      const data = await AdminService.updateOrderStatus(id, status);
+      const { status, courierPartner, trackingNumber, trackingUrl } = req.body;
+      const data = await AdminService.updateOrderStatus(id, status, {
+        courierPartner,
+        trackingNumber,
+        trackingUrl,
+      });
 
       return res.status(200).json({
         success: true,
@@ -161,6 +165,121 @@ export class AdminController {
       return res.status(200).json({
         success: true,
         message: "Pincode deleted successfully.",
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Customers / Users Management
+   */
+  static async listUsers(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { search, role, page, limit } = req.query;
+      const data = await AdminService.listUsers({
+        search: search as string,
+        role: role as string,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Users retrieved successfully.",
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async getUserDetail(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const data = await AdminService.getUserDetail(id);
+
+      return res.status(200).json({
+        success: true,
+        message: "User details retrieved successfully.",
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async toggleUserStatus(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const user = await AdminService.toggleUserStatus(id);
+
+      return res.status(200).json({
+        success: true,
+        message: `User status changed to ${user.isActive ? "active" : "inactive"}.`,
+        data: { user },
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Payments & Transactions
+   */
+  static async listPayments(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { search, status, provider, page, limit } = req.query;
+      const data = await AdminService.listPayments({
+        search: search as string,
+        status: status as string,
+        provider: provider as string,
+        page: page ? Number(page) : undefined,
+        limit: limit ? Number(limit) : undefined,
+      });
+
+      return res.status(200).json({
+        success: true,
+        message: "Payment transactions retrieved successfully.",
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  static async verifyCodPayment(req: Request, res: Response, next: NextFunction) {
+    try {
+      const { id } = req.params;
+      const data = await AdminService.verifyCodPayment(id);
+
+      return res.status(200).json({
+        success: true,
+        message: "COD payment verified and collected successfully.",
+        data,
+        timestamp: new Date().toISOString(),
+      });
+    } catch (error) {
+      next(error);
+    }
+  }
+
+  /**
+   * Pending Actions & Live Operational Alerts
+   */
+  static async getPendingActions(req: Request, res: Response, next: NextFunction) {
+    try {
+      const data = await AdminService.getPendingActions();
+
+      return res.status(200).json({
+        success: true,
+        message: "Operational pending actions retrieved successfully.",
+        data,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {

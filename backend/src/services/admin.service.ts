@@ -1,5 +1,5 @@
 import prisma from "../config/db.js";
-import { OrderStatus, DiscountType } from "@prisma/client";
+import { OrderStatus, DiscountType, PaymentStatus } from "@prisma/client";
 import { SmsService } from "./sms.service.js";
 import { UserService } from "./user.service.js";
 import { ApiError } from "../exceptions/api-error.js";
@@ -357,11 +357,13 @@ export class AdminService {
       }),
     ]);
 
-    const orders = rawOrders.map((ord) => {
+    const orders = rawOrders.map((ord: any) => {
       const fullName =
         `${ord.user?.profile?.firstName || ""} ${ord.user?.profile?.lastName || ""}`.trim() ||
         ord.address?.fullName ||
         "Guest Customer";
+      const primaryPayment = ord.payments && ord.payments.length > 0 ? ord.payments[0] : null;
+
       return {
         id: ord.id,
         orderNumber: ord.orderNumber,
@@ -370,8 +372,23 @@ export class AdminService {
         phone: ord.user?.profile?.phone || ord.address?.phone || "N/A",
         amount: Number(ord.grandTotal),
         status: ord.status.toLowerCase(),
-        paymentMethod: ord.payments[0]?.provider === "cod" ? "cod" : "online",
-        paymentStatus: (ord.payments[0]?.status || "PENDING").toLowerCase(),
+        paymentMethod: primaryPayment?.provider === "cod" ? "cod" : "online",
+        paymentStatus: (primaryPayment?.status || "PENDING").toLowerCase(),
+        courierPartner: ord.courierPartner || null,
+        trackingNumber: ord.trackingNumber || null,
+        trackingUrl: ord.trackingUrl || null,
+        dispatchedAt: ord.dispatchedAt ? ord.dispatchedAt.toISOString() : null,
+        payment: primaryPayment
+          ? {
+              id: primaryPayment.id,
+              provider: primaryPayment.provider,
+              providerOrderId: primaryPayment.providerOrderId,
+              providerPaymentId: primaryPayment.providerPaymentId,
+              status: primaryPayment.status,
+              failureReason: primaryPayment.failureReason,
+              paidAt: primaryPayment.paidAt ? primaryPayment.paidAt.toISOString() : null,
+            }
+          : null,
         date: ord.createdAt.toLocaleDateString("en-IN", {
           day: "numeric",
           month: "short",
@@ -382,7 +399,7 @@ export class AdminService {
         address: ord.address
           ? `${ord.address.addressLine1}, ${ord.address.city}, ${ord.address.state} - ${ord.address.postalCode}`
           : "Standard Shipping Address",
-        items: ord.orderItems.map((item) => ({
+        items: ord.orderItems.map((item: any) => ({
           id: item.id,
           name: item.productName,
           unit: item.sku,
@@ -396,9 +413,17 @@ export class AdminService {
   }
 
   /**
-   * Update status of an existing order
+   * Update status of an existing order and optionally attach courier tracking
    */
-  static async updateOrderStatus(id: string, status: string) {
+  static async updateOrderStatus(
+    id: string,
+    status: string,
+    trackingDetails?: {
+      courierPartner?: string;
+      trackingNumber?: string;
+      trackingUrl?: string;
+    }
+  ) {
     if (!status) {
       throw ApiError.badRequest("Order status is required.");
     }
@@ -414,9 +439,27 @@ export class AdminService {
       return UserService.cancelOrder(null, id, "Admin Cancellation");
     }
 
+    const updateData: any = { status: upperStatus };
+
+    if (trackingDetails) {
+      if (trackingDetails.courierPartner !== undefined) {
+        updateData.courierPartner = trackingDetails.courierPartner;
+      }
+      if (trackingDetails.trackingNumber !== undefined) {
+        updateData.trackingNumber = trackingDetails.trackingNumber;
+      }
+      if (trackingDetails.trackingUrl !== undefined) {
+        updateData.trackingUrl = trackingDetails.trackingUrl;
+      }
+    }
+
+    if (upperStatus === OrderStatus.SHIPPED) {
+      updateData.dispatchedAt = new Date();
+    }
+
     const order = await prisma.order.update({
       where: { id },
-      data: { status: upperStatus },
+      data: updateData,
       include: {
         orderItems: true,
         user: { include: { profile: true } },
@@ -433,6 +476,15 @@ export class AdminService {
           orderNumber: order.orderNumber,
           orderId: order.id,
         }).catch((err) => logger.error("Failed to send delivery SMS:", err));
+      } else if (upperStatus === OrderStatus.SHIPPED) {
+        SmsService.sendOrderShipped({
+          phone: customerPhone,
+          orderNumber: order.orderNumber,
+          courierPartner: order.courierPartner,
+          trackingNumber: order.trackingNumber,
+          trackingUrl: order.trackingUrl,
+          orderId: order.id,
+        }).catch((err) => logger.error("Failed to send shipped SMS:", err));
       } else if (
         upperStatus === OrderStatus.PAYMENT_VERIFIED ||
         upperStatus === OrderStatus.CONFIRMED
@@ -548,5 +600,436 @@ export class AdminService {
    */
   static async deletePincode(pincode: string) {
     return prisma.pincode.delete({ where: { pincode } });
+  }
+
+  /**
+   * =========================================================================
+   * CUSTOMERS & USERS MANAGEMENT
+   * =========================================================================
+   */
+
+  /**
+   * List customers with metrics (LTV, order count, etc.)
+   */
+  static async listUsers(query: { search?: string; role?: string; page?: number; limit?: number }) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.role && query.role !== "ALL") {
+      where.role = query.role.toUpperCase();
+    }
+    if (query.search) {
+      const s = query.search.trim();
+      where.OR = [
+        { email: { contains: s, mode: "insensitive" } },
+        { phone: { contains: s, mode: "insensitive" } },
+        { profile: { firstName: { contains: s, mode: "insensitive" } } },
+        { profile: { lastName: { contains: s, mode: "insensitive" } } },
+      ];
+    }
+
+    const [total, rawUsers, totalCustomersCount, activeCustomersCount, guestCount] = await Promise.all([
+      prisma.user.count({ where }),
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          profile: true,
+          addresses: { where: { deletedAt: null } },
+          orders: {
+            where: { status: { notIn: [OrderStatus.CANCELLED, OrderStatus.DRAFT] } },
+            select: { id: true, grandTotal: true, createdAt: true, status: true },
+          },
+        },
+      }),
+      prisma.user.count(),
+      prisma.user.count({ where: { isActive: true } }),
+      prisma.user.count({ where: { isGuest: true } }),
+    ]);
+
+    const users = rawUsers.map((u) => {
+      const totalOrders = u.orders.length;
+      const totalSpent = u.orders.reduce((sum, o) => sum + Number(o.grandTotal), 0);
+      const name = `${u.profile?.firstName || ""} ${u.profile?.lastName || ""}`.trim() || "Customer";
+      return {
+        id: u.id,
+        email: u.email || "N/A",
+        phone: u.phone || u.profile?.phone || "N/A",
+        name,
+        role: u.role,
+        isGuest: u.isGuest,
+        isActive: u.isActive,
+        isVerified: u.isVerified,
+        lastLoginAt: u.lastLoginAt,
+        createdAt: u.createdAt,
+        totalOrders,
+        totalSpent,
+        addressesCount: u.addresses.length,
+      };
+    });
+
+    return {
+      users,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      summary: {
+        totalCustomers: totalCustomersCount,
+        activeCustomers: activeCustomersCount,
+        guestCount,
+      },
+    };
+  }
+
+  /**
+   * Get single user full profile and complete order history
+   */
+  static async getUserDetail(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        profile: true,
+        addresses: { where: { deletedAt: null }, orderBy: { createdAt: "desc" } },
+        orders: {
+          orderBy: { createdAt: "desc" },
+          include: {
+            orderItems: true,
+            payments: true,
+          },
+        },
+      },
+    });
+
+    if (!user) throw ApiError.notFound("User not found");
+
+    const totalSpent = user.orders
+      .filter((o) => o.status !== OrderStatus.CANCELLED && o.status !== OrderStatus.DRAFT)
+      .reduce((sum, o) => sum + Number(o.grandTotal), 0);
+
+    return {
+      user: {
+        id: user.id,
+        email: user.email,
+        phone: user.phone,
+        role: user.role,
+        isGuest: user.isGuest,
+        isActive: user.isActive,
+        isVerified: user.isVerified,
+        createdAt: user.createdAt,
+        lastLoginAt: user.lastLoginAt,
+        profile: user.profile,
+        addresses: user.addresses,
+        totalSpent,
+        totalOrders: user.orders.length,
+        orders: user.orders.map((o) => ({
+          id: o.id,
+          orderNumber: o.orderNumber,
+          grandTotal: Number(o.grandTotal),
+          status: o.status,
+          createdAt: o.createdAt,
+          itemsCount: o.orderItems.length,
+          paymentStatus: o.payments[0]?.status || "PENDING",
+        })),
+      },
+    };
+  }
+
+  /**
+   * Toggle user active/blocked status
+   */
+  static async toggleUserStatus(userId: string) {
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) throw ApiError.notFound("User not found");
+    if (user.role === "ADMIN") {
+      throw ApiError.badRequest("Cannot deactivate admin user.");
+    }
+    return prisma.user.update({
+      where: { id: userId },
+      data: { isActive: !user.isActive },
+    });
+  }
+
+  /**
+   * =========================================================================
+   * PAYMENTS & TRANSACTIONS MANAGEMENT
+   * =========================================================================
+   */
+
+  /**
+   * List all payment transactions (Razorpay & COD) with status and diagnostic info
+   */
+  static async listPayments(query: { search?: string; status?: string; provider?: string; page?: number; limit?: number }) {
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (query.status && query.status.toLowerCase() !== "all") {
+      where.status = query.status.toUpperCase() as PaymentStatus;
+    }
+    if (query.provider && query.provider.toLowerCase() !== "all") {
+      where.provider = query.provider.toLowerCase();
+    }
+    if (query.search) {
+      const s = query.search.trim();
+      where.OR = [
+        { providerPaymentId: { contains: s, mode: "insensitive" } },
+        { providerOrderId: { contains: s, mode: "insensitive" } },
+        { order: { orderNumber: { contains: s, mode: "insensitive" } } },
+        { order: { user: { profile: { firstName: { contains: s, mode: "insensitive" } } } } },
+        { order: { user: { profile: { lastName: { contains: s, mode: "insensitive" } } } } },
+        { order: { address: { phone: { contains: s, mode: "insensitive" } } } },
+      ];
+    }
+
+    const [total, rawPayments, totalVolumeAgg, capturedVolumeAgg, codPendingAgg, failedCount] = await Promise.all([
+      prisma.payment.count({ where }),
+      prisma.payment.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { createdAt: "desc" },
+        include: {
+          order: {
+            include: {
+              user: { include: { profile: true } },
+              address: true,
+            },
+          },
+        },
+      }),
+      // Total volume
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { status: { in: [PaymentStatus.SUCCESSFUL, PaymentStatus.CAPTURED] } },
+      }),
+      // Razorpay captured volume
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { provider: "razorpay", status: { in: [PaymentStatus.SUCCESSFUL, PaymentStatus.CAPTURED] } },
+      }),
+      // COD pending volume
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { provider: "cod", status: { in: [PaymentStatus.PENDING, PaymentStatus.CREATED] } },
+      }),
+      // Failed count
+      prisma.payment.count({
+        where: { status: PaymentStatus.FAILED },
+      }),
+    ]);
+
+    const payments = rawPayments.map((p) => {
+      const customerName =
+        `${p.order?.user?.profile?.firstName || ""} ${p.order?.user?.profile?.lastName || ""}`.trim() ||
+        p.order?.address?.fullName ||
+        "Guest Customer";
+      const customerPhone = p.order?.user?.phone || p.order?.address?.phone || "N/A";
+
+      return {
+        id: p.id,
+        orderId: p.orderId,
+        orderNumber: p.order?.orderNumber || "N/A",
+        customerName,
+        customerPhone,
+        provider: p.provider,
+        providerOrderId: p.providerOrderId,
+        providerPaymentId: p.providerPaymentId,
+        amount: Number(p.amount),
+        currency: p.currency,
+        status: p.status,
+        failureReason: p.failureReason,
+        paidAt: p.paidAt,
+        createdAt: p.createdAt,
+      };
+    });
+
+    return {
+      payments,
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      summary: {
+        totalVolume: Number(totalVolumeAgg._sum.amount || 0),
+        razorpayVolume: Number(capturedVolumeAgg._sum.amount || 0),
+        codPendingVolume: Number(codPendingAgg._sum.amount || 0),
+        failedCount,
+      },
+    };
+  }
+
+  /**
+   * Verify COD cash collection upon delivery
+   */
+  static async verifyCodPayment(paymentId: string) {
+    const payment = await prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: { order: true },
+    });
+    if (!payment) throw ApiError.notFound("Payment record not found");
+    if (payment.provider !== "cod") {
+      throw ApiError.badRequest("Only COD payments can be manually marked as verified.");
+    }
+
+    const updated = await prisma.payment.update({
+      where: { id: paymentId },
+      data: {
+        status: PaymentStatus.CAPTURED,
+        paidAt: new Date(),
+      },
+    });
+
+    if (payment.order && payment.order.status !== OrderStatus.DELIVERED) {
+      await prisma.order.update({
+        where: { id: payment.orderId },
+        data: { status: OrderStatus.DELIVERED },
+      });
+    }
+
+    return updated;
+  }
+
+  /**
+   * =========================================================================
+   * OPERATIONAL NOTIFICATIONS & PENDING ACTIONS QUEUE
+   * =========================================================================
+   */
+
+  /**
+   * Get operational pending actions checklist and real-time alerts
+   */
+  static async getPendingActions() {
+    const [
+      ordersToPackCount,
+      ordersToShipCount,
+      lowStockVariants,
+      recentFailedPayments,
+      pendingCodCount,
+    ] = await Promise.all([
+      // Orders confirmed, awaiting packing
+      prisma.order.count({
+        where: { status: OrderStatus.CONFIRMED },
+      }),
+      // Orders packed, awaiting dispatch
+      prisma.order.count({
+        where: { status: OrderStatus.PACKED },
+      }),
+      // Low stock variants (availableQuantity <= 5 and product active)
+      prisma.inventory.findMany({
+        where: {
+          availableQuantity: { lte: 5 },
+          variant: { product: { isActive: true, deletedAt: null } },
+        },
+        take: 10,
+        include: {
+          variant: {
+            include: { product: true },
+          },
+        },
+      }),
+      // Failed payments in last 48 hours
+      prisma.payment.findMany({
+        where: {
+          status: PaymentStatus.FAILED,
+          createdAt: { gte: new Date(Date.now() - 48 * 60 * 60 * 1000) },
+        },
+        take: 5,
+        orderBy: { createdAt: "desc" },
+        include: {
+          order: {
+            include: {
+              address: true,
+              user: { include: { profile: true } },
+            },
+          },
+        },
+      }),
+      // COD orders pending
+      prisma.payment.count({
+        where: { provider: "cod", status: { in: [PaymentStatus.PENDING, PaymentStatus.CREATED] } },
+      }),
+    ]);
+
+    // Build notifications items
+    const notifications: Array<{
+      id: string;
+      type: "order" | "stock" | "payment" | "system";
+      severity: "info" | "warning" | "error";
+      title: string;
+      message: string;
+      link: string;
+      time: string;
+      unread: boolean;
+    }> = [];
+
+    if (ordersToPackCount > 0) {
+      notifications.push({
+        id: "alert-pack",
+        type: "order",
+        severity: "info",
+        title: "Orders Ready for Packing",
+        message: `${ordersToPackCount} order(s) confirmed and ready to be packed.`,
+        link: "/admin/orders?status=confirmed",
+        time: "Action Required",
+        unread: true,
+      });
+    }
+
+    if (ordersToShipCount > 0) {
+      notifications.push({
+        id: "alert-ship",
+        type: "order",
+        severity: "warning",
+        title: "Orders Awaiting Dispatch",
+        message: `${ordersToShipCount} packed order(s) awaiting courier partner assignment.`,
+        link: "/admin/orders?status=packed",
+        time: "Action Required",
+        unread: true,
+      });
+    }
+
+    for (const inv of lowStockVariants) {
+      notifications.push({
+        id: `alert-stock-${inv.id}`,
+        type: "stock",
+        severity: "warning",
+        title: "Low Inventory Alert",
+        message: `"${inv.variant.product.nameEn} (${inv.variant.nameEn})" has only ${inv.availableQuantity} units left.`,
+        link: `/admin/products`,
+        time: "Stock Alert",
+        unread: true,
+      });
+    }
+
+    for (const fail of recentFailedPayments) {
+      const customer =
+        fail.order?.user?.profile?.firstName || fail.order?.address?.fullName || "Customer";
+      notifications.push({
+        id: `alert-pay-${fail.id}`,
+        type: "payment",
+        severity: "error",
+        title: "Payment Transaction Failed",
+        message: `₹${fail.amount} payment failed for order #${fail.order?.orderNumber} (${customer}).`,
+        link: "/admin/payments?status=failed",
+        time: fail.createdAt.toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+        unread: true,
+      });
+    }
+
+    return {
+      checklist: {
+        ordersToPack: ordersToPackCount,
+        ordersToShip: ordersToShipCount,
+        lowStockCount: lowStockVariants.length,
+        recentFailedPaymentsCount: recentFailedPayments.length,
+        pendingCodCount,
+      },
+      notifications,
+      totalUnread: notifications.length,
+    };
   }
 }

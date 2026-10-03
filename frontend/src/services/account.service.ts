@@ -72,10 +72,14 @@ export interface CustomerPayment {
   id: string;
   orderId: string;
   provider: string;
+  providerOrderId?: string | null;
+  providerPaymentId?: string | null;
   currency: string;
   amount: number;
   status: string;
   paidAt?: string | null;
+  failureReason?: string | null;
+  createdAt?: string;
 }
 
 export interface CustomerOrder {
@@ -87,11 +91,21 @@ export interface CustomerOrder {
   shippingCharge: number;
   grandTotal: number;
   status: string;
+  courierPartner?: string | null;
+  trackingNumber?: string | null;
+  trackingUrl?: string | null;
+  dispatchedAt?: string | null;
   orderedAt?: string | null;
   createdAt: string;
   orderItems: CustomerOrderItem[];
   payments: CustomerPayment[];
   address?: UserAddress;
+  coupon?: {
+    id: string;
+    code: string;
+    discountType: string;
+    discountValue: number;
+  } | null;
 }
 
 class AccountService {

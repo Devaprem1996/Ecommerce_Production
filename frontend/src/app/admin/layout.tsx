@@ -22,17 +22,21 @@ import {
   Loader2,
   Ticket,
   MapPin,
-  Settings
+  Settings,
+  Users,
+  CreditCard,
+  CheckCircle2
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/auth-store';
 import { QueryProvider } from '@/providers/QueryProvider';
+import { useAdminPendingActions } from '@/hooks/useAdmin';
 
 interface AdminLayoutProps {
   children: React.ReactNode;
 }
 
-export default function AdminLayout({ children }: AdminLayoutProps) {
+function AdminLayoutContent({ children }: AdminLayoutProps) {
   const router = useRouter();
   const pathname = usePathname();
   const logout = useAuthStore((state) => state.logout);
@@ -41,13 +45,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  // Notification States
+  // Real-time Pending Operational Actions
   const [showNotifications, setShowNotifications] = useState(false);
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'New order #YATHU-8910 received from Priya K.', time: '5m ago', read: false },
-    { id: 2, text: 'Product "Raw Mountain Honey" stock low (12 units)', time: '2h ago', read: false },
-    { id: 3, text: 'System update completed successfully', time: '1d ago', read: true }
-  ]);
+  const { data: pendingData } = useAdminPendingActions();
+  const pendingNotifications = pendingData?.notifications || [];
+  const unreadCount = pendingData?.totalUnread || 0;
 
   const isGuestPath =
     pathname === '/admin/login' ||
@@ -97,22 +99,16 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     router.replace('/admin/login');
   };
 
-  const markAllNotificationsRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-    toast.success('All notifications marked as read');
-  };
-
   const menuItems = [
     { label: 'Overview', path: '/admin', icon: LayoutDashboard },
+    { label: 'Orders', path: '/admin/orders', icon: ClipboardList },
+    { label: 'Customers', path: '/admin/users', icon: Users },
+    { label: 'Payments', path: '/admin/payments', icon: CreditCard },
     { label: 'Products', path: '/admin/products', icon: ShoppingBag },
     { label: 'Categories', path: '/admin/categories', icon: FolderTree },
-    { label: 'Orders', path: '/admin/orders', icon: ClipboardList },
     { label: 'Coupons', path: '/admin/coupons', icon: Ticket },
-    { label: 'Notifications', path: '/admin/notifications', icon: Bell },
-    { label: 'Pincodes', path: '/admin/settings/pincodes', icon: MapPin },
+    { label: 'Delivery Pincodes', path: '/admin/settings/pincodes', icon: MapPin },
     { label: 'Settings', path: '/admin/settings', icon: Settings },
-    { label: 'Content', path: '/admin/content', icon: FileText },
-    { label: 'Reports', path: '/admin/reports', icon: BarChart3 },
   ];
 
   if (checkingAuth) {
@@ -158,11 +154,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
     );
   }
 
-  const unreadCount = notifications.filter(n => !n.read).length;
-
   return (
-    <QueryProvider>
-      <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 transition-colors duration-normal">
+    <div className="min-h-screen flex bg-neutral-50 dark:bg-neutral-950 font-sans text-neutral-900 dark:text-neutral-100 transition-colors duration-normal">
 
       {/* SIDEBAR - DESKTOP */}
       <aside
@@ -347,31 +340,33 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                     className="absolute right-12 top-12 w-80 bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-feature shadow-2xl p-4 space-y-3 z-50 text-xs"
                   >
                     <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2">
-                      <h4 className="font-bold text-neutral-900 dark:text-white uppercase tracking-wider">Notifications</h4>
-                      {unreadCount > 0 && (
-                        <button
-                          onClick={markAllNotificationsRead}
-                          className="text-[10px] font-black text-primary-500 uppercase tracking-widest hover:underline cursor-pointer"
-                        >
-                          Mark all read
-                        </button>
-                      )}
+                      <h4 className="font-bold text-neutral-900 dark:text-white uppercase tracking-wider">
+                        Operational Alerts ({unreadCount})
+                      </h4>
                     </div>
 
-                    <div className="space-y-2 max-h-60 overflow-y-auto">
-                      {notifications.map(n => (
-                        <div
-                          key={n.id}
-                          className={`p-2 rounded-card border transition-colors ${
-                            n.read
-                              ? 'bg-neutral-50 dark:bg-neutral-950 border-neutral-100 dark:border-neutral-850 text-neutral-500'
-                              : 'bg-primary-500/5 border-primary-500/10 text-neutral-900 dark:text-white'
-                          }`}
-                        >
-                          <p className="font-semibold leading-relaxed">{n.text}</p>
-                          <span className="text-[10px] text-neutral-400 font-bold block mt-1">{n.time}</span>
+                    <div className="space-y-2 max-h-72 overflow-y-auto">
+                      {pendingNotifications.length > 0 ? (
+                        pendingNotifications.map((n) => (
+                          <Link
+                            key={n.id}
+                            href={n.link}
+                            onClick={() => setShowNotifications(false)}
+                            className="block p-2.5 rounded-card border bg-neutral-50/50 dark:bg-neutral-950/50 border-neutral-150 dark:border-neutral-800 hover:border-primary-500 transition-colors"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-bold text-neutral-900 dark:text-white">{n.title}</span>
+                              <span className="text-[9px] font-black uppercase text-amber-500">{n.time}</span>
+                            </div>
+                            <p className="text-[11px] text-neutral-500 mt-0.5">{n.message}</p>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="py-6 text-center text-xs text-neutral-400 space-y-1">
+                          <CheckCircle2 className="w-5 h-5 text-emerald-500 mx-auto" />
+                          <p>All clear! Zero pending operational actions.</p>
                         </div>
-                      ))}
+                      )}
                     </div>
                   </motion.div>
                 </>
@@ -405,6 +400,13 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         </main>
       </div>
     </div>
-  </QueryProvider>
-);
+  );
+}
+
+export default function AdminLayout({ children }: AdminLayoutProps) {
+  return (
+    <QueryProvider>
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </QueryProvider>
+  );
 }

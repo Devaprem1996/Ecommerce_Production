@@ -40,6 +40,8 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
   const [checking, setChecking] = useState(true);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [activeOrdersCount, setActiveOrdersCount] = useState(0);
+  const [unreadAlertsCount, setUnreadAlertsCount] = useState(0);
 
   // 1. Resilient Session & Auth Guard
   useEffect(() => {
@@ -100,6 +102,23 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
 
           // Synchronize customer wishlist from live database
           useWishlist.getState().syncWithDb();
+
+          // Fetch customer orders to compute active shipments and notifications count
+          accountService.getOrders()
+            .then((orders) => {
+              const activeCount = orders.filter((o) => {
+                const s = o.status.toUpperCase();
+                return ['CONFIRMED', 'PROCESSING', 'PACKED', 'SHIPPED', 'OUT_FOR_DELIVERY'].includes(s);
+              }).length;
+              setActiveOrdersCount(activeCount);
+
+              const alertsCount = orders.filter((o) => {
+                const s = o.status.toUpperCase();
+                return ['SHIPPED', 'OUT_FOR_DELIVERY', 'REFUNDED', 'DELIVERED'].includes(s);
+              }).length;
+              setUnreadAlertsCount(alertsCount);
+            })
+            .catch(() => {});
         }
         setChecking(false);
       })
@@ -244,11 +263,23 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                         <Icon className="w-4 h-4" />
                         <span>{item.label}</span>
                       </div>
-                      {item.path === '/account/wishlist' && wishlistItems.length > 0 && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
-                          {wishlistItems.length}
-                        </span>
-                      )}
+                      <div className="flex items-center gap-1.5">
+                        {item.path === '/account/orders' && activeOrdersCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-emerald-500 text-[10px] text-white font-bold leading-none" title="Active shipments">
+                            {activeOrdersCount}
+                          </span>
+                        )}
+                        {item.path === '/account/wishlist' && wishlistItems.length > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-red-500 text-[10px] text-white font-bold leading-none">
+                            {wishlistItems.length}
+                          </span>
+                        )}
+                        {item.path === '/account/notifications' && unreadAlertsCount > 0 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-blue-500 text-[10px] text-white font-bold leading-none" title="Recent order alerts">
+                            {unreadAlertsCount}
+                          </span>
+                        )}
+                      </div>
                     </button>
                   );
                 })}
@@ -285,11 +316,25 @@ export default function AccountLayout({ children }: { children: React.ReactNode 
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{item.label}</span>
+                    {item.path === '/account/orders' && activeOrdersCount > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                        isActive ? 'bg-white text-emerald-600' : 'bg-emerald-500 text-white'
+                      }`}>
+                        {activeOrdersCount}
+                      </span>
+                    )}
                     {item.path === '/account/wishlist' && wishlistItems.length > 0 && (
                       <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
                         isActive ? 'bg-white text-primary-500' : 'bg-red-500 text-white'
                       }`}>
                         {wishlistItems.length}
+                      </span>
+                    )}
+                    {item.path === '/account/notifications' && unreadAlertsCount > 0 && (
+                      <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold leading-none ${
+                        isActive ? 'bg-white text-blue-600' : 'bg-blue-500 text-white'
+                      }`}>
+                        {unreadAlertsCount}
                       </span>
                     )}
                   </button>

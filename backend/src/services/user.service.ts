@@ -1204,8 +1204,10 @@ export class UserService {
           ? `${o.address.fullName}, ${o.address.addressLine1}, ${o.address.city} - ${o.address.postalCode}`
           : null,
         shippingCity: o.address?.city,
-        carrierName: "Delhivery",
-        trackingNumber: `DEL-${o.orderNumber.replace(/\D/g, "")}`,
+        carrierName: (o as any).courierPartner || "Standard Delivery",
+        trackingNumber: (o as any).trackingNumber || null,
+        trackingUrl: (o as any).trackingUrl || null,
+        dispatchedAt: (o as any).dispatchedAt || null,
         items: o.orderItems.map((item) => ({
           id: item.id,
           name: item.productName,
@@ -1339,8 +1341,10 @@ export class UserService {
         ? `${order.address.fullName}, ${order.address.addressLine1}, ${order.address.city} - ${order.address.postalCode}`
         : null,
       shippingCity: order.address?.city,
-      carrierName: "Delhivery",
-      trackingNumber: `DEL-${order.orderNumber.replace(/\D/g, "")}`,
+      carrierName: (order as any).courierPartner || "Standard Delivery",
+      trackingNumber: (order as any).trackingNumber || null,
+      trackingUrl: (order as any).trackingUrl || null,
+      dispatchedAt: (order as any).dispatchedAt || null,
       items: order.orderItems.map((item) => ({
         id: item.id,
         name: item.productName,

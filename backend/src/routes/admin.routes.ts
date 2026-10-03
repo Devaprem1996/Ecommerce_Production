@@ -33,4 +33,22 @@ router.post("/pincodes", ...adminAuth, AdminController.createPincode);
 router.patch("/pincodes/:pincode", ...adminAuth, AdminController.updatePincode);
 router.delete("/pincodes/:pincode", ...adminAuth, AdminController.deletePincode);
 
+/**
+ * Customers & Users Management
+ */
+router.get("/users", ...adminAuth, AdminController.listUsers);
+router.get("/users/:id", ...adminAuth, AdminController.getUserDetail);
+router.patch("/users/:id/toggle", ...adminAuth, AdminController.toggleUserStatus);
+
+/**
+ * Payments & Transactions Ledger
+ */
+router.get("/payments", ...adminAuth, AdminController.listPayments);
+router.patch("/payments/:id/verify-cod", ...adminAuth, AdminController.verifyCodPayment);
+
+/**
+ * Operational Alerts & Pending Actions Queue
+ */
+router.get("/pending-actions", ...adminAuth, AdminController.getPendingActions);
+
 export default router;

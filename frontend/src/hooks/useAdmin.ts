@@ -42,3 +42,28 @@ export function useAdminPincodes() {
     staleTime: 30000,
   });
 }
+
+export function useAdminUsers(params: { search?: string; role?: string; page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ["admin", "users", params],
+    queryFn: () => adminService.listUsers(params),
+    staleTime: 10000,
+  });
+}
+
+export function useAdminPayments(params: { search?: string; status?: string; provider?: string; page?: number; limit?: number } = {}) {
+  return useQuery({
+    queryKey: ["admin", "payments", params],
+    queryFn: () => adminService.listPayments(params),
+    staleTime: 10000,
+  });
+}
+
+export function useAdminPendingActions() {
+  return useQuery({
+    queryKey: ["admin", "pending-actions"],
+    queryFn: () => adminService.getPendingActions(),
+    staleTime: 15000,
+    refetchInterval: 30000, // poll operational alerts every 30s
+  });
+}

@@ -12,19 +12,22 @@ import {
   CreditCard, 
   HelpCircle, 
   Check, 
-  Loader2,
-  Calendar,
-  AlertCircle,
-  Copy,
-  Info,
-  XCircle,
-  AlertTriangle,
-  X,
-  CheckCircle2
+  Loader2, 
+  Calendar, 
+  AlertCircle, 
+  Copy, 
+  Info, 
+  XCircle, 
+  AlertTriangle, 
+  X, 
+  CheckCircle2,
+  RotateCcw
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
 import { motion } from 'framer-motion';
+import { useCartStore } from '@/store/cartStore';
+import { ProductType } from '@/types';
 
 // Timeline definition
 const TIMELINE_STEPS = [
@@ -127,6 +130,37 @@ export default function OrderDetailPage() {
     window.print();
   };
 
+  // Action: 1-Click Buy Again / Reorder
+  const handleReorder = () => {
+    if (!order) return;
+    const cartStore = useCartStore.getState();
+    let addedCount = 0;
+
+    order.orderItems?.forEach((item) => {
+      const productObj: ProductType = {
+        id: item.variant?.product?.id || item.variantId || item.id,
+        slug: item.variant?.product?.slug || 'organic-product',
+        name: item.productName,
+        description: '100% natural, heritage organic harvest',
+        price: Number(item.unitPrice),
+        images: [item.variant?.product?.thumbnailUrl || '/placeholder.png'],
+        category: 'Organic Staples',
+        stock: 99,
+        rating: 5,
+        reviewsCount: 10,
+        isOrganic: true,
+        isLabTested: true,
+        unit: 'Pack',
+        selectedVariantId: item.variantId,
+      };
+      cartStore.addItem(productObj, item.quantity || 1);
+      addedCount += item.quantity || 1;
+    });
+
+    cartStore.openMiniCart();
+    toast.success(`${addedCount} item(s) from #${order.orderNumber || order.id.slice(0, 8)} added to your cart!`);
+  };
+
   if (loading) {
     return (
       <div className="text-center py-20 space-y-4">
@@ -210,14 +244,70 @@ export default function OrderDetailPage() {
             </button>
           )}
 
-          {/* Download/Print Invoice */}
+          {/* Return / Refund Request Trigger (When Delivered) */}
+          {upperStatus === 'DELIVERED' && (
+            <Link href={`/account/orders/${order.id}/return`}>
+              <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/30 text-xs font-bold text-amber-800 dark:text-amber-300 rounded-card hover:bg-amber-100 dark:hover:bg-amber-900/40 transition-colors cursor-pointer shadow-2xs">
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Return / Replace</span>
+              </button>
+            </Link>
+          )}
+
+          {/* 1-Click Buy Again / Reorder */}
           <button
-            onClick={handlePrintInvoice}
-            className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/30 dark:border-neutral-750 bg-white dark:bg-neutral-800 text-xs font-bold text-neutral-750 dark:text-neutral-300 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer shadow-sm"
+            onClick={handleReorder}
+            className="flex items-center space-x-1.5 px-3.5 py-2 border border-primary-500/25 bg-primary-50/60 dark:bg-primary-950/30 text-xs font-bold text-primary-700 dark:text-primary-300 rounded-card hover:bg-primary-100/60 transition-colors cursor-pointer shadow-2xs"
+            title="Add all items from this order to cart"
           >
-            <Printer className="w-3.5 h-3.5" />
-            <span>Print Invoice</span>
+            <RotateCcw className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
+            <span>Buy Again</span>
           </button>
+
+          {/* Download/Print Invoice */}
+          <Link href={`/account/orders/${order.id}/invoice`}>
+            <button
+              className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/30 dark:border-neutral-750 bg-white dark:bg-neutral-800 text-xs font-bold text-neutral-750 dark:text-neutral-300 rounded-card hover:bg-neutral-50 dark:hover:bg-neutral-900 cursor-pointer shadow-sm"
+              title="View & Download PDF Invoice"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Tax Invoice</span>
+            </button>
+          </Link>
+        </div>
+      </div>
+
+      {/* Printable Store Header (Visible only when printing) */}
+      <div className="hidden print:block border-b-2 border-neutral-800 pb-4 mb-4">
+        <div className="flex justify-between items-start">
+          <div>
+            <h1 className="text-xl font-black uppercase tracking-tight text-neutral-950 font-heading">
+              YATHU AROKIYAGAM
+            </h1>
+            <p className="text-xs text-neutral-700">
+              100% Natural Organic Heritage Foods &amp; Cold-Pressed Oils
+            </p>
+            <p className="text-[11px] text-neutral-600">
+              Tamil Nadu, India &bull; Support: +91 99434 31050 &bull; yathuarokiyagam@gmail.com
+            </p>
+            <p className="text-[10px] text-neutral-500 font-mono">
+              FSSAI Lic: 22421000000000 &bull; GST Registered
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-base font-black uppercase text-neutral-950 block">
+              RETAIL TAX INVOICE
+            </span>
+            <p className="text-xs font-mono font-bold text-neutral-900">
+              #{order.orderNumber || order.id.slice(0, 8)}
+            </p>
+            <p className="text-[11px] text-neutral-600">Date: {orderDateFormatted}</p>
+            {order.courierPartner && (
+              <p className="text-[10px] text-neutral-600">
+                Courier: {order.courierPartner} {order.trackingNumber ? `(AWB: ${order.trackingNumber})` : ''}
+              </p>
+            )}
+          </div>
         </div>
       </div>
 
@@ -387,10 +477,114 @@ export default function OrderDetailPage() {
         </div>
       </div>
 
-      {/* Address & Payment Info Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Logistics, Address & Payment Info Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Delivery Address Card */}
+        {/* Card 1: Logistics & Courier Tracking Card */}
+        <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-neutral-100 dark:border-neutral-800 pb-2.5">
+            <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2 select-none">
+              <Truck className="w-4 h-4 text-primary-500" /> Logistics &amp; Courier
+            </h3>
+            {order.courierPartner && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-primary-50 dark:bg-primary-950/40 text-primary-700 dark:text-primary-300 border border-primary-200/50">
+                {order.courierPartner}
+              </span>
+            )}
+          </div>
+
+          <div className="text-xs space-y-3 text-neutral-700 dark:text-neutral-350 font-semibold">
+            {order.courierPartner || order.trackingNumber ? (
+              <>
+                <div className="flex items-center justify-between">
+                  <span className="text-neutral-500">Carrier Partner:</span>
+                  <span className="font-bold text-neutral-900 dark:text-white">
+                    {order.courierPartner || 'Assigned Courier'}
+                  </span>
+                </div>
+
+                {order.trackingNumber && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-500">AWB Tracking #:</span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-mono font-bold text-neutral-900 dark:text-white">
+                        {order.trackingNumber}
+                      </span>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(order.trackingNumber!);
+                          setIsCopied(true);
+                          toast.success('AWB copied to clipboard!');
+                          setTimeout(() => setIsCopied(false), 2000);
+                        }}
+                        className="p-1 rounded hover:bg-neutral-150 dark:hover:bg-neutral-800 text-neutral-500 hover:text-neutral-800 dark:hover:text-neutral-200 transition-colors"
+                        title="Copy AWB Number"
+                      >
+                        {isCopied ? (
+                          <Check className="w-3.5 h-3.5 text-emerald-500" />
+                        ) : (
+                          <Copy className="w-3.5 h-3.5" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {order.dispatchedAt && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-neutral-500">Dispatched:</span>
+                    <span className="font-medium text-neutral-700 dark:text-neutral-300">
+                      {new Date(order.dispatchedAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                )}
+
+                {/* Direct Courier Website Link */}
+                <div className="pt-2 border-t border-neutral-100 dark:border-neutral-800 space-y-2">
+                  {order.trackingUrl ? (
+                    <a
+                      href={order.trackingUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors"
+                    >
+                      <span>Track on {order.courierPartner || 'Courier'} Website</span>
+                      <Truck className="w-3.5 h-3.5" />
+                    </a>
+                  ) : (
+                    <Link
+                      href={`/track-order?orderId=${order.orderNumber || order.id}`}
+                      className="w-full flex items-center justify-center gap-1.5 px-3 py-2 bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs rounded-xl shadow-sm transition-colors"
+                    >
+                      <span>Track Live on Portal</span>
+                      <Truck className="w-3.5 h-3.5" />
+                    </Link>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-4 space-y-2">
+                <Truck className="w-6 h-6 text-neutral-400 mx-auto opacity-40" />
+                <p className="text-neutral-500 text-[11px] leading-relaxed">
+                  Logistics partner and AWB number will appear here as soon as our warehouse team dispatches your package.
+                </p>
+                <Link
+                  href={`/track-order?orderId=${order.orderNumber || order.id}`}
+                  className="inline-block text-xs font-bold text-primary-600 dark:text-primary-400 hover:underline pt-1"
+                >
+                  Check Portal Tracking →
+                </Link>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Card 2: Delivery Address Card */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-2.5 select-none">
             <MapPin className="w-4 h-4 text-primary-500" /> Delivery Address
@@ -416,51 +610,91 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
-        {/* Payment Summary Card */}
+        {/* Card 3: Payment Summary Card */}
         <div className="bg-white dark:bg-neutral-900 border border-neutral-150 dark:border-neutral-800 rounded-feature p-5 shadow-sm space-y-4">
           <h3 className="text-sm font-bold text-neutral-900 dark:text-white flex items-center gap-2 border-b border-neutral-100 dark:border-neutral-800 pb-2.5 select-none">
-            <CreditCard className="w-4 h-4 text-primary-500" /> Payment Summary
+            <CreditCard className="w-4 h-4 text-primary-500" /> Payment Diagnostics
           </h3>
           <div className="text-xs space-y-2 text-neutral-700 dark:text-neutral-355 font-semibold">
             {order.payments && order.payments.length > 0 ? (
-              order.payments.map((p) => (
-                <div key={p.id} className="space-y-1.5">
-                  <div className="flex justify-between">
-                    <span>Payment Channel:</span>
-                    <span className="font-bold text-neutral-900 dark:text-white uppercase">
-                      {p.provider === 'cod' ? 'Cash on Delivery (COD)' : `Online (${p.provider})`}
-                    </span>
+              order.payments.map((p) => {
+                const isOnline = p.provider === 'razorpay' || p.provider === 'online';
+                return (
+                  <div key={p.id} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500">Payment Channel:</span>
+                      <span className="font-bold text-neutral-900 dark:text-white uppercase">
+                        {p.provider === 'cod' ? 'Cash on Delivery (COD)' : `Online (${p.provider})`}
+                      </span>
+                    </div>
+
+                    {isOnline && p.providerPaymentId && (
+                      <div className="flex justify-between items-center">
+                        <span className="text-neutral-500">Payment ID:</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200 text-[11px]">
+                            {p.providerPaymentId.slice(0, 14)}...
+                          </span>
+                          <button
+                            onClick={() => {
+                              navigator.clipboard.writeText(p.providerPaymentId!);
+                              toast.success('Razorpay Payment ID copied!');
+                            }}
+                            className="p-0.5 hover:text-primary-500 transition-colors"
+                            title="Copy Razorpay Payment ID"
+                          >
+                            <Copy className="w-3 h-3 text-neutral-400" />
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-neutral-500">Payment Status:</span>
+                      <span>
+                        {p.status.toUpperCase() === 'REFUNDED' ? (
+                          <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
+                            Refunded
+                          </span>
+                        ) : p.status.toUpperCase() === 'SUCCESSFUL' || p.status.toUpperCase() === 'CAPTURED' ? (
+                          <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-550 border border-green-500/15 text-[10px] font-bold uppercase tracking-wider">
+                            Paid &amp; Verified
+                          </span>
+                        ) : p.status.toUpperCase() === 'FAILED' ? (
+                          <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/15 text-[10px] font-bold uppercase tracking-wider">
+                            Failed
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/15 text-[10px] font-bold uppercase tracking-wider">
+                            Pending Collection
+                          </span>
+                        )}
+                      </span>
+                    </div>
+
+                    {p.paidAt && (
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="text-neutral-500">Paid At:</span>
+                        <span className="text-neutral-700 dark:text-neutral-300">
+                          {new Date(p.paidAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit',
+                          })}
+                        </span>
+                      </div>
+                    )}
                   </div>
-                  <div className="flex justify-between">
-                    <span>Payment Status:</span>
-                    <span>
-                      {p.status.toUpperCase() === 'REFUNDED' ? (
-                        <span className="px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-600 border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-                          Refunded
-                        </span>
-                      ) : p.status.toUpperCase() === 'SUCCESSFUL' || p.status.toUpperCase() === 'CAPTURED' ? (
-                        <span className="px-2 py-0.5 rounded bg-green-500/10 text-green-550 border border-green-500/15 text-[10px] font-bold uppercase tracking-wider">
-                          Paid
-                        </span>
-                      ) : p.status.toUpperCase() === 'FAILED' ? (
-                        <span className="px-2 py-0.5 rounded bg-red-500/10 text-red-500 border border-red-500/15 text-[10px] font-bold uppercase tracking-wider">
-                          Failed
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded bg-amber-500/10 text-amber-500 border border-amber-500/15 text-[10px] font-bold uppercase tracking-wider">
-                          {p.status}
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="flex justify-between">
-                <span>Payment Channel:</span>
+                <span className="text-neutral-500">Payment Channel:</span>
                 <span className="font-bold text-neutral-900 dark:text-white">Cash on Delivery</span>
               </div>
             )}
+
             <div className="flex justify-between pt-2 border-t border-neutral-100 dark:border-neutral-800 font-bold text-neutral-900 dark:text-white">
               <span>Settled Amount:</span>
               <span className="text-primary-750 dark:text-primary-400 font-black">{formatPrice(Number(order.grandTotal))}</span>
@@ -468,6 +702,40 @@ export default function OrderDetailPage() {
           </div>
         </div>
 
+      </div>
+
+      {/* Support & Assistance Row */}
+      <div className="bg-neutral-50 dark:bg-neutral-950/20 border border-neutral-150 dark:border-neutral-850 rounded-feature p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden">
+        <div className="flex items-center gap-3">
+          <div className="w-8 h-8 rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center shrink-0">
+            <HelpCircle className="w-4 h-4" />
+          </div>
+          <div>
+            <h4 className="text-xs font-bold text-neutral-900 dark:text-white">Have a question or request about this order?</h4>
+            <p className="text-[10px] text-neutral-500 dark:text-neutral-400">Our customer care desk is available on WhatsApp Mon–Sat, 9am–7pm.</p>
+          </div>
+        </div>
+        <a
+          href={`https://wa.me/919943431050?text=${encodeURIComponent(`Hi Yathu Arokiyagam Support, I need assistance with my order #${order.orderNumber || order.id.slice(0, 8)}.`)}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm transition-colors flex items-center justify-center gap-1.5 shrink-0"
+        >
+          <span>Chat on WhatsApp</span>
+        </a>
+      </div>
+
+      {/* Printable Invoice Footer (Visible only when printing) */}
+      <div className="hidden print:block pt-6 border-t border-neutral-300 text-[11px] text-neutral-600 space-y-1.5">
+        <p className="font-bold text-neutral-900">
+          Thank you for choosing Yathu Arokiyagam – Pure, Traditional, &amp; Natural!
+        </p>
+        <p>
+          This is a system-generated retail tax invoice for electronic order fulfillment. For questions, replacements, or quality inquiries, contact customer care at +91 99434 31050 or email yathuarokiyagam@gmail.com.
+        </p>
+        <p className="text-[10px] text-neutral-500 font-mono">
+          Return Policy: Unopened, untampered food products may be eligible for return or exchange within 7 days of delivery.
+        </p>
       </div>
 
       {/* Cancellation Confirmation Modal */}

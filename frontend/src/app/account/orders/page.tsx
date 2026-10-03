@@ -15,11 +15,13 @@ import {
   AlertTriangle,
   X,
   CreditCard,
-  CheckCircle2
+  CheckCircle2,
+  Download
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/Toast';
 import { useAuthStore } from '@/store/auth-store';
+import { ProductType } from '@/types';
 
 const TABS = ['all', 'pending', 'processing', 'shipped', 'delivered', 'cancelled'];
 
@@ -67,8 +69,102 @@ export default function OrdersListPage() {
     }
   }, [user?.id]);
 
-  // Filter orders by active tab
+  const [searchQuery, setSearchQuery] = useState('');
+  const [copiedAwb, setCopiedAwb] = useState<string | null>(null);
+
+  // Copy AWB helper
+  const handleCopyAwb = (awb: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    navigator.clipboard.writeText(awb);
+    setCopiedAwb(awb);
+    toast.success(`Tracking number ${awb} copied!`);
+    setTimeout(() => setCopiedAwb(null), 2500);
+  };
+
+  // Export customer orders to CSV
+  const handleExportCsv = () => {
+    if (orders.length === 0) {
+      toast.info('No orders available to export.');
+      return;
+    }
+
+    const headers = [
+      'Order Number',
+      'Date',
+      'Status',
+      'Grand Total (INR)',
+      'Subtotal (INR)',
+      'Discount (INR)',
+      'Tax (INR)',
+      'Shipping Charge (INR)',
+      'Payment Provider',
+      'Payment Status',
+      'Courier Partner',
+      'AWB Tracking Number',
+      'Total Items',
+      'Products Summary',
+    ];
+
+    const escapeCsv = (val: any) => {
+      if (val === null || val === undefined) return '""';
+      const str = String(val).replace(/"/g, '""');
+      return `"${str}"`;
+    };
+
+    const rows = orders.map((order) => {
+      const payment = order.payments?.[0];
+      const itemsSummary = order.orderItems
+        ?.map((i) => `${i.productName} (x${i.quantity})`)
+        .join('; ') || '';
+
+      return [
+        escapeCsv(order.orderNumber || order.id),
+        escapeCsv(new Date(order.createdAt).toISOString().split('T')[0]),
+        escapeCsv(order.status),
+        escapeCsv(order.grandTotal),
+        escapeCsv(order.subtotal || order.grandTotal),
+        escapeCsv(order.discount || 0),
+        escapeCsv(order.tax || 0),
+        escapeCsv(order.shippingCharge || 0),
+        escapeCsv(payment?.provider || 'Standard'),
+        escapeCsv(payment?.status || 'N/A'),
+        escapeCsv(order.courierPartner || 'N/A'),
+        escapeCsv(order.trackingNumber || 'N/A'),
+        escapeCsv(order.orderItems?.reduce((acc, it) => acc + (it.quantity || 1), 0) || 0),
+        escapeCsv(itemsSummary),
+      ].join(',');
+    });
+
+    const csvContent = [headers.join(','), ...rows].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `yathu_orders_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    toast.success('Order history exported successfully (.CSV)');
+  };
+
+  // Filter orders by active tab and search query
   const filteredOrders = orders.filter((order) => {
+    // 1. Search filter
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const matchesOrderNum = (order.orderNumber || '').toLowerCase().includes(q);
+      const matchesTracking = (order.trackingNumber || '').toLowerCase().includes(q);
+      const matchesCourier = (order.courierPartner || '').toLowerCase().includes(q);
+      const matchesItem = order.orderItems?.some((i) => i.productName.toLowerCase().includes(q));
+      if (!matchesOrderNum && !matchesTracking && !matchesCourier && !matchesItem) {
+        return false;
+      }
+    }
+
+    // 2. Tab filter
     if (activeTab === 'all') return true;
     const status = order.status.toLowerCase();
     if (activeTab === 'pending') {
@@ -79,6 +175,9 @@ export default function OrdersListPage() {
     }
     if (activeTab === 'shipped') {
       return status.includes('shipped') || status.includes('out_for_delivery');
+    }
+    if (activeTab === 'delivered') {
+      return status === 'delivered';
     }
     if (activeTab === 'cancelled') {
       return status === 'cancelled' || status === 'refunded';
@@ -111,6 +210,79 @@ export default function OrdersListPage() {
     } finally {
       setIsSubmittingCancel(false);
     }
+  };
+
+  // Action: 1-Click Reorder / Buy Again
+  const handleReorder = (order: CustomerOrder, e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    const cartStore = useActualCartStore.getState();
+    let addedCount = 0;
+
+    order.orderItems?.forEach((item) => {
+      const productObj: ProductType = {
+        id: item.variant?.product?.id || item.variantId || item.id,
+        slug: item.variant?.product?.slug || 'organic-product',
+        name: item.productName,
+        description: '100% natural, heritage organic harvest',
+        price: Number(item.unitPrice),
+        images: [item.variant?.product?.thumbnailUrl || '/placeholder.png'],
+        category: 'Organic Staples',
+        stock: 99,
+        rating: 5,
+        reviewsCount: 10,
+        isOrganic: true,
+        isLabTested: true,
+        unit: 'Pack',
+        selectedVariantId: item.variantId,
+      };
+      cartStore.addItem(productObj, item.quantity || 1);
+      addedCount += item.quantity || 1;
+    });
+
+    cartStore.openMiniCart();
+    toast.success(`${addedCount} item(s) from #${order.orderNumber || order.id.slice(0, 8)} added to your cart!`);
+  };
+
+  // Helper to format payment badge
+  const getPaymentBadge = (order: CustomerOrder) => {
+    const payment = order.payments?.[0];
+    const isOnline = payment?.provider === 'razorpay' || payment?.provider === 'online';
+    const isCod = payment?.provider === 'cod' || !isOnline;
+    const isRefunded = order.status.toUpperCase() === 'REFUNDED' || payment?.status?.toUpperCase() === 'REFUNDED';
+    const isPaid = payment?.status?.toUpperCase() === 'SUCCESSFUL' || payment?.status?.toUpperCase() === 'CAPTURED';
+
+    if (isRefunded) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+          Online • Refunded
+        </span>
+      );
+    }
+    if (isOnline && isPaid) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20">
+          <CheckCircle2 className="w-3 h-3 text-green-500" />
+          Razorpay • Paid
+        </span>
+      );
+    }
+    if (isCod) {
+      return (
+        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20">
+          <CreditCard className="w-3 h-3 text-amber-500" />
+          Cash on Delivery
+        </span>
+      );
+    }
+    return (
+      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-neutral-200/50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400">
+        {payment?.provider ? payment.provider.toUpperCase() : 'Standard'}
+      </span>
+    );
   };
 
   // Helper for status badge design
@@ -165,14 +337,38 @@ export default function OrdersListPage() {
 
   return (
     <div className="space-y-6">
-      {/* Title */}
-      <div className="border-b border-neutral-100 dark:border-neutral-800 pb-4">
-        <h2 className="text-xl font-black font-heading text-neutral-900 dark:text-white">
-          My Orders
-        </h2>
-        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
-          Track, cancel, and review your order history.
-        </p>
+      {/* Title & Search Bar Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+        <div>
+          <h2 className="text-xl font-black font-heading text-neutral-900 dark:text-white">
+            My Orders
+          </h2>
+          <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 font-medium">
+            Live parcel tracking, courier details, and invoices for your orders.
+          </p>
+        </div>
+
+        {/* Search input & CSV Export */}
+        <div className="flex items-center gap-2.5 w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-64">
+            <input
+              type="text"
+              placeholder="Search by order #, AWB, or item..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full px-3.5 py-2 text-xs rounded-xl border border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-900 text-neutral-900 dark:text-white placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-primary-500/30"
+            />
+          </div>
+          <button
+            onClick={handleExportCsv}
+            disabled={orders.length === 0}
+            className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl border border-neutral-250 dark:border-neutral-750 bg-white dark:bg-neutral-800 hover:bg-neutral-50 dark:hover:bg-neutral-750 text-neutral-700 dark:text-neutral-200 text-xs font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed shrink-0 shadow-sm cursor-pointer select-none"
+            title="Download personal order history as CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-primary-500" />
+            <span className="hidden sm:inline">Export CSV</span>
+          </button>
+        </div>
       </div>
 
       {/* Filter Tabs */}
@@ -210,7 +406,7 @@ export default function OrdersListPage() {
             <div className="space-y-1">
               <h3 className="text-sm font-bold text-neutral-900 dark:text-white uppercase tracking-wider">No Orders Found</h3>
               <p className="text-xs text-neutral-500 dark:text-neutral-450 max-w-xs mx-auto">
-                No orders matching filter "{activeTab}".
+                {searchQuery ? `No orders matched "${searchQuery}".` : `No orders matching filter "${activeTab}".`}
               </p>
             </div>
             <Link href="/shop" className="inline-block pt-2">
@@ -234,6 +430,8 @@ export default function OrdersListPage() {
               (p) => p.status.toUpperCase() === 'REFUNDED'
             );
 
+            const hasCourierTracking = Boolean(order.courierPartner || order.trackingNumber);
+
             return (
               <div 
                 key={order.id} 
@@ -250,11 +448,76 @@ export default function OrdersListPage() {
                       <span>{formattedDate}</span>
                     </div>
                     {getStatusBadge(order.status)}
+                    {getPaymentBadge(order)}
                   </div>
                   <div className="text-sm font-black text-primary-700 dark:text-primary-400">
                     Total: {formatPrice(Number(order.grandTotal))}
                   </div>
                 </div>
+
+                {/* Real Logistics & Courier Tracking Banner */}
+                {hasCourierTracking && (
+                  <div className="bg-primary-50/50 dark:bg-primary-950/20 border border-primary-200/60 dark:border-primary-900/40 rounded-xl p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-start sm:items-center gap-3">
+                      <div className="w-8 h-8 rounded-lg bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 shrink-0">
+                        <Truck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-bold text-neutral-900 dark:text-white">
+                            Courier: {order.courierPartner || 'Logistics Partner'}
+                          </span>
+                          {order.trackingNumber && (
+                            <span className="text-[11px] font-mono font-bold bg-white dark:bg-neutral-800 px-2 py-0.5 rounded border border-neutral-200 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300">
+                              AWB: {order.trackingNumber}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[10px] text-neutral-500 dark:text-neutral-400 mt-0.5 font-medium">
+                          {order.dispatchedAt ? `Dispatched on ${new Date(order.dispatchedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}` : 'Parcel is currently with the courier for dispatch and delivery.'}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-2 shrink-0">
+                      {order.trackingNumber && (
+                        <button
+                          onClick={(e) => handleCopyAwb(order.trackingNumber!, e)}
+                          className="px-2.5 py-1.5 text-[11px] font-bold rounded-lg border border-neutral-200 dark:border-neutral-750 bg-white dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-50 dark:hover:bg-neutral-700 transition-colors flex items-center gap-1 cursor-pointer"
+                          title="Copy AWB Tracking Number"
+                        >
+                          {copiedAwb === order.trackingNumber ? (
+                            <>
+                              <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                              <span className="text-emerald-600 dark:text-emerald-400">Copied</span>
+                            </>
+                          ) : (
+                            <span>Copy AWB</span>
+                          )}
+                        </button>
+                      )}
+
+                      {order.trackingUrl ? (
+                        <a
+                          href={order.trackingUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer"
+                        >
+                          <span>Track on Courier Site</span>
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      ) : (
+                        <Link href={`/track-order?orderId=${order.orderNumber || order.id}`}>
+                          <button className="px-3 py-1.5 text-[11px] font-bold rounded-lg bg-primary-600 hover:bg-primary-700 text-white flex items-center gap-1.5 shadow-sm transition-colors cursor-pointer">
+                            <span>Track Parcel</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </button>
+                        </Link>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Refund Notice (if refunded) */}
                 {refundedPayment && (
@@ -297,33 +560,55 @@ export default function OrdersListPage() {
                 </div>
 
                 {/* Actions row */}
-                <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
-                  {/* Cancel Trigger */}
-                  {isCancellable && (
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-neutral-100 dark:border-neutral-800">
+                  {/* WhatsApp Support Help */}
+                  <a
+                    href={`https://wa.me/919943431050?text=${encodeURIComponent(`Hi Yathu Arokiyagam, I need assistance with my order #${order.orderNumber || order.id.slice(0, 8)}`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-neutral-500 hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors flex items-center gap-1.5"
+                  >
+                    <span>Need help with this order?</span>
+                  </a>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {/* Cancel Trigger */}
+                    {isCancellable && (
+                      <button
+                        onClick={() => openCancelModal(order)}
+                        className="flex items-center space-x-1.5 px-3.5 py-2 border border-red-200 hover:border-red-300 dark:border-red-950 bg-red-500/5 hover:bg-red-500/10 text-xs font-bold text-red-500 rounded-card transition-colors cursor-pointer"
+                      >
+                        <XCircle className="w-3.5 h-3.5" />
+                        <span>Cancel</span>
+                      </button>
+                    )}
+
+                    {/* 1-Click Buy Again / Reorder */}
                     <button
-                      onClick={() => openCancelModal(order)}
-                      className="flex items-center space-x-1.5 px-3.5 py-2 border border-red-200 hover:border-red-300 dark:border-red-950 bg-red-500/5 hover:bg-red-500/10 text-xs font-bold text-red-500 rounded-card transition-colors cursor-pointer"
+                      onClick={(e) => handleReorder(order, e)}
+                      className="flex items-center space-x-1.5 px-3 py-2 border border-primary-500/25 hover:border-primary-500/50 bg-primary-50/60 dark:bg-primary-950/30 text-xs font-bold text-primary-700 dark:text-primary-300 rounded-card hover:bg-primary-100/50 transition-colors cursor-pointer shadow-2xs"
+                      title="Add items from this order to your cart"
                     >
-                      <XCircle className="w-3.5 h-3.5" />
-                      <span>Cancel Order</span>
+                      <RotateCcw className="w-3.5 h-3.5 text-primary-600 dark:text-primary-400" />
+                      <span>Buy Again</span>
                     </button>
-                  )}
 
-                  {/* Track Order Trigger - Always enabled for all orders */}
-                  <Link href={`/track-order?orderId=${order.orderNumber || order.id}`}>
-                    <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/50 dark:border-neutral-750 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs font-bold text-emerald-700 dark:text-emerald-400 rounded-card hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer shadow-2xs">
-                      <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 animate-pulse" />
-                      <span>Track Order</span>
-                    </button>
-                  </Link>
+                    {/* Track Order Trigger */}
+                    <Link href={`/track-order?orderId=${order.orderNumber || order.id}`}>
+                      <button className="flex items-center space-x-1.5 px-3.5 py-2 border border-neutral-250 hover:border-primary-500/50 dark:border-neutral-750 bg-emerald-50/50 dark:bg-emerald-950/20 text-xs font-bold text-emerald-700 dark:text-emerald-400 rounded-card hover:bg-emerald-100/50 dark:hover:bg-emerald-900/30 transition-colors cursor-pointer shadow-2xs">
+                        <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
+                        <span>Track</span>
+                      </button>
+                    </Link>
 
-                  {/* View Details Trigger */}
-                  <Link href={`/account/orders/${order.id}`}>
-                    <button className="flex items-center space-x-1.5 px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-xs font-bold text-white rounded-card cursor-pointer">
-                      <span>View Details</span>
-                      <ExternalLink className="w-3.5 h-3.5" />
-                    </button>
-                  </Link>
+                    {/* View Details Trigger */}
+                    <Link href={`/account/orders/${order.id}`}>
+                      <button className="flex items-center space-x-1.5 px-3.5 py-2 bg-neutral-900 hover:bg-neutral-800 dark:bg-neutral-800 dark:hover:bg-neutral-700 text-xs font-bold text-white rounded-card cursor-pointer">
+                        <span>Details &amp; Invoice</span>
+                        <ExternalLink className="w-3.5 h-3.5" />
+                      </button>
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

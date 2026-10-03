@@ -57,6 +57,7 @@ interface TrackingData {
   estDeliveryTamil: string;
   carrierName: string;
   trackingNo: string;
+  trackingUrl?: string | null;
   currentStep: number;
   steps: TrackingStep[];
   address: string;
@@ -297,8 +298,9 @@ function TrackOrderContent() {
       status: statusLabel,
       estDelivery: '3-5 Business Days',
       estDeliveryTamil: '3-5 வேலை நாட்கள்',
-      carrierName: order.carrierName || 'Delhivery',
-      trackingNo: order.trackingNumber || `DEL-${(order.orderNumber || '0000').replace(/\D/g, '')}`,
+      carrierName: order.carrierName || order.courierPartner || 'Assigned on Dispatch',
+      trackingNo: order.trackingNumber || (order.status === 'shipped' || order.status === 'delivered' ? 'In Transit' : 'Pending'),
+      trackingUrl: order.trackingUrl || null,
       currentStep,
       steps,
       address: formattedAddress,
@@ -835,12 +837,22 @@ function TrackOrderContent() {
 
                           {step.status === 'shipped' && idx <= activeTracking.currentStep && activeTracking.currentStep >= 3 && (
                             <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
+                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full">
                                 Courier: {activeTracking.carrierName}
                               </span>
-                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded-full">
-                                Tracking: {activeTracking.trackingNo}
+                              <span className="text-[10px] font-bold text-neutral-600 dark:text-neutral-400 uppercase tracking-widest bg-neutral-100 dark:bg-neutral-800 px-2.5 py-0.5 rounded-full">
+                                AWB: {activeTracking.trackingNo}
                               </span>
+                              {activeTracking.trackingUrl && (
+                                <a
+                                  href={activeTracking.trackingUrl}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-[10px] font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider underline hover:text-primary-700"
+                                >
+                                  Track on Courier Website &rarr;
+                                </a>
+                              )}
                             </div>
                           )}
                         </div>

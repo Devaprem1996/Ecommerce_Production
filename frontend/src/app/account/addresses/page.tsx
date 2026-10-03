@@ -7,7 +7,9 @@ import {
   Trash2, 
   Edit3, 
   X, 
-  Loader2 
+  Loader2,
+  CheckCircle2,
+  AlertCircle
 } from 'lucide-react';
 import { toast } from '@/components/ui/Toast';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -29,6 +31,53 @@ export default function AddressesPage() {
   const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
+  const [landmark, setLandmark] = useState('');
+
+  // Pincode auto-detection states
+  const [isCheckingPincode, setIsCheckingPincode] = useState(false);
+  const [pincodeStatus, setPincodeStatus] = useState<{
+    serviceable?: boolean;
+    city?: string;
+    state?: string;
+    message?: string;
+  } | null>(null);
+
+  // Auto-detect City & State when 6 digits are typed
+  const handlePincodeChange = async (val: string) => {
+    const clean = val.replace(/\D/g, '').slice(0, 6);
+    setPincode(clean);
+    setPincodeStatus(null);
+
+    if (clean.length === 6) {
+      setIsCheckingPincode(true);
+      try {
+        const res = await fetch(`/api/pincode/${clean}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.serviceable) {
+            setCity(data.city || 'Chennai');
+            setState(data.state || 'Tamil Nadu');
+            setPincodeStatus({
+              serviceable: true,
+              city: data.city,
+              state: data.state,
+              message: `Serviceable delivery area (Est. ${data.estimatedDays || 2-3} days)`,
+            });
+            toast.success(`Pincode ${clean} recognized: ${data.city || 'Tamil Nadu'}`);
+          } else {
+            setPincodeStatus({
+              serviceable: false,
+              message: data.message || 'Delivery service currently unavailable for this pincode.',
+            });
+          }
+        }
+      } catch (err) {
+        console.warn('Pincode check error:', err);
+      } finally {
+        setIsCheckingPincode(false);
+      }
+    }
+  };
 
   // Load Addresses from live Neon DB
   const loadAddresses = async () => {
@@ -66,6 +115,8 @@ export default function AddressesPage() {
     setCity('');
     setState('');
     setPincode('');
+    setLandmark('');
+    setPincodeStatus(null);
     setShowDrawer(true);
   };
 
@@ -78,6 +129,8 @@ export default function AddressesPage() {
     setCity(address.city);
     setState(address.state);
     setPincode(address.postalCode);
+    setLandmark(address.landmark || '');
+    setPincodeStatus(null);
     setShowDrawer(true);
   };
 
@@ -146,6 +199,7 @@ export default function AddressesPage() {
           city: city.trim(),
           state: state.trim(),
           postalCode: pincode.trim(),
+          landmark: landmark.trim() || null,
         });
         toast.success('Address updated successfully.');
       } else {
@@ -158,6 +212,7 @@ export default function AddressesPage() {
           state: state.trim(),
           postalCode: pincode.trim(),
           country: 'India',
+          landmark: landmark.trim() || null,
           isDefault: addresses.length === 0,
         });
         toast.success('New address added successfully.');
@@ -255,6 +310,12 @@ export default function AddressesPage() {
                 <p className="text-[11px] text-neutral-500 font-medium pt-1">
                   Mobile: +91-{addr.phone}
                 </p>
+                {addr.landmark && (
+                  <div className="flex items-start gap-1.5 mt-2 pt-2 border-t border-neutral-100 dark:border-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-400">
+                    <span className="font-bold text-neutral-700 dark:text-neutral-300 shrink-0">Note / Landmark:</span>
+                    <span className="italic break-words">{addr.landmark}</span>
+                  </div>
+                )}
               </div>
 
               {/* Action Buttons */}
@@ -370,7 +431,42 @@ export default function AddressesPage() {
                     />
                   </div>
 
-                  {/* Two columns for City/State */}
+                  {/* Pincode field with live auto-detection */}
+                  <div>
+                    <div className="flex items-center justify-between mb-1.5 select-none">
+                      <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                        6-Digit PIN Code *
+                      </label>
+                      {isCheckingPincode && (
+                        <span className="text-[10px] text-primary-500 font-bold flex items-center gap-1">
+                          <Loader2 className="w-3 h-3 animate-spin" /> Auto-detecting City &amp; State...
+                        </span>
+                      )}
+                    </div>
+                    <input
+                      type="text"
+                      required
+                      maxLength={6}
+                      value={pincode}
+                      onChange={(e) => handlePincodeChange(e.target.value)}
+                      placeholder="e.g. 600001"
+                      className="w-full text-xs font-semibold px-3.5 py-2.5 bg-neutral-50 border border-neutral-250 rounded-card focus:outline-none focus:border-primary-500 focus:bg-white dark:bg-neutral-950 dark:border-neutral-800 dark:focus:bg-neutral-950 dark:focus:border-primary-500 font-mono tracking-wider"
+                    />
+                    {pincodeStatus && (
+                      <div className={`mt-1.5 text-[11px] font-medium flex items-center gap-1.5 ${
+                        pincodeStatus.serviceable ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'
+                      }`}>
+                        {pincodeStatus.serviceable ? (
+                          <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                        ) : (
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                        )}
+                        <span>{pincodeStatus.message}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Two columns for City/State (Auto-populated from Pincode) */}
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
@@ -400,18 +496,20 @@ export default function AddressesPage() {
                     </div>
                   </div>
 
-                  {/* Pincode field */}
+                  {/* Delivery Instructions / Landmark field */}
                   <div>
-                    <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider mb-1.5 select-none">
-                      Postal Pincode *
-                    </label>
+                    <div className="flex items-center justify-between mb-1.5 select-none">
+                      <label className="block text-[10px] font-bold text-neutral-500 uppercase tracking-wider">
+                        Delivery Notes / Landmark (Optional)
+                      </label>
+                      <span className="text-[10px] text-neutral-400">Max 120 chars</span>
+                    </div>
                     <input
                       type="text"
-                      required
-                      maxLength={6}
-                      value={pincode}
-                      onChange={(e) => setPincode(e.target.value.replace(/\D/g, ''))}
-                      placeholder="6-digit PIN code"
+                      maxLength={120}
+                      value={landmark}
+                      onChange={(e) => setLandmark(e.target.value)}
+                      placeholder="e.g. Near Vinayagar Temple / Leave at door / Call on arrival"
                       className="w-full text-xs font-semibold px-3.5 py-2.5 bg-neutral-50 border border-neutral-250 rounded-card focus:outline-none focus:border-primary-500 focus:bg-white dark:bg-neutral-950 dark:border-neutral-800 dark:focus:bg-neutral-950 dark:focus:border-primary-500"
                     />
                   </div>
