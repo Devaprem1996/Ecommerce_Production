@@ -9,6 +9,7 @@ This directory contains the authoritative documentation for the Yathu Arokiyagam
 | Document | Description |
 | :--- | :--- |
 | [observability_and_alerting_setup.md](observability_and_alerting_setup.md) | **Primary Production Manual:** Hostinger VPS setup, free domain DNS, Sentry error tracking, Telegram mobile alerts, backup cron, and zero-downtime GitHub Actions deploy. |
+| [APPLICATION_BUILD_AND_DOCKER_DEBUGGING_GUIDE.md](APPLICATION_BUILD_AND_DOCKER_DEBUGGING_GUIDE.md) | **Build & Debugging Manual:** Step-by-step application building, Docker Compose management, debugging playbook, and one-liner cheat sheet. |
 | [08_DEPLOYMENT_ARCHITECTURE.md](08_DEPLOYMENT_ARCHITECTURE.md) | Architectural specification for Docker Compose, Nginx reverse proxy, and zero-downtime rolling container deploys. |
 
 ---
