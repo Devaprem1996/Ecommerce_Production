@@ -1,1 +1,0 @@
-# Bilingual Rules
