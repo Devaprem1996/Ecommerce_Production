@@ -66,6 +66,8 @@ jobs:
           tags: |
             ${{ env.FRONTEND_IMAGE }}:latest
             ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          build-args: |
+            NEXT_PUBLIC_API_URL=/api/v1
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -146,3 +148,16 @@ jobs:
             echo "=================================================="
             echo "🚀 Zero-Downtime Deployment Completed Successfully!"
             echo "=================================================="
+
+      - name: Send Telegram Deployment Alert
+        if: always() && secrets.TELEGRAM_BOT_TOKEN != '' && secrets.TELEGRAM_CHAT_ID != ''
+        run: |
+          if [ "${{ job.status }}" = "success" ]; then
+            MSG="🚀 <b>[DEPLOYMENT SUCCESSFUL]</b>%0A<b>Repository:</b> ${{ github.repository }}%0A<b>Branch:</b> <code>${{ github.ref_name }}</code>%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Actor:</b> ${{ github.actor }}%0A<b>Status:</b> Zero-Downtime Hot-Swap Active ✅"
+          else
+            MSG="❌ <b>[DEPLOYMENT FAILED]</b>%0A<b>Repository:</b> ${{ github.repository }}%0A<b>Branch:</b> <code>${{ github.ref_name }}</code>%0A<b>Commit:</b> <code>${{ github.sha }}</code>%0A<b>Actor:</b> ${{ github.actor }}%0A<b>Status:</b> Deployment encountered an error ⚠️"
+          fi
+          curl -s -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage" \
+            -d "chat_id=${{ secrets.TELEGRAM_CHAT_ID }}" \
+            -d "parse_mode=HTML" \
+            -d "text=${MSG}" > /dev/null 2>&1 || true

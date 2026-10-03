@@ -8,7 +8,7 @@ WORKDIR /app
 
 RUN apk add --no-cache libc6-compat
 COPY package*.json ./
-RUN npm ci
+RUN npm ci || npm install
 
 # Stage 2: Production Build
 FROM node:20-alpine AS builder
