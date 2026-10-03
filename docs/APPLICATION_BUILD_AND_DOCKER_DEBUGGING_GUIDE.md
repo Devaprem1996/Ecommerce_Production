@@ -81,8 +81,25 @@ npm ci || npm install
 # 2. Build production assets & compile TypeScript
 npm run build
 
-# 3. Start local production runner
-npm start
+```
+
+#### 3. Prisma Database Schema Updates (`prisma db push`)
+Whenever you add or update models, fields, or indexes in `backend/prisma/schema.prisma`:
+
+**Method 1: Inside Running Docker Backend (Recommended)**
+```bash
+# Push schema updates directly to PostgreSQL container
+docker exec -it yathu_backend npx prisma db push
+
+# Regenerate Prisma Client in backend container
+docker exec -it yathu_backend npx prisma generate
+```
+
+**Method 2: From Host Terminal**
+```bash
+cd backend
+npx prisma db push
+npx prisma generate
 ```
 
 ---
