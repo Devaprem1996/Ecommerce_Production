@@ -1,0 +1,148 @@
+name: Production Zero-Downtime Deployment (VPS)
+
+on:
+  push:
+    branches:
+      - vps
+      - VPS-SETUP
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  BACKEND_IMAGE_NAME: ${{ github.repository_owner }}/ecommerce-backend
+  FRONTEND_IMAGE_NAME: ${{ github.repository_owner }}/ecommerce-frontend
+
+jobs:
+  # =================================================================
+  # Stage 1: Build & Push Docker Images Remotely via GitHub Actions
+  # (Prevents CPU/RAM spikes on 2 vCPU VPS)
+  # =================================================================
+  build-and-push:
+    name: 1. Build & Push Docker Images (GHCR)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Downcase Image Names
+        run: |
+          echo "BACKEND_IMAGE=${REGISTRY}/${BACKEND_IMAGE_NAME,,}" >> ${GITHUB_ENV}
+          echo "FRONTEND_IMAGE=${REGISTRY}/${FRONTEND_IMAGE_NAME,,}" >> ${GITHUB_ENV}
+
+      # Build & Push Express Backend
+      - name: Build & Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./backend
+          file: ./deploy/backend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # Build & Push Next.js Frontend
+      - name: Build & Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./deploy/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =================================================================
+  # Stage 2: Zero-Downtime Deployment on VPS via SSH
+  # =================================================================
+  deploy-vps:
+    name: 2. Rolling Deploy to VPS
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    if: secrets.VPS_IP != '' && secrets.VPS_SSH_PRIVATE_KEY != ''
+    steps:
+      - name: Execute Zero-Downtime Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_IP }}
+          username: ${{ secrets.VPS_USER || 'root' }}
+          key: ${{ secrets.VPS_SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+
+            DEPLOY_DIR="/root/ecommerce-production/deploy"
+            [ ! -d "$DEPLOY_DIR" ] && DEPLOY_DIR="/var/www/yathu/deploy"
+            cd "$DEPLOY_DIR"
+
+            echo "=================================================="
+            echo "[DEPLOYMENT STARTED] Commit: ${{ github.sha }}"
+            echo "Working Directory: $DEPLOY_DIR"
+
+            # 1. Pull latest repository configuration files
+            git pull origin ${{ github.ref_name }} || true
+
+            # 2. Authenticate Docker with GHCR on VPS
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            # 3. Pull newly built images from registry
+            echo "[Step 1/5] Pulling pre-built images from GHCR..."
+            docker compose -f docker-compose.prod.yml pull backend frontend
+
+            # 4. Run database migrations safely
+            echo "[Step 2/5] Running Prisma database migrations..."
+            docker compose -f docker-compose.prod.yml run --rm backend npx prisma migrate deploy
+
+            # 5. Hot-swap backend container
+            echo "[Step 3/5] Starting updated backend container..."
+            docker compose -f docker-compose.prod.yml up -d --no-deps backend
+
+            # 6. Verify readiness probe before routing user traffic
+            echo "[Step 4/5] Verifying /ready probe..."
+            MAX_RETRIES=20
+            COUNT=0
+            READY=false
+
+            while [ $COUNT -lt $MAX_RETRIES ]; do
+              if curl -s -f http://127.0.0.1:8080/ready | grep -q '"status":"ready"'; then
+                READY=true
+                echo "✅ Backend passed /ready check!"
+                break
+              fi
+              COUNT=$((COUNT + 1))
+              echo "Waiting for backend to become ready... ($COUNT/$MAX_RETRIES)"
+              sleep 2
+            done
+
+            if [ "$READY" = false ]; then
+              echo "❌ Backend failed readiness check! Rolling back or aborting."
+              exit 1
+            fi
+
+            # 7. Hot-swap frontend and reload Nginx reverse proxy
+            echo "[Step 5/5] Updating frontend & reloading Nginx..."
+            docker compose -f docker-compose.prod.yml up -d --no-deps frontend
+            docker exec yathu_nginx nginx -s reload || true
+
+            # Prune obsolete dangling images to preserve disk space
+            docker image prune -f
+
+            echo "=================================================="
+            echo "🚀 Zero-Downtime Deployment Completed Successfully!"
+            echo "=================================================="

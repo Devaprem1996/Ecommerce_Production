@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { ApiError } from "../exceptions/api-error.js";
 import logger from "../logger/index.js";
+import { Sentry } from "../instrument.js";
 
 export function errorMiddleware(
   err: Error,
@@ -12,6 +13,17 @@ export function errorMiddleware(
   const requestId = (req.headers["x-request-id"] as string) ?? "N/A";
 
   if (err instanceof ApiError) {
+    if (err.statusCode >= 500) {
+      Sentry.captureException(err, {
+        extra: {
+          path: req.path,
+          method: req.method,
+          requestId,
+          statusCode: err.statusCode,
+        },
+      });
+    }
+
     logger.warn({
       message: err.message,
       statusCode: err.statusCode,
@@ -29,6 +41,16 @@ export function errorMiddleware(
       requestId,
     });
   }
+
+  // Capture all unhandled 5xx / unexpected runtime errors in Sentry
+  Sentry.captureException(err, {
+    extra: {
+      path: req.path,
+      method: req.method,
+      requestId,
+      stack: err.stack,
+    },
+  });
 
   // Handle default unhandled exceptions
   logger.error({

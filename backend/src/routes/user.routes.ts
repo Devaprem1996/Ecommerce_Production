@@ -11,6 +11,7 @@ import {
   wishlistSchema,
 } from "../validations/user.validation.js";
 import { trackByOtpSchema } from "../validations/otp.validation.js";
+import { checkoutRateLimiter } from "../middleware/rate-limit.middleware.js";
 
 const router = Router();
 
@@ -59,6 +60,7 @@ router.get("/orders", UserController.getOrders);
 router.get("/orders/:id", UserController.getOrderById);
 router.post(
   "/orders",
+  checkoutRateLimiter,
   validateRequest(createOrderSchema),
   UserController.createOrder
 );

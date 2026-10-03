@@ -1,8 +1,19 @@
 version: '3.8'
 
+# =================================================================
+# PRODUCTION DOCKER COMPOSE CONFIGURATION (HARDENED FOR 2 vCPU, 8 GB VPS)
+# =================================================================
+# Features:
+#   - Strict resource limits (Memory & CPU) to prevent VPS OOM panics
+#   - Dedicated Healthcheck probes (/healthz and /ready) on all services
+#   - Sentry error tracking & monitoring environment variables
+#   - Docker json-file log rotation (max 20m, 3 files)
+#   - Zero-downtime rolling reload compatibility with Nginx
+# =================================================================
+
 services:
   # =================================================================
-  # 1. DATABASE: PostgreSQL 16 (Self-Hosted on NVMe Volume)
+  # 1. DATABASE: PostgreSQL 16 (NVMe Volume Persistence)
   # =================================================================
   postgres:
     image: postgres:16-alpine
@@ -18,9 +29,18 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-yathu_admin} -d ${POSTGRES_DB:-yathu_ecommerce}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 15s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 2048M
+        reservations:
+          cpus: '0.2'
+          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -33,6 +53,7 @@ services:
   # 2. BACKEND: Express.js + Prisma API
   # =================================================================
   backend:
+    image: ${BACKEND_IMAGE:-ghcr.io/devaprem1996/ecommerce-backend:latest}
     build:
       context: ../backend
       dockerfile: ../deploy/backend/Dockerfile
@@ -48,9 +69,9 @@ services:
       PORT: 8080
       DATABASE_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable&connection_limit=20&pool_timeout=10
       DIRECT_URL: postgresql://${POSTGRES_USER:-yathu_admin}:${POSTGRES_PASSWORD:-yathu_secure_pass_2026}@postgres:5432/${POSTGRES_DB:-yathu_ecommerce}?sslmode=disable&connection_limit=20&pool_timeout=10
-      JWT_SECRET: ${JWT_SECRET:-dev-secret-key-for-jwt-signing-tokens-123456}
-      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET:-dev-secret-key-for-refresh-tokens-signing-987654}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      JWT_SECRET: ${JWT_SECRET}
+      REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
+      FRONTEND_URL: ${FRONTEND_URL:-https://yathuarokiyagam.com}
       FAST2SMS_API_KEY: ${FAST2SMS_API_KEY}
       GMAIL_USER: ${GMAIL_USER}
       GMAIL_APP_PASSWORD: ${GMAIL_APP_PASSWORD}
@@ -60,17 +81,26 @@ services:
       STORAGE_DRIVER: ${STORAGE_DRIVER:-local}
       LOCAL_UPLOAD_PATH: /var/www/uploads
       CLOUDINARY_URL: ${CLOUDINARY_URL}
-      SENTRY_DSN: ${SENTRY_DSN:-}
-      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-local-simulation}
+      # Sentry Observability & Tracing
+      SENTRY_DSN: ${SENTRY_DSN}
+      SENTRY_ENVIRONMENT: ${SENTRY_ENVIRONMENT:-production}
       SENTRY_TRACES_SAMPLE_RATE: ${SENTRY_TRACES_SAMPLE_RATE:-0.2}
     volumes:
       - media_uploads:/var/www/uploads
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:8080/ready || exit 1"]
-      interval: 10s
+      interval: 15s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1536M
+        reservations:
+          cpus: '0.2'
+          memory: 256M
     logging:
       driver: "json-file"
       options:
@@ -83,19 +113,35 @@ services:
   # 3. FRONTEND: Next.js Web Application
   # =================================================================
   frontend:
+    image: ${FRONTEND_IMAGE:-ghcr.io/devaprem1996/ecommerce-frontend:latest}
     build:
       context: ../frontend
       dockerfile: ../deploy/frontend/Dockerfile
       args:
-        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost/api/v1}
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-/api/v1}
     container_name: yathu_frontend
     restart: unless-stopped
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     environment:
       NODE_ENV: production
       PORT: 3000
       INTERNAL_API_URL: http://backend:8080/api/v1
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.8'
+          memory: 2048M
+        reservations:
+          cpus: '0.2'
+          memory: 512M
     logging:
       driver: "json-file"
       options:
@@ -105,7 +151,7 @@ services:
       - app_network
 
   # =================================================================
-  # 4. REVERSE PROXY: Nginx (Direct Media Caching + SSL Termination)
+  # 4. REVERSE PROXY: Nginx (SSL Termination + Media Caching)
   # =================================================================
   nginx:
     image: nginx:alpine
@@ -123,6 +169,20 @@ services:
     depends_on:
       - frontend
       - backend
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:80/healthz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.4'
+          memory: 512M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     logging:
       driver: "json-file"
       options:
@@ -132,16 +192,30 @@ services:
       - app_network
 
   # =================================================================
-  # 5. MONITORING: Uptime Kuma (Uptime Status & Downtime Alerting)
+  # 5. MONITORING: Uptime Kuma (Uptime & Webhook Alerting)
   # =================================================================
   uptime-kuma:
     image: louislam/uptime-kuma:2
     container_name: yathu_uptime_kuma
     restart: unless-stopped
     ports:
-      - "${UPTIME_KUMA_PORT:-3001}:3001"
+      - "127.0.0.1:${UPTIME_KUMA_PORT:-3001}:3001"
     volumes:
       - uptime_kuma_data:/app/data
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3001/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 384M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
     logging:
       driver: "json-file"
       options:

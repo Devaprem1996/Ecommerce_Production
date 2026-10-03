@@ -69,6 +69,8 @@ model User {
   @@index([email])
   @@index([phone])
   @@index([googleId])
+  @@index([role, isActive])
+  @@index([createdAt])
   @@map("users")
 }
 
@@ -149,6 +151,9 @@ model Product {
 
   @@index([slug])
   @@index([categoryId])
+  @@index([categoryId, isActive])
+  @@index([brand, isActive])
+  @@index([isActive, createdAt])
   @@map("products")
 }
 
@@ -172,6 +177,7 @@ model ProductVariant {
 
   @@index([productId])
   @@index([sku])
+  @@index([productId, isActive])
   @@map("product_variants")
 }
 
@@ -244,6 +250,9 @@ model Order {
   @@index([orderNumber])
   @@index([createdAt])
   @@index([status])
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
   @@map("orders")
 }
 
@@ -264,6 +273,7 @@ model OrderItem {
 
   @@index([orderId])
   @@index([variantId])
+  @@index([orderId, variantId])
   @@map("order_items")
 }
 
@@ -284,6 +294,9 @@ model Payment {
   updatedAt         DateTime      @updatedAt @map("updated_at")
 
   @@index([orderId])
+  @@index([providerOrderId])
+  @@index([orderId, status])
+  @@index([status, createdAt])
   @@map("payments")
 }
 

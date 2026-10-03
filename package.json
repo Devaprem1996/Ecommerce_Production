@@ -7,7 +7,12 @@
     "dev:backend": "pnpm --filter ecommerce-backend dev",
     "build": "pnpm -r build",
     "build:frontend": "pnpm --filter frontend build",
-    "build:backend": "pnpm --filter ecommerce-backend build"
+    "build:backend": "pnpm --filter ecommerce-backend build",
+    "sim:start": "docker compose -f deploy/docker-compose.yml up -d --build",
+    "sim:stop": "docker compose -f deploy/docker-compose.yml stop",
+    "sim:down": "docker compose -f deploy/docker-compose.yml down",
+    "sim:logs": "docker compose -f deploy/docker-compose.yml logs -f",
+    "sim:ps": "docker compose -f deploy/docker-compose.yml ps"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1"
