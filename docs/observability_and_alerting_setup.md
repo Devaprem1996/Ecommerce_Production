@@ -4,7 +4,63 @@ This guide details how to configure real-time observability, instant mobile noti
 
 ---
 
-## 1. Real-Time Error Tracking with Sentry (Node.js Express + Prisma)
+## Table of Contents
+1. [Local PC Pre-Flight Testing (Verify Before Deploying)](#1-local-pc-pre-flight-testing-verify-before-deploying)
+2. [Hostinger Free Domain & DNS Setup](#2-hostinger-free-domain--dns-setup)
+3. [Real-Time Error Tracking with Sentry (Express + Prisma)](#3-real-time-error-tracking-with-sentry-express--prisma)
+4. [Instant Telegram Push Notifications Setup](#4-instant-telegram-push-notifications-setup)
+5. [Host Resource Monitoring (`monitor-resources.sh`)](#5-host-resource-monitoring-monitor-resourcessh)
+6. [Automated Database Backups & Rolling Retention (`backup-db.sh`)](#6-automated-database-backups--rolling-retention-backup-dbsh)
+7. [Health & Readiness Observability Probes](#7-health--readiness-observability-probes)
+8. [Uptime Kuma External Ping & Downtime Alerts](#8-uptime-kuma-external-ping--downtime-alerts)
+9. [Zero-Downtime GitHub Actions Deployment (`VPS-SETUP` branch)](#9-zero-downtime-github-actions-deployment-vps-setup-branch)
+
+---
+
+## 1. Local PC Pre-Flight Testing (Verify Before Deploying)
+
+Before pushing to the VPS, test the entire Docker stack (including Nginx and health probes) locally on your Windows PC:
+
+```powershell
+# 1. Start full Docker simulation on PC
+pnpm run sim:start
+
+# 2. Verify all probes in PowerShell or browser
+curl http://localhost/healthz
+curl http://localhost/ready
+
+# 3. Check container logs
+pnpm run sim:logs
+
+# 4. Stop simulation when done
+pnpm run sim:stop
+```
+
+---
+
+## 2. Hostinger Free Domain & DNS Setup
+
+### Step 1: Claim Free Domain Voucher in Hostinger
+1. In [Hostinger hPanel](https://hpanel.hostinger.com/), click the **Claim Domain** banner.
+2. Choose your domain name (e.g. `yathuarokiyagam.com`), select `.com`, and complete free registration.
+3. Click the ICANN email verification link sent to your inbox.
+
+### Step 2: Configure DNS Records to Point to VPS
+In Hostinger hPanel ➔ **Domains** ➔ **Manage** ➔ **DNS / Nameservers**:
+
+| Type | Name | Value (Points to) | TTL | Purpose |
+| :--- | :--- | :--- | :--- | :--- |
+| **A** | `@` | `YOUR_VPS_IP` (e.g. `194.163.xxx.xxx`) | `300` | Points root domain to VPS |
+| **A** | `www` | `YOUR_VPS_IP` (e.g. `194.163.xxx.xxx`) | `300` | Points www subdomain to VPS |
+
+Verify DNS propagation on your PC:
+```powershell
+nslookup yathuarokiyagam.com
+```
+
+---
+
+## 3. Real-Time Error Tracking with Sentry (Express + Prisma)
 
 ### Step 1: Create a Free Sentry Account & Project
 1. Go to [sentry.io](https://sentry.io) and create an account.
@@ -20,30 +76,27 @@ SENTRY_ENVIRONMENT="production"
 SENTRY_TRACES_SAMPLE_RATE="0.2"
 ```
 
-### Step 3: Configure Instant Sentry Alert Routing to Telegram or Email
-1. In the Sentry dashboard, go to **Alerts** ➔ **Create Alert**.
+### Step 3: Configure Sentry Alert Routing to Telegram / Email
+1. In Sentry, go to **Alerts** ➔ **Create Alert**.
 2. Set condition: *"When an event is captured"* ➔ Filter: `level == error` or `environment == production`.
 3. Under **Perform Actions**:
    - **Email:** Select *Send a notification to Issue Owners / Personal Email*.
-   - **Telegram:** Use Sentry's native Telegram integration (*Settings ➔ Integrations ➔ Telegram*) or route Sentry Webhooks to your Telegram bot.
+   - **Telegram:** Use Sentry's native Telegram integration (*Settings ➔ Integrations ➔ Telegram*).
 
 ---
 
-## 2. Instant Telegram Push Notifications Setup
+## 4. Instant Telegram Push Notifications Setup
 
 ### Step 1: Create Your Monitoring Bot with @BotFather
-1. Open your Telegram app on mobile or desktop.
-2. Search for `@BotFather` (verified checkmark).
-3. Send `/newbot`.
-4. Choose a friendly name (e.g., `Yathu VPS Alert Bot`).
-5. Choose a username ending in `bot` (e.g., `yathu_vps_alert_bot`).
-6. BotFather will provide an **HTTP API Bot Token** (e.g., `7123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`). Save this token.
+1. In Telegram, search for `@BotFather`.
+2. Send `/newbot`.
+3. Name your bot (e.g., `Yathu VPS Alert Bot`) and username (e.g., `yathu_vps_alert_bot`).
+4. Copy the **HTTP API Bot Token** (e.g., `7123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ`).
 
 ### Step 2: Get Your Personal Chat ID
-1. In Telegram, search for `@userinfobot`.
-2. Click **Start**.
-3. It will immediately reply with your numeric **Id** (e.g., `123456789`).
-4. **Important:** Send a test message (e.g., "Hello") to your new bot so it has permission to message you.
+1. Search for `@userinfobot` in Telegram and click **Start**.
+2. Copy your numeric **Id** (e.g., `123456789`).
+3. **Important:** Send a test message (e.g., "Hello") to your new bot.
 
 ### Step 3: Add Credentials to `.env` on VPS
 ```bash
@@ -53,7 +106,7 @@ TELEGRAM_CHAT_ID="123456789"
 
 ---
 
-## 3. Host Resource Monitoring (`monitor-resources.sh`)
+## 5. Host Resource Monitoring (`monitor-resources.sh`)
 
 The script checks:
 - **RAM usage > 85%**
@@ -69,28 +122,28 @@ chmod +x /root/ecommerce-production/deploy/scripts/monitor-resources.sh
 ```bash
 /root/ecommerce-production/deploy/scripts/monitor-resources.sh
 ```
-*(If normal, outputs `Health Check OK`. You can lower the threshold to `10` temporarily to verify an instant Telegram ping on your phone).*
+*(If normal, outputs `Health Check OK`. You can lower the threshold to `10` temporarily to test the Telegram ping).*
 
 ### Step 3: Configure Host Crontab
-Open crontab:
+Open crontab on VPS:
 ```bash
 crontab -e
 ```
-Add the following line to run the monitor every 5 minutes:
-```bash
+Add:
+```cron
 */5 * * * * /root/ecommerce-production/deploy/scripts/monitor-resources.sh >> /var/log/vps_monitor.log 2>&1
 ```
 
 ---
 
-## 4. Automated Database Backups & Rolling Retention (`backup-db.sh`)
+## 6. Automated Database Backups & Rolling Retention (`backup-db.sh`)
 
-The script enforces a **7 Daily / 4 Weekly copies** rolling retention algorithm:
-- Every night, creates a compressed `pg_dump` in `/var/backups/postgres/daily/`.
-- Every Sunday, archives a snapshot in `/var/backups/postgres/weekly/`.
-- Purges daily copies older than 7 days and weekly copies older than 28 days.
-- Backs up the product image volume `yathu_media_uploads`.
-- Sends an instant Telegram success/failure message with backup sizes and execution time.
+Enforces a **7 Daily / 4 Weekly copies** rolling retention policy:
+- Nightly compressed `pg_dump` saved to `/var/backups/postgres/daily/`.
+- Weekly Sunday snapshot saved to `/var/backups/postgres/weekly/`.
+- Auto-purges daily copies older than 7 days and weekly copies older than 28 days.
+- Backs up uploaded product media from `yathu_media_uploads`.
+- Sends instant Telegram success/failure message with backup sizes.
 
 ### Step 1: Make Script Executable
 ```bash
@@ -103,15 +156,13 @@ Open crontab:
 crontab -e
 ```
 Add:
-```bash
+```cron
 0 2 * * * /root/ecommerce-production/deploy/scripts/backup-db.sh >> /var/log/db_backup.log 2>&1
 ```
 
 ---
 
-## 5. Health & Readiness Observability Probes
-
-The backend now exposes two distinct, standardized probes:
+## 7. Health & Readiness Observability Probes
 
 | Probe | Endpoint | Method | Purpose | Overhead |
 | :--- | :--- | :--- | :--- | :--- |
@@ -140,7 +191,7 @@ curl -i http://localhost:8080/ready
 
 ---
 
-## 6. Uptime Kuma External Latency & Downtime Alerts
+## 8. Uptime Kuma External Ping & Downtime Alerts
 
 Uptime Kuma is containerized on port `3001` on your VPS.
 
@@ -150,33 +201,34 @@ Uptime Kuma is containerized on port `3001` on your VPS.
    - Bot Token: `<Your Bot Token>`
    - Chat ID: `<Your Chat ID>`
    - Click **Test** and **Save**.
-3. Add **Monitor: Backend Readiness**:
-   - Monitor Type: `HTTP(s)`
+3. Add **Monitor 1: Backend Readiness**:
    - URL: `https://yathuarokiyagam.com/ready`
    - Heartbeat: `30 seconds`
-   - Retries: `2`
    - Accepted Status Codes: `200`
-   - Max Redirects: `5`
-4. Add **Monitor: Storefront**:
+4. Add **Monitor 2: Storefront**:
    - URL: `https://yathuarokiyagam.com`
    - Heartbeat: `60 seconds`
    - Accepted Status Codes: `200`
 
 ---
 
-## 7. Zero-Downtime GitHub Actions Deployment (`vps` branch)
+## 9. Zero-Downtime GitHub Actions Deployment (`VPS-SETUP` branch)
 
 The workflow file [.github/workflows/deploy.yml](file:///e:/ecommerce-production-VPS/.github/workflows/deploy.yml) automates zero-downtime rolling deploys:
 
 ### Workflow Secrets to Add in GitHub:
 Go to your GitHub Repository ➔ **Settings** ➔ **Secrets and variables** ➔ **Actions**:
-- `VPS_IP`: Your VPS public IP address.
-- `VPS_SSH_PRIVATE_KEY`: Your OpenSSH private key used to connect to the VPS.
+- `VPS_IP`: Your Hostinger VPS public IP.
 - `VPS_USER`: `root`
+- `VPS_SSH_PRIVATE_KEY`: Your OpenSSH private key used to connect to the VPS.
 
 ### Deployment Flow:
-1. Whenever code is pushed to the `vps` branch, GitHub Actions builds the Backend and Frontend images remotely using Docker Buildx and pushes them to GitHub Container Registry (GHCR).
-2. SSHs into the VPS and pulls the pre-built images (zero build load on VPS).
-3. Executes `npx prisma migrate deploy` in a temporary container.
-4. Starts the updated backend container and polls `/ready` until it returns HTTP 200.
-5. Starts the updated frontend container and executes `nginx -s reload` with zero dropped user requests.
+1. Whenever code is pushed to **`VPS-SETUP`** (or `vps`):
+   ```bash
+   git push origin VPS-SETUP
+   ```
+2. GitHub Actions builds the Backend and Frontend images remotely using Docker Buildx and pushes them to GitHub Container Registry (GHCR).
+3. SSHs into the VPS and pulls the pre-built images (zero build load on VPS).
+4. Executes `npx prisma migrate deploy` in a temporary container.
+5. Starts the updated backend container and polls `/ready` until it returns HTTP 200.
+6. Starts the updated frontend container and executes `docker exec yathu_nginx nginx -s reload` with zero dropped user checkouts.
